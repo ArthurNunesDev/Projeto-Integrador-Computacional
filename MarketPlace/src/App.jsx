@@ -1,21 +1,18 @@
 import { useEffect, useState } from "react";
 
-import Header from "./Components/Header/Head.jsx";
-import Body from "./Components/Body/Body.jsx";
-import Configs from "./Components/Header/Configs.jsx";
-import Perfil from "./Components/Header/Profile.jsx";
+import Header from "./components/Header.jsx";
+import Body from "./components/Body.jsx";
+import Configs from "./components/Configs.jsx";
+import Perfil from "./components/Profile.jsx";
 
-import Login from "./Login/Login.jsx";
+import Login from "./auth/Login.jsx";
 
-import "./Css/index.css";
-import "./Css/Head.css";
-import "./Css/Body.css";
-import "./Css/Profile.css";
-import "./Css/Configs.css";
-import "./Css/Login/Login.css";
-import "./Css/Login/Particulas.css";
-import "./Css/Login/TelasLogin.css";
-import "./Css/Pets/Glutao.css";
+import "./index.css";
+import "./components/Header.css";
+import "./components/Body.css";
+import "./components/Profile.css";
+import "./components/Configs.css";
+import "./pets/Glutao.css";
 
 const CHAVE_TEMA = "marketfaesa-theme";
 const CHAVE_CONFIG = "marketfaesa-config";
