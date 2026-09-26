@@ -12,11 +12,9 @@ import "./components/Header.css";
 import "./components/Body.css";
 import "./components/Profile.css";
 import "./components/Configs.css";
-import "./pets/Glutao.css";
 
 const CHAVE_TEMA = "marketfaesa-theme";
 const CHAVE_CONFIG = "marketfaesa-config";
-const CHAVE_LOGIN_CONFIG = "marketfaesa-login-config";
 const CHAVE_AUTENTICACAO = "marketfaesa-auth";
 
 function obterTemaInicial() {
@@ -37,13 +35,6 @@ const CONFIG_PADRAO = {
   reduzirAnimacoes: false,
 };
 
-const LOGIN_CONFIG_PADRAO = {
-  pet: "glutao",
-  estilo: "padrao",
-  particulas: true,
-  animacoes: true,
-};
-
 function obterConfiguracoesIniciais() {
   try {
     const salvo = localStorage.getItem(CHAVE_CONFIG);
@@ -59,23 +50,6 @@ function obterConfiguracoesIniciais() {
   }
 
   return CONFIG_PADRAO;
-}
-
-function obterConfiguracoesLoginIniciais() {
-  try {
-    const salvo = localStorage.getItem(CHAVE_LOGIN_CONFIG);
-
-    if (salvo) {
-      return {
-        ...LOGIN_CONFIG_PADRAO,
-        ...JSON.parse(salvo),
-      };
-    }
-  } catch {
-    // Usa as configurações padrão.
-  }
-
-  return LOGIN_CONFIG_PADRAO;
 }
 
 function obterUsuarioInicial() {
@@ -101,10 +75,6 @@ function App() {
 
   const [configuracoes, setConfiguracoes] = useState(
     obterConfiguracoesIniciais,
-  );
-
-  const [configuracoesLogin, setConfiguracoesLogin] = useState(
-    obterConfiguracoesLoginIniciais,
   );
 
   function fazerLogin(dadosLogin) {
@@ -164,13 +134,6 @@ function App() {
     localStorage.setItem(CHAVE_CONFIG, JSON.stringify(configuracoes));
   }, [configuracoes]);
 
-  useEffect(() => {
-    localStorage.setItem(
-      CHAVE_LOGIN_CONFIG,
-      JSON.stringify(configuracoesLogin),
-    );
-  }, [configuracoesLogin]);
-
   function alterarTema(novoTema) {
     setTema(novoTema === "dark" ? "dark" : "light");
   }
@@ -179,13 +142,6 @@ function App() {
     setConfiguracoes((estado) => ({
       ...estado,
       [campo]: !estado[campo],
-    }));
-  }
-
-  function alterarConfiguracaoLogin(campo, valor) {
-    setConfiguracoesLogin((estado) => ({
-      ...estado,
-      [campo]: valor,
     }));
   }
 
@@ -219,8 +175,6 @@ function App() {
             onChangeTema={alterarTema}
             configuracoes={configuracoes}
             onAlterarConfiguracao={alterarConfiguracao}
-            configuracoesLogin={configuracoesLogin}
-            onAlterarConfiguracaoLogin={alterarConfiguracaoLogin}
           />
         );
 
@@ -233,7 +187,7 @@ function App() {
   if (!usuario) {
     return (
       <div className="app">
-        <Login onLogin={fazerLogin} configuracoesLogin={configuracoesLogin} />
+        <Login onLogin={fazerLogin} />
       </div>
     );
   }

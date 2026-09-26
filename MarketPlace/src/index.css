@@ -4,38 +4,21 @@
   box-sizing: border-box;
 }
 
-/* 
-   Animate.css — Ajuste Gloval
-   A biblioteca usa 1s de duração por padrão, o que fica
-   lento/pesado pra transições de UI (cards, hero, dropdowns).
-   0.5s com uma curva de saída suave (ease-out) deixa a entrada
-   das seções perceptível sem parecer arrastada.
-   */
-
-:root {
-  --animate-duration: 0.5s;
-  --animate-delay: 0.5s;
-}
-
-.animate__animated {
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* Respeita quem prefere menos movimento no sistema. */
+/* Respeita "reduzir movimento" do sistema e o toggle "Reduzir animações"
+   das Configurações (data-reduzir-animacoes no <html>, via App.jsx). */
 @media (prefers-reduced-motion: reduce) {
-  .animate__animated {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }
 
-/* Mesma lógica, agora também acionada manualmente pelo toggle
-   "Reduzir animações" das Configurações (data-reduzir-animacoes
-   no <html>, aplicado em App.jsx pra valer em qualquer página). */
-[data-reduzir-animacoes="true"] .animate__animated {
+[data-reduzir-animacoes="true"] *,
+[data-reduzir-animacoes="true"] *::before,
+[data-reduzir-animacoes="true"] *::after {
   animation-duration: 0.01ms !important;
-  animation-iteration-count: 1 !important;
   transition-duration: 0.01ms !important;
 }
 

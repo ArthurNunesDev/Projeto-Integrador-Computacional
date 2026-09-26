@@ -47,7 +47,7 @@ function Body() {
       <div className="dashboard-container">
         <section className="dashboard-main">
           {/* HERO */}
-          <section className="welcome-card animate__animated animate__fadeInDown">
+          <section className="welcome-card">
             <div className="welcome-content">
               <span className="welcome-small">MARKETFAESA</span>
 
@@ -73,7 +73,7 @@ function Body() {
 
           {/* ESTATÍSTICAS */}
           <section className="stats-grid">
-            <div className="stat-card animate__animated animate__zoomIn">
+            <div className="stat-card">
               <strong>1.847</strong>
 
               <span>Estudantes ativos</span>
@@ -81,10 +81,7 @@ function Body() {
               <small>↑ +23 esta semana</small>
             </div>
 
-            <div
-              className="stat-card animate__animated animate__zoomIn"
-              style={{ animationDelay: "80ms" }}
-            >
+            <div className="stat-card">
               <strong>342</strong>
 
               <span>Oportunidades abertas</span>
@@ -92,10 +89,7 @@ function Body() {
               <small>↑ +18 novos hoje</small>
             </div>
 
-            <div
-              className="stat-card animate__animated animate__zoomIn"
-              style={{ animationDelay: "160ms" }}
-            >
+            <div className="stat-card">
               <strong>96</strong>
 
               <span>Habilidades disponíveis</span>
@@ -157,12 +151,9 @@ function Body() {
             </div>
 
             <div className="opportunities-grid">
-              {oportunidades.map((item, index) => (
+              {oportunidades.map((item) => (
                 <article
-                  className="opportunity-card animate__animated animate__fadeInUp"
-                  style={{
-                    animationDelay: `${index * 80}ms`,
-                  }}
+                  className="opportunity-card"
                   key={item.titulo}
                 >
                   <div className="opportunity-top">
@@ -200,7 +191,7 @@ function Body() {
 
         <aside className="dashboard-sidebar">
           {/* PERFIL */}
-          <section className="profile-card animate__animated animate__fadeInRight">
+          <section className="profile-card">
             <div className="profile-avatar">JS</div>
 
             <h3>João Silva</h3>

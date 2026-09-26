@@ -35,7 +35,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail }) {
   return (
     <main className="perfil-page">
       <div className="perfil-container">
-        <section className="perfil-page-header animate__animated animate__fadeInDown">
+        <section className="perfil-page-header">
           <div>
             <span className="perfil-eyebrow">MINHA CONTA</span>
 
@@ -56,13 +56,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail }) {
           </button>
         </section>
 
-        <section
-          className="
-            perfil-main-card
-            animate__animated
-            animate__fadeInUp
-          "
-        >
+        <section className="perfil-main-card">
           <div className="perfil-main-top">
             <div className="perfil-avatar-large">JS</div>
 
@@ -157,13 +151,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail }) {
           <div className="perfil-column-main">
             {/* SOBRE */}
 
-            <section
-              className="
-                perfil-section-card
-                animate__animated
-                animate__fadeInUp
-              "
-            >
+            <section className="perfil-section-card">
               <div className="perfil-section-heading">
                 <div>
                   <span>PERFIL</span>
@@ -186,14 +174,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail }) {
 
             {/* HABILIDADES */}
 
-            <section
-              className="
-                perfil-section-card
-                animate__animated
-                animate__fadeInUp
-              "
-              style={{ animationDelay: "80ms" }}
-            >
+            <section className="perfil-section-card">
               <div className="perfil-section-heading">
                 <div>
                   <span>COMPETÊNCIAS</span>
@@ -217,14 +198,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail }) {
 
             {/* INTERESSES */}
 
-            <section
-              className="
-                perfil-section-card
-                animate__animated
-                animate__fadeInUp
-              "
-              style={{ animationDelay: "160ms" }}
-            >
+            <section className="perfil-section-card">
               <div className="perfil-section-heading">
                 <div>
                   <span>INTERESSES</span>
@@ -248,13 +222,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail }) {
           <aside className="perfil-column-side">
             {/* INFORMAÇÕES */}
 
-            <section
-              className="
-                perfil-side-card
-                animate__animated
-                animate__fadeInRight
-              "
-            >
+            <section className="perfil-side-card">
               <div className="perfil-side-title">
                 <h3>Informações</h3>
               </div>
@@ -301,14 +269,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail }) {
 
             {/* PERFIL COMPLETO */}
 
-            <section
-              className="
-                perfil-completion-card
-                animate__animated
-                animate__fadeInRight
-              "
-              style={{ animationDelay: "100ms" }}
-            >
+            <section className="perfil-completion-card">
               <div className="perfil-completion-icon">✨</div>
 
               <div>
@@ -324,15 +285,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail }) {
 
             {/* AÇÕES */}
 
-            <section
-              className="
-                perfil-side-card
-                perfil-quick-actions
-                animate__animated
-                animate__fadeInRight
-              "
-              style={{ animationDelay: "180ms" }}
-            >
+            <section className="perfil-side-card perfil-quick-actions">
               <h3>Acesso rápido</h3>
 
               <button type="button">

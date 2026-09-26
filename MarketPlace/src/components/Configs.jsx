@@ -37,12 +37,6 @@ const CONFIG_SECTIONS = [
     description: "Personalize sua experiência",
     icon: "⚙",
   },
-  {
-    id: "telas-login",
-    label: "Telas de Login",
-    description: "Personalize a tela de acesso",
-    icon: "✦",
-  },
 ];
 
 function Configs({
@@ -51,8 +45,6 @@ function Configs({
   onChangeTema,
   configuracoes,
   onAlterarConfiguracao,
-  configuracoesLogin,
-  onAlterarConfiguracaoLogin,
 }) {
   const [secaoAtiva, setSecaoAtiva] = useState("conta");
 
@@ -95,7 +87,7 @@ function Configs({
     switch (secaoAtiva) {
       case "conta":
         return (
-          <section className="configs-content-card animate__animated animate__fadeIn">
+          <section className="configs-content-card">
             <ConfigHeader
               eyebrow="CONTA"
               title="Informações da conta"
@@ -132,7 +124,7 @@ function Configs({
 
       case "seguranca":
         return (
-          <section className="configs-content-card animate__animated animate__fadeIn">
+          <section className="configs-content-card">
             <ConfigHeader
               eyebrow="SEGURANÇA"
               title="Segurança e acesso"
@@ -166,7 +158,7 @@ function Configs({
 
       case "privacidade":
         return (
-          <section className="configs-content-card animate__animated animate__fadeIn">
+          <section className="configs-content-card">
             <ConfigHeader
               eyebrow="PRIVACIDADE"
               title="Privacidade"
@@ -200,7 +192,7 @@ function Configs({
 
       case "notificacoes":
         return (
-          <section className="configs-content-card animate__animated animate__fadeIn">
+          <section className="configs-content-card">
             <ConfigHeader
               eyebrow="NOTIFICAÇÕES"
               title="Notificações"
@@ -248,7 +240,7 @@ function Configs({
 
       case "aparencia":
         return (
-          <section className="configs-content-card animate__animated animate__fadeIn">
+          <section className="configs-content-card">
             <ConfigHeader
               eyebrow="APARÊNCIA"
               title="Aparência"
@@ -298,114 +290,9 @@ function Configs({
           </section>
         );
 
-      case "telas-login":
-        return (
-          <section className="configs-content-card animate__animated animate__fadeIn">
-            <ConfigHeader
-              eyebrow="TELAS DE LOGIN"
-              title="Personalização da tela de login"
-              description="Escolha como a tela de acesso do MarketFaesa será apresentada."
-            />
-
-            <div className="login-config-section">
-              <div className="login-config-group">
-                <div className="login-config-group-header">
-                  <span className="login-config-icon">🐾</span>
-                  <div>
-                    <strong>Pet</strong>
-                    <p>Escolha o personagem exibido na tela de login.</p>
-                  </div>
-                </div>
-
-                <div className="login-config-options">
-                  <button
-                    type="button"
-                    className={`login-config-option ${configuracoesLogin?.pet === "glutao" ? "ativo" : ""}`}
-                    onClick={() => onAlterarConfiguracaoLogin("pet", "glutao")}
-                  >
-                    <span className="login-config-preview">🐾</span>
-                    <strong>Glutão</strong>
-                    <small>Pet atual</small>
-                  </button>
-
-                  <button
-                    type="button"
-                    className={`login-config-option ${configuracoesLogin?.pet === "nenhum" ? "ativo" : ""}`}
-                    onClick={() => onAlterarConfiguracaoLogin("pet", "nenhum")}
-                  >
-                    <span className="login-config-preview">○</span>
-                    <strong>Nenhum</strong>
-                    <small>Sem pet</small>
-                  </button>
-                </div>
-              </div>
-
-              <div className="login-config-divider" />
-
-              <div className="login-config-group">
-                <div className="login-config-group-header">
-                  <span className="login-config-icon">◈</span>
-                  <div>
-                    <strong>Estilo da tela</strong>
-                    <p>Defina o estilo visual do login.</p>
-                  </div>
-                </div>
-
-                <div className="login-config-options">
-                  <button
-                    type="button"
-                    className={`login-config-option ${configuracoesLogin?.estilo === "padrao" ? "ativo" : ""}`}
-                    onClick={() => onAlterarConfiguracaoLogin("estilo", "padrao")}
-                  >
-                    <span className="login-style-preview login-style-padrao">Aa</span>
-                    <strong>Padrão</strong>
-                    <small>Visual atual</small>
-                  </button>
-
-                  <button
-                    type="button"
-                    className={`login-config-option ${configuracoesLogin?.estilo === "neon" ? "ativo" : ""}`}
-                    onClick={() => onAlterarConfiguracaoLogin("estilo", "neon")}
-                  >
-                    <span className="login-style-preview login-style-neon">✦</span>
-                    <strong>Neon</strong>
-                    <small>Visual luminoso</small>
-                  </button>
-                </div>
-              </div>
-
-              <div className="login-config-divider" />
-
-              <ConfigToggle
-                title="Partículas"
-                description="Exibe as partículas interativas da tela de login."
-                checked={configuracoesLogin?.particulas ?? true}
-                onChange={() =>
-                  onAlterarConfiguracaoLogin(
-                    "particulas",
-                    !(configuracoesLogin?.particulas ?? true),
-                  )
-                }
-              />
-
-              <ConfigToggle
-                title="Animações"
-                description="Ativa as animações e transições da tela de login."
-                checked={configuracoesLogin?.animacoes ?? true}
-                onChange={() =>
-                  onAlterarConfiguracaoLogin(
-                    "animacoes",
-                    !(configuracoesLogin?.animacoes ?? true),
-                  )
-                }
-              />
-            </div>
-          </section>
-        );
-
       case "preferencias":
         return (
-          <section className="configs-content-card animate__animated animate__fadeIn">
+          <section className="configs-content-card">
             <ConfigHeader
               eyebrow="PREFERÊNCIAS"
               title="Preferências"
@@ -468,7 +355,7 @@ function Configs({
   return (
     <main className="configs-page">
       <div className="configs-container">
-        <header className="configs-page-header animate__animated animate__fadeInDown">
+        <header className="configs-page-header">
           <div>
             <span>PREFERÊNCIAS DA CONTA</span>
 
@@ -492,13 +379,7 @@ function Configs({
         <div className="configs-layout">
           {/* MENU */}
 
-          <aside
-            className="
-              configs-sidebar
-              animate__animated
-              animate__fadeInLeft
-            "
-          >
+          <aside className="configs-sidebar">
             <span className="configs-sidebar-title">CONFIGURAÇÕES</span>
 
             <nav>
