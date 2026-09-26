@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-function Header({ paginaAtual, onNavigate }) {
+function Header({ paginaAtual, onNavigate, onLogout }) {
   const [menuAberto, setMenuAberto] = useState(false);
   const [perfilMenuAberto, setPerfilMenuAberto] = useState(false);
 
@@ -143,13 +143,7 @@ function Header({ paginaAtual, onNavigate }) {
             </button>
 
             {perfilMenuAberto && (
-              <div
-                className="
-                  profile-dropdown
-                  animate__animated
-                  animate__fadeIn
-                "
-              >
+              <div className="profile-dropdown">
                 <div className="profile-dropdown__user">
                   <div className="profile-dropdown__avatar">JS</div>
 
@@ -222,6 +216,35 @@ function Header({ paginaAtual, onNavigate }) {
                   </span>
 
                   <span>Configurações</span>
+
+                  <span className="profile-dropdown__arrow">→</span>
+                </button>
+
+                <div className="profile-dropdown__divider"></div>
+
+                <button
+                  className="profile-dropdown__item"
+                  type="button"
+                  onClick={() => {
+                    setPerfilMenuAberto(false);
+                    setMenuAberto(false);
+                    onLogout();
+                  }}
+                >
+                  <span className="profile-dropdown__icon">
+                    <svg viewBox="0 0 24 24">
+                      <path
+                        d="M10 5H6a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h4M14 8l4 4-4 4M18 12H9"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+
+                  <span>Sair</span>
 
                   <span className="profile-dropdown__arrow">→</span>
                 </button>
