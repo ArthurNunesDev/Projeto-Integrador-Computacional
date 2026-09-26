@@ -1,8 +1,6 @@
 # MarketFaesa
 
-<a href="https://arthurnunesdev.github.io/Desenvolvimento-2026/" target="_blank" rel="noopener noreferrer">
-    MarketFaesa
-</a> web desenvolvido no Projeto Integrador Computacional da FAESA. O frontend é uma SPA em React publicada no GitHub Pages; o backend em Java está começando agora e ainda não se comunica com o front.
+MarketFaesa web desenvolvido no Projeto Integrador Computacional da FAESA. O frontend é uma SPA em React publicada no GitHub Pages; o backend em Java está começando agora e ainda não se comunica com o front.
 
 ## Funcionalidades
 
