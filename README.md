@@ -4,17 +4,16 @@ Marketplace web desenvolvido no Projeto Integrador Computacional da FAESA. O fro
 
 ## Funcionalidades
 
-- **Login e cadastro**: telas com fundo de partículas interativas. Por enquanto a autenticação é simulada no navegador (usuário `admin` / senha `admin`); o formulário de cadastro valida os campos, mas ainda não salva nada.
+- **Login e cadastro**: telas simples, com troca direta entre login e cadastro. Por enquanto a autenticação é simulada no navegador (usuário `admin` / senha `admin`); o formulário de cadastro valida os campos, mas ainda não salva nada. O botão "Sair", no menu do avatar do cabeçalho, encerra a sessão.
 - **Perfil**: página com os dados do usuário logado.
 - **Configurações**: tema claro/escuro, privacidade (perfil público, mostrar e-mail, permitir mensagens), notificações e a opção de reduzir animações.
-- **Pets animados**: o pet "Glutão", com animações de movimento, batalhas (ataques, combos, cooldowns, armas) e stickers na tela de login. Pet, estilo, partículas e animações da tela de login podem ser configurados.
-- **Persistência local**: sessão e preferências ficam no `localStorage` (`marketfaesa-auth`, `marketfaesa-theme`, `marketfaesa-config`, `marketfaesa-login-config`). Ainda não há chamadas HTTP.
+- **Persistência local**: sessão e preferências ficam no `localStorage` (`marketfaesa-auth`, `marketfaesa-theme`, `marketfaesa-config`). Ainda não há chamadas HTTP.
 
 ## Tecnologias
 
 | Camada | Stack |
 |---|---|
-| Frontend | React 19, Vite 8, Tailwind CSS 4, animate.css, ESLint (JavaScript/JSX) |
+| Frontend | React 19, Vite 8, Tailwind CSS 4, ESLint (JavaScript/JSX) |
 | Backend | Java puro (JDK 17+), sem framework e sem ferramenta de build por enquanto |
 | Deploy | GitHub Actions + GitHub Pages |
 
@@ -30,17 +29,7 @@ MarketFaesaWeb/
 │   │   ├── App.jsx                  # estado global: tema, autenticação (localStorage) e navegação
 │   │   ├── index.css                # estilos globais
 │   │   ├── components/              # "casca" da aplicação: Header, Body, Profile, Configs (.jsx + .css)
-│   │   ├── auth/                    # tela de login/cadastro
-│   │   │   ├── Login.jsx, Login.css, Particulas.css, TelasLogin.css
-│   │   │   ├── components/          # LoginView.jsx          ┐ divisão do Login.jsx em andamento
-│   │   │   ├── hooks/               # useLoginForm, useDotField, useInteractiveParticles, useSvgParticles
-│   │   │   └── utils/               # createDotField.js      ┘ (ainda não usados pelo app)
-│   │   └── pets/                    # pets e sistema de batalha
-│   │       ├── Glutao.jsx/.css, Stickers.jsx/.css
-│   │       ├── stickers/            # Sticker1, Sticker2 (.jsx + .css)
-│   │       ├── battle/              # basic, combos, cooldowns, repertory
-│   │       └── animation/           # animation, attack, damage, defend, fall, jump, mobility,
-│   │                                # run, special, walk, weapons
+│   │   └── auth/                    # tela de login/cadastro: Login.jsx, Login.css
 │   ├── index.html
 │   ├── vite.config.js
 │   ├── eslint.config.js
@@ -58,9 +47,9 @@ MarketFaesaWeb/
 
 ### Convenções do frontend
 
-- **Organização por funcionalidade**: `components/` guarda a casca da aplicação (cabeçalho, corpo, perfil, configurações), `auth/` tudo do login/cadastro e `pets/` os pets, stickers, batalhas e animações.
+- **Organização por funcionalidade**: `components/` guarda a casca da aplicação (cabeçalho, corpo, perfil, configurações), e `auth/` tudo do login/cadastro.
 - **CSS ao lado do componente**: cada `Componente.jsx` tem seu `Componente.css` na mesma pasta.
-- **Nomes**: pastas em minúsculas; arquivos de componente em PascalCase (`Header.jsx`, `Glutao.jsx`); hooks em camelCase começando com `use`.
+- **Nomes**: pastas em minúsculas; arquivos de componente em PascalCase (`Header.jsx`, `Login.jsx`); hooks em camelCase começando com `use`.
 - **CSS global**: os estilos compartilhados são importados em `App.jsx` numa ordem fixa. A ordem importa para a cascata; ao adicionar um import, não reordene os existentes.
 - **Assets**: arquivos de `public/` não são importados; são referenciados por caminho relativo (ex.: `./Imagens/Sino.svg`), para funcionar com o `base` do Vite.
 - **Onde colocar código novo**:
@@ -70,7 +59,7 @@ MarketFaesaWeb/
 
 ### Fluxo de dados hoje
 
-`App.jsx` concentra o estado (sessão, tema, configurações, configuração da tela de login) e o repassa por props. Cada alteração é gravada no `localStorage` e lida de volta ao carregar a página; não existe servidor envolvido.
+`App.jsx` concentra o estado (sessão, tema, configurações) e o repassa por props. Cada alteração é gravada no `localStorage` e lida de volta ao carregar a página; não existe servidor envolvido.
 
 ### Camadas do backend
 
