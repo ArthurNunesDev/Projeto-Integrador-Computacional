@@ -9,7 +9,7 @@ Roadmap para evoluir o backend e ligá-lo ao frontend. Hoje o front funciona soz
 1. **Ferramenta de build**: adotar Maven (ou Gradle) para gerenciar dependências e substituir o `javac` manual. Usar o Maven Wrapper (`mvnw`) para ninguém precisar instalar o Maven.
 2. **Framework**: migrar para Spring Boot (Spring Web + Validation + Data JPA). Ele já resolve servidor HTTP, JSON, injeção de dependência e CORS.
 3. **Camadas** (as pastas já existem em `backend/src/br/com/marketfaesa/`):
-   - `model`: entidades (`Usuario`, `ConfiguracaoUsuario`, depois `Pet`, `Batalha`).
+   - `model`: entidades (`Usuario`, `ConfiguracaoUsuario`).
    - `repository`: acesso ao banco (interfaces `JpaRepository`).
    - `service`: regras de negócio (cadastro, login, validações).
    - `controller`: endpoints REST, sem regra de negócio.
@@ -31,10 +31,6 @@ Base: `http://localhost:8080/api` em desenvolvimento.
 | GET | `/api/users/{id}` | perfil (`Profile.jsx`) | `200` usuário (sem senha); `404` |
 | GET | `/api/users/{id}/config` | carregar tema e configurações ao logar | `200` configurações |
 | PUT | `/api/users/{id}/config` | salvar alterações em `Configs.jsx` | `200` configurações salvas |
-| GET | `/api/pets` | *(futuro)* lista de pets disponíveis | `200` lista |
-| GET/PUT | `/api/users/{id}/pet` | *(futuro)* pet do usuário e progresso | `200` pet |
-| POST | `/api/battles` | *(futuro)* registrar resultado de batalha | `201` batalha |
-| GET | `/api/users/{id}/battles` | *(futuro)* histórico de batalhas | `200` lista |
 
 Erros seguem um formato único:
 
@@ -69,7 +65,7 @@ Erros seguem um formato único:
 }
 ```
 
-`GET /api/users/1/config` e `PUT /api/users/1/config` (mesmo corpo). Os campos espelham `CONFIG_PADRAO` e `LOGIN_CONFIG_PADRAO` de `App.jsx`:
+`GET /api/users/1/config` e `PUT /api/users/1/config` (mesmo corpo). Os campos espelham `CONFIG_PADRAO` de `App.jsx`:
 
 ```json
 {
@@ -82,11 +78,7 @@ Erros seguem um formato único:
   "conexoes": true,
   "publicacoes": true,
   "resumoSemanal": false,
-  "reduzirAnimacoes": false,
-  "pet": "glutao",
-  "estilo": "padrao",
-  "particulas": true,
-  "animacoes": true
+  "reduzirAnimacoes": false
 }
 ```
 
@@ -101,12 +93,11 @@ Toda a leitura e escrita dessas chaves está em `MarketPlace/src/App.jsx`.
 | Chave atual | Substituir por | Onde mudar |
 |---|---|---|
 | `marketfaesa-auth` | `POST /api/auth/login`; guardar só o token + dados básicos do usuário | `App.jsx` (`fazerLogin`, `fazerLogout`, `obterUsuarioInicial`) |
-| *(cadastro não persiste)* | `POST /api/auth/register` | `App.jsx` (passar `onRegister` para `<Login>`) e `auth/Login.jsx` (fluxo ativo, que já aceita `onRegister`); `auth/hooks/useLoginForm.js` só se a divisão do Login for concluída |
+| *(cadastro não persiste)* | `POST /api/auth/register` | `App.jsx` (passar `onRegister` para `<Login>`) e `auth/Login.jsx` (que já aceita `onRegister`) |
 | `marketfaesa-theme` | campo `tema` de `GET/PUT /api/users/{id}/config` | `App.jsx` (`obterTemaInicial`, `useEffect` do tema) |
 | `marketfaesa-config` | `GET/PUT /api/users/{id}/config` | `App.jsx` (`obterConfiguracoesIniciais`, `useEffect` de configurações), `components/Configs.jsx` |
-| `marketfaesa-login-config` | campos `pet`, `estilo`, `particulas`, `animacoes` da mesma config | `App.jsx` (`obterConfiguracoesLoginIniciais`) |
 
-Sugestão: manter o `localStorage` como cache para a tela de login (antes de logar ainda não existe usuário para buscar a config) e para o tema não "piscar" ao carregar.
+Sugestão: manter o `localStorage` como cache do tema, para ele não "piscar" ao carregar (antes de logar ainda não existe usuário para buscar a config).
 
 ### Cliente de API
 
@@ -165,24 +156,19 @@ O GitHub Pages serve apenas arquivos estáticos: o frontend continua lá, mas o 
 - [ ] Testes de integração do cadastro e login
 
 ### Fase 3 — Integração do front
-- [ ] Concluir a divisão do Login.jsx (`auth/components`, `auth/hooks`, `auth/utils`) ou removê-la
+- [x] Remover a divisão incompleta do Login.jsx (`auth/components`, `auth/hooks`, `auth/utils`)
 - [ ] Criar `src/api/client.js` e `.env.development` com `VITE_API_URL`
 - [ ] Trocar o login simulado (`admin`/`admin`) pela API
 - [ ] Ligar o cadastro (`onRegister`) à API
 - [ ] Estados de carregamento e erro no login e cadastro
-- [ ] Logout limpando o token; `401` redireciona para o login
+- [ ] Logout (botão "Sair" já existe no cabeçalho) limpando o token; `401` redireciona para o login
 
 ### Fase 4 — Configurações
 - [ ] `GET/PUT /api/users/{id}/config`
 - [ ] Carregar configurações após o login e salvar ao alterar em `Configs.jsx`
-- [ ] Manter `localStorage` só como cache de tema/tela de login
+- [ ] Manter `localStorage` só como cache do tema
 
-### Fase 5 — Pets e batalhas
-- [ ] Modelar `Pet` e `Batalha`
-- [ ] Endpoints de pets e histórico de batalhas
-- [ ] Salvar progresso do pet no servidor
-
-### Fase 6 — Produção
+### Fase 5 — Produção
 - [ ] Migrar para PostgreSQL
 - [ ] Hospedar o backend e configurar variáveis de ambiente
 - [ ] Definir `VITE_API_URL` de produção no workflow de deploy
