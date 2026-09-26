@@ -1,0 +1,263 @@
+.stickers-physics-runtime {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.stickers-runtime-stage {
+  position: absolute;
+  inset: 0;
+}
+
+.sticker-fighter-instance {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 54px;
+  height: 82px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: 50% 84%;
+  will-change: transform;
+  z-index: 5;
+}
+
+.runtime-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Transições Suaves para Membros */
+.arm-front,
+.arm-back,
+.leg-front,
+.leg-back,
+.stick-head,
+.runtime-body {
+  transform-box: view-box;
+  transition: transform 0.06s ease-out;
+}
+
+.stick-head {
+  transform-origin: 50px 31px;
+  fill: #0c0f1d;
+  stroke-width: 3.8;
+}
+
+.stick-line {
+  fill: none;
+  stroke-width: 4.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.arm-front {
+  transform-origin: 50px 52px;
+}
+.arm-back {
+  transform-origin: 50px 50px;
+}
+.leg-front,
+.leg-back {
+  transform-origin: 50px 82px;
+}
+
+.stickman-shadow {
+  fill: rgba(0, 0, 0, 0.4);
+  filter: blur(2px);
+}
+
+.stick-hand {
+  fill: currentColor;
+}
+
+.hand-energy {
+  opacity: 0;
+  transition: opacity 90ms ease;
+}
+
+.hand-energy circle {
+  fill: currentColor;
+}
+
+.runtime-effects {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 8;
+}
+
+.runtime-effect {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.runtime-effect-label {
+  color: #fff;
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: rgba(10, 10, 18, 0.85);
+  font: 800 9px sans-serif;
+  white-space: nowrap;
+  animation: label-pop 0.8s ease-out forwards;
+}
+
+@keyframes label-pop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 0) scale(0.7);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -10px) scale(1.05);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -25px) scale(0.9);
+  }
+}
+
+.runtime-effect-projectile {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    #fff 0%,
+    var(--effect-color, #fff) 55%,
+    transparent 78%
+  );
+  box-shadow:
+    0 0 10px 3px var(--effect-color, #fff),
+    0 0 22px 8px color-mix(in srgb, var(--effect-color, #fff) 45%, transparent);
+  animation: runtime-projectile-spin 0.4s linear infinite;
+}
+
+@keyframes runtime-projectile-spin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg) scale(0.85);
+  }
+  50% {
+    transform: translate(-50%, -50%) rotate(180deg) scale(1.05);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg) scale(0.85);
+  }
+}
+
+/* Feixe — Kamehameha, Excalibur, Spirit Gun, Dragon Roar, Rapid
+   Fire, Thunder Spear. Precisa de mais especificidade que
+   ".runtime-effect" sozinho pra vencer o transform base dela e
+   ficar de fato apontado com --angle (calculado em Stickers.jsx a
+   partir da direção real até o alvo). */
+.runtime-effect.runtime-effect-beam {
+  width: 52px;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--effect-color, #fff) 20%,
+    #fff 50%,
+    var(--effect-color, #fff) 80%,
+    transparent
+  );
+  box-shadow: 0 0 16px 4px var(--effect-color, #fff);
+  transform: translate(-50%, -50%) rotate(var(--angle, 0deg));
+  animation: runtime-beam-flicker 0.12s linear infinite alternate;
+}
+
+@keyframes runtime-beam-flicker {
+  from {
+    filter: brightness(1);
+  }
+  to {
+    filter: brightness(1.35);
+  }
+}
+
+/* Explosão de impacto — toda vez que um golpe (corpo-a-corpo ou
+   à distância) realmente acerta. */
+.runtime-effect-impact {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 3px solid var(--effect-color, #fff);
+  box-shadow: 0 0 20px var(--effect-color, #fff);
+  animation: runtime-impact-burst 0.3s ease-out forwards;
+}
+
+@keyframes runtime-impact-burst {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.3);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.8);
+  }
+}
+
+/* 
+   ARMAS — só aparecem quando o lutador está com data-armado.
+   Cor prateada/neutra pra ler como metal, diferente do azul/
+   vermelho do corpo. Presas ao braço da frente via o mesmo
+   --pose-arm-front (ver Sticker1.jsx/Sticker2.jsx), então
+   giram junto com o golpe.
+   */
+
+.arma-visual {
+  opacity: 0;
+  transition: opacity 100ms ease;
+  pointer-events: none;
+}
+
+.sticker-fighter-instance[data-armado="true"] .arma-visual {
+  opacity: 1;
+}
+
+.arma-lamina,
+.arma-guarda,
+.arma-haste {
+  fill: none;
+  stroke: #dfe7f5;
+  stroke-width: 3.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 5px rgba(223, 231, 245, 0.85));
+}
+
+.arma-pomo {
+  fill: #9aa7c2;
+}
+
+/* Rastro deixado pelo Passo Relâmpago — some rápido, só reforça
+   a sensação de "estava aqui, agora está ali". */
+.runtime-effect-rastro {
+  width: 38px;
+  height: 64px;
+  margin: -32px -19px;
+  border: 2px solid var(--effect-color, #fff);
+  border-radius: 45%;
+  opacity: 0.55;
+  animation: runtime-rastro-fade 0.26s ease-out forwards;
+}
+
+@keyframes runtime-rastro-fade {
+  from {
+    opacity: 0.55;
+    transform: translate(-50%, -50%) scaleY(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scaleY(1.35);
+  }
+}
