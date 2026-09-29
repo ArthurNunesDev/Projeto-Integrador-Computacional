@@ -1,2 +1,6 @@
-out/
-*.class
+target/
+
+### IDEs ###
+.idea/
+*.iml
+.vscode/

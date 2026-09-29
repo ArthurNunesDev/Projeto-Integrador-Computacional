@@ -1,7 +1,8 @@
 <!--
-Instruções para quem escreve este PR (inclusive com IA):
+Instruções para quem escreve este PR (inclusive com IA). Padrão completo em CONTRIBUTING.md.
 - Escreva em português, sem emojis. Título no imperativo, 3ª pessoa (ex.: "Simplifica tela de login").
 - Preencha todas as seções. Se uma não se aplica, escreva "Não se aplica" em vez de apagar.
+- Uma branch por assunto, nomeada como o título (ex.: simplifica-login). Base: main do repositório principal.
 - Liste os arquivos alterados/removidos e o efeito de cada mudança no comportamento do site.
 - Diga o que foi testado e o que NÃO foi testado. Não afirme testes que não rodaram.
 - Apague este comentário antes de enviar.
@@ -26,11 +27,13 @@ Para arquivos removidos, use uma tabela | Arquivo | Motivo |. -->
 
 ## Como foi verificado
 
-<!-- Resultado de `npm run build`, `npm run lint`, testes manuais. Diga o que não foi testado. -->
+<!-- Marque o que rodou e escreva "não se aplica" no que não se aplica. Diga o que não foi testado. -->
 
 - [ ] `npm run build` sem erros
 - [ ] `npm run lint` sem erros novos
 - [ ] Testado manualmente no navegador (`npm run dev`)
+- [ ] `./mvnw test` passando (em `backend/`)
+- [ ] Documentação atualizada (`README.md`, `PROXIMOS_PASSOS.md`), se a mudança afeta o que ela descreve
 
 ## Observações (não alteradas neste PR)
 
@@ -41,10 +44,16 @@ Para arquivos removidos, use uma tabela | Arquivo | Motivo |. -->
 ## Como testar
 
 1. Baixe a branch deste PR.
-2. ```bash
+2. Frontend:
+   ```bash
    cd MarketPlace
    npm install
    npm run build
    npm run dev
    ```
-3. <!-- Passos no navegador e o resultado esperado. -->
+3. Backend (se mudou), dentro de `backend/`:
+   ```bash
+   ./mvnw test
+   ./mvnw spring-boot:run
+   ```
+4. <!-- Passos no navegador ou chamadas à API e o resultado esperado. Apague os passos que não se aplicam. -->
