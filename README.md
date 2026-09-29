@@ -14,7 +14,7 @@
 | Camada | Stack |
 |---|---|
 | Frontend | React 19, Vite 8, Tailwind CSS 4, ESLint (JavaScript/JSX) |
-| Backend | Java 25, Spring Boot 4.1 (Spring Web MVC), Maven (via Maven Wrapper) |
+| Backend | Java 21+, Spring Boot 4.1 (Spring Web MVC), Maven (via Maven Wrapper) |
 | Deploy | GitHub Actions + GitHub Pages |
 
 ## Arquitetura
@@ -96,7 +96,7 @@ Outros scripts:
 
 ## Como rodar o backend
 
-Pré-requisito: JDK 25 (`java -version`). Não é preciso instalar o Maven: o Maven Wrapper (`mvnw`) baixa a versão certa na primeira execução.
+Pré-requisito: JDK 21 ou superior (`java -version`). Não é preciso instalar o Maven: o Maven Wrapper (`mvnw`) baixa a versão certa na primeira execução.
 
 Dentro de `backend/`:
 

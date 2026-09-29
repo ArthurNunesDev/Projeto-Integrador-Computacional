@@ -1,6 +1,6 @@
 # Próximos passos
 
-Roadmap para evoluir o backend e ligá-lo ao frontend. Hoje o front funciona sozinho: login simulado (`admin`/`admin` em `App.jsx`), cadastro sem persistência e todas as preferências no `localStorage`. O backend já roda com Spring Boot 4.1 (Java 25, Maven Wrapper), mas ainda não tem endpoints: só o modelo `Usuario` e as pastas das camadas, ainda vazias.
+Roadmap para evoluir o backend e ligá-lo ao frontend. Hoje o front funciona sozinho: login simulado (`admin`/`admin` em `App.jsx`), cadastro sem persistência e todas as preferências no `localStorage`. O backend já roda com Spring Boot 4.1 (Java 21+, Maven Wrapper), mas ainda não tem endpoints: só o modelo `Usuario` e as pastas das camadas, ainda vazias.
 
 ---
 
@@ -187,7 +187,7 @@ O GitHub Pages serve apenas arquivos estáticos: o frontend continua lá, mas o 
 
 ## Referência: rodar o backend
 
-Dentro de `backend/` (JDK 25):
+Dentro de `backend/` (JDK 21+):
 
 ```bash
 ./mvnw spring-boot:run   # http://localhost:8080
