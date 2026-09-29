@@ -21,7 +21,9 @@
 
 ```
 MarketFaesaWeb/
-├── .github/workflows/deploy.yml     # build e deploy do front no GitHub Pages
+├── .github/
+│   ├── workflows/deploy.yml         # build e deploy do front no GitHub Pages
+│   └── pull_request_template.md     # modelo de descrição de PR
 ├── MarketPlace/                     # frontend (React + Vite)
 │   ├── public/Imagens/              # ícones SVG, referenciados por caminho (ex.: ./Imagens/Sino.svg)
 │   ├── src/
@@ -46,6 +48,7 @@ MarketFaesaWeb/
 │       │   └── repository/
 │       ├── main/resources/application.properties  # configurações (porta, banco etc.)
 │       └── test/java/br/com/marketfaesa/          # testes (JUnit + Spring Boot Test)
+├── CONTRIBUTING.md                  # padrão de branches, commits e PRs
 ├── README.md
 └── PROXIMOS_PASSOS.md
 ```
@@ -111,6 +114,10 @@ Ainda não há endpoints: acessar `http://localhost:8080` responde `404` até o 
 A cada push na branch `main`, o workflow `.github/workflows/deploy.yml` instala as dependências, roda `npm run build` em `MarketPlace/` e publica o `dist` no GitHub Pages. O `base` do Vite está configurado como `/Projeto-Integrador-Computacional/`; se o nome do repositório no Pages mudar, esse valor precisa ser atualizado em `MarketPlace/vite.config.js`.
 
 O GitHub Pages só hospeda arquivos estáticos, então o backend vai precisar de hospedagem separada.
+
+## Como contribuir
+
+O padrão de branches, commits e pull requests está em [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Próximos passos
 
