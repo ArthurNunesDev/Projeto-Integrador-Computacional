@@ -1,14 +1,16 @@
 # Próximos passos
 
-Roadmap para evoluir o backend e ligá-lo ao frontend. Hoje o front funciona sozinho: login simulado (`admin`/`admin` em `App.jsx`), cadastro sem persistência e todas as preferências no `localStorage`. O backend é Java puro, com o modelo `Usuario` e as pastas das camadas ainda vazias.
+Roadmap para evoluir o backend e ligá-lo ao frontend. Hoje o front funciona sozinho: login simulado (`admin`/`admin` em `App.jsx`), cadastro sem persistência e todas as preferências no `localStorage`. O backend já roda com Spring Boot 4.1 (Java 25, Maven Wrapper), mas ainda não tem endpoints: só o modelo `Usuario` e as pastas das camadas, ainda vazias.
 
 ---
 
 ## 1. Evoluir o backend
 
-1. **Ferramenta de build**: adotar Maven (ou Gradle) para gerenciar dependências e substituir o `javac` manual. Usar o Maven Wrapper (`mvnw`) para ninguém precisar instalar o Maven.
-2. **Framework**: migrar para Spring Boot (Spring Web + Validation + Data JPA). Ele já resolve servidor HTTP, JSON, injeção de dependência e CORS.
-3. **Camadas** (as pastas já existem em `backend/src/br/com/marketfaesa/`):
+1. **Ferramenta de build** (feito): Maven com Maven Wrapper (`backend/mvnw`), então ninguém precisa instalar o Maven. As dependências ficam em `backend/pom.xml`.
+2. **Framework** (base feita): Spring Boot 4.1 com Spring Web MVC, que já resolve servidor HTTP, JSON, injeção de dependência e CORS. Faltam os starters que entram junto com as funcionalidades que os usam:
+   - `spring-boot-starter-data-jpa` + driver H2, quando o banco for configurado (Fase 1);
+   - `spring-boot-starter-validation`, junto com o cadastro (Fase 2).
+3. **Camadas** (as pastas já existem em `backend/src/main/java/br/com/marketfaesa/`):
    - `model`: entidades (`Usuario`, `ConfiguracaoUsuario`).
    - `repository`: acesso ao banco (interfaces `JpaRepository`).
    - `service`: regras de negócio (cadastro, login, validações).
@@ -143,14 +145,15 @@ O GitHub Pages serve apenas arquivos estáticos: o frontend continua lá, mas o 
 ## 5. Checklist
 
 ### Fase 1 — Base do backend
-- [ ] Criar `pom.xml` com Maven Wrapper e migrar para Spring Boot
-- [ ] Endpoint `GET /api/health`
-- [ ] Configurar H2 em arquivo para desenvolvimento
+- [x] Criar `pom.xml` com Maven Wrapper e migrar para Spring Boot
+- [ ] Endpoint `GET /api/health` (primeiro controller, com teste)
+- [ ] Adicionar Spring Data JPA + H2 e configurar o H2 em arquivo para desenvolvimento
 - [ ] Liberar CORS para `http://localhost:5173`
+- [ ] Rodar `./mvnw test` no GitHub Actions em cada PR (hoje o workflow só faz o build do front, e só na `main`)
 
 ### Fase 2 — Usuários e autenticação
 - [ ] Entidade `Usuario` + repository + service + controller
-- [ ] `POST /api/auth/register` com validação e hash BCrypt
+- [ ] `POST /api/auth/register` com validação (`spring-boot-starter-validation`) e hash BCrypt
 - [ ] `POST /api/auth/login` retornando JWT
 - [ ] `GET /api/users/{id}` protegido por token
 - [ ] Testes de integração do cadastro e login
@@ -182,17 +185,13 @@ O GitHub Pages serve apenas arquivos estáticos: o frontend continua lá, mas o 
 
 ---
 
-## Referência: compilar o backend atual
+## Referência: rodar o backend
 
-Enquanto não houver Maven, dentro de `backend/` (JDK 17+):
-
-```powershell
-chcp 65001   # opcional, no PowerShell: acentos corretos na saída
-javac -encoding UTF-8 -d out (Get-ChildItem -Recurse src -Filter *.java).FullName
-java -cp out br.com.marketfaesa.Main
-```
+Dentro de `backend/` (JDK 25):
 
 ```bash
-javac -encoding UTF-8 -d out $(find src -name "*.java")
-java -cp out br.com.marketfaesa.Main
+./mvnw spring-boot:run   # http://localhost:8080
+./mvnw test
 ```
+
+No PowerShell ou no CMD, use `.\mvnw.cmd`. Mais detalhes no [README](README.md#como-rodar-o-backend).

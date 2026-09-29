@@ -1,6 +1,6 @@
 # MarketFaesa
 
-[MarketFaesa](https://arthurnunesdev.github.io/Projeto-Integrador-Computacional/) web desenvolvido no Projeto Integrador Computacional da FAESA. O frontend é uma SPA em React publicada no GitHub Pages; o backend em Java está começando agora e ainda não se comunica com o front.
+[MarketFaesa](https://arthurnunesdev.github.io/Projeto-Integrador-Computacional/) web desenvolvido no Projeto Integrador Computacional da FAESA. O frontend é uma SPA em React publicada no GitHub Pages; o backend em Java com Spring Boot está começando agora e ainda não se comunica com o front.
 
 ## Funcionalidades
 
@@ -14,7 +14,7 @@
 | Camada | Stack |
 |---|---|
 | Frontend | React 19, Vite 8, Tailwind CSS 4, ESLint (JavaScript/JSX) |
-| Backend | Java puro (JDK 17+), sem framework e sem ferramenta de build por enquanto |
+| Backend | Java 25, Spring Boot 4.1 (Spring Web MVC), Maven (via Maven Wrapper) |
 | Deploy | GitHub Actions + GitHub Pages |
 
 ## Arquitetura
@@ -34,13 +34,18 @@ MarketFaesaWeb/
 │   ├── vite.config.js
 │   ├── eslint.config.js
 │   └── package.json
-├── backend/                         # backend em Java
-│   └── src/br/com/marketfaesa/
-│       ├── Main.java
-│       ├── model/Usuario.java       # record: id, usuario, nome, email
-│       ├── controller/
-│       ├── service/
-│       └── repository/
+├── backend/                         # backend em Java (Spring Boot + Maven)
+│   ├── pom.xml                      # dependências e build
+│   ├── mvnw, mvnw.cmd, .mvn/        # Maven Wrapper (não precisa instalar o Maven)
+│   └── src/
+│       ├── main/java/br/com/marketfaesa/
+│       │   ├── MarketFaesaApplication.java  # ponto de entrada (@SpringBootApplication)
+│       │   ├── model/Usuario.java   # record: id, usuario, nome, email
+│       │   ├── controller/
+│       │   ├── service/
+│       │   └── repository/
+│       ├── main/resources/application.properties  # configurações (porta, banco etc.)
+│       └── test/java/br/com/marketfaesa/          # testes (JUnit + Spring Boot Test)
 ├── README.md
 └── PROXIMOS_PASSOS.md
 ```
@@ -86,26 +91,20 @@ Outros scripts:
 | `npm run preview` | serve o build localmente |
 | `npm run lint` | roda o ESLint |
 
-## Como compilar e rodar o backend
+## Como rodar o backend
 
-Pré-requisito: JDK 17 ou superior (`java -version`).
+Pré-requisito: JDK 25 (`java -version`). Não é preciso instalar o Maven: o Maven Wrapper (`mvnw`) baixa a versão certa na primeira execução.
 
-PowerShell, dentro de `backend/`:
-
-```powershell
-chcp 65001   # opcional: faz os acentos aparecerem corretamente na saída do console
-javac -encoding UTF-8 -d out (Get-ChildItem -Recurse src -Filter *.java).FullName
-java -cp out br.com.marketfaesa.Main
-```
-
-Bash (Linux, macOS ou Git Bash), dentro de `backend/`:
+Dentro de `backend/`:
 
 ```bash
-javac -encoding UTF-8 -d out $(find src -name "*.java")
-java -cp out br.com.marketfaesa.Main
+./mvnw spring-boot:run   # sobe o servidor em http://localhost:8080
+./mvnw test              # roda os testes
 ```
 
-As classes compiladas vão para `backend/out/` (ignorada pelo `backend/.gitignore`).
+No PowerShell ou no CMD, use `.\mvnw.cmd` no lugar de `./mvnw`. O build vai para `backend/target/` (ignorada pelo `backend/.gitignore`).
+
+Ainda não há endpoints: acessar `http://localhost:8080` responde `404` até o primeiro controller ser criado (ver [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md)).
 
 ## Deploy
 
