@@ -7,16 +7,16 @@ Roadmap para evoluir o backend e ligá-lo ao frontend. Hoje o front funciona soz
 ## 1. Evoluir o backend
 
 1. **Ferramenta de build** (feito): Maven com Maven Wrapper (`backend/mvnw`), então ninguém precisa instalar o Maven. As dependências ficam em `backend/pom.xml`.
-2. **Framework** (base feita): Spring Boot 4.1 com Spring Web MVC, que já resolve servidor HTTP, JSON, injeção de dependência e CORS. Faltam os starters que entram junto com as funcionalidades que os usam:
+2. **Framework** (base feita): Spring Boot 4.1 com Spring Web MVC, que já resolve servidor HTTP, JSON, injeção de dependência e CORS, e Spring Security em `config/SecurityConfig.java` (API stateless: toda rota exige autenticação e responde `401` sem token; CORS liberado para `http://localhost:5173` e o GitHub Pages; BCrypt para senhas). Faltam os starters que entram junto com as funcionalidades que os usam:
    - `spring-boot-starter-data-jpa` + driver H2, quando o banco for configurado (Fase 1);
-   - `spring-boot-starter-validation`, junto com o cadastro (Fase 2).
+   - `spring-boot-starter-validation` já está no `pom.xml`; falta usar `@Valid` nos DTOs do cadastro (Fase 2).
 3. **Camadas** (as pastas já existem em `backend/src/main/java/br/com/marketfaesa/`):
    - `model`: entidades (`Usuario`, `ConfiguracaoUsuario`).
    - `repository`: acesso ao banco (interfaces `JpaRepository`).
    - `service`: regras de negócio (cadastro, login, validações).
    - `controller`: endpoints REST, sem regra de negócio.
 4. **Banco de dados**: H2 em arquivo no desenvolvimento (zero instalação) e PostgreSQL em produção. Trocar só pelo `application.properties`/variáveis de ambiente.
-5. **Senhas**: nunca guardar em texto puro. Usar hash BCrypt (`spring-security-crypto`) e nunca devolver a senha nas respostas.
+5. **Senhas**: nunca guardar em texto puro. Usar hash BCrypt (bean `PasswordEncoder` em `config/SecurityConfig.java`) e nunca devolver a senha nas respostas.
 6. **Autenticação**: gerar um JWT no login e exigir `Authorization: Bearer <token>` nas rotas de usuário. O usuário só pode ler/alterar os próprios dados.
 
 ---
@@ -148,7 +148,7 @@ O GitHub Pages serve apenas arquivos estáticos: o frontend continua lá, mas o 
 - [x] Criar `pom.xml` com Maven Wrapper e migrar para Spring Boot
 - [ ] Endpoint `GET /api/health` (primeiro controller, com teste)
 - [ ] Adicionar Spring Data JPA + H2 e configurar o H2 em arquivo para desenvolvimento
-- [ ] Liberar CORS para `http://localhost:5173`
+- [x] Liberar CORS para `http://localhost:5173`
 - [ ] Rodar `./mvnw test` no GitHub Actions em cada PR (hoje o workflow só faz o build do front, e só na `main`)
 
 ### Fase 2 — Usuários e autenticação
@@ -175,7 +175,7 @@ O GitHub Pages serve apenas arquivos estáticos: o frontend continua lá, mas o 
 - [ ] Migrar para PostgreSQL
 - [ ] Hospedar o backend e configurar variáveis de ambiente
 - [ ] Definir `VITE_API_URL` de produção no workflow de deploy
-- [ ] Liberar CORS para a origem do GitHub Pages
+- [x] Liberar CORS para a origem do GitHub Pages
 
 ### Opcional — Limpeza do frontend
 - [ ] Renomear o `name` do `package.json` (ainda `meu-projeto-react`)
