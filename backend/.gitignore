@@ -4,3 +4,8 @@ target/
 .idea/
 *.iml
 .vscode/
+
+### Env / local config ###
+.env
+.env.*
+application-local.properties

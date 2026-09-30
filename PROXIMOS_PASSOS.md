@@ -1,6 +1,6 @@
 # Próximos passos
 
-Roadmap para evoluir o backend e ligá-lo ao frontend. Hoje o front funciona sozinho: login simulado (`admin`/`admin` em `App.jsx`), cadastro sem persistência e todas as preferências no `localStorage`. O backend já roda com Spring Boot 4.1 (Java 21+, Maven Wrapper), mas ainda não tem endpoints: só o modelo `Usuario` e as pastas das camadas, ainda vazias.
+Roadmap para evoluir o backend e ligá-lo ao frontend. Hoje o front funciona sozinho: login simulado só em dev (credenciais de `.env.development.local`, desativado em produção), cadastro sem persistência e todas as preferências no `localStorage`. O backend já roda com Spring Boot 4.1 (Java 21+, Maven Wrapper), mas ainda não tem endpoints: só o modelo `Usuario` e as pastas das camadas, ainda vazias.
 
 ---
 
@@ -29,7 +29,7 @@ Base: `http://localhost:8080/api` em desenvolvimento.
 |---|---|---|---|
 | GET | `/api/health` | teste de conexão | `200 {"status":"ok"}` |
 | POST | `/api/auth/register` | formulário de cadastro (`auth/Login.jsx` → `onRegister`) | `201` usuário criado; `409` se usuário/e-mail já existe; `400` se inválido |
-| POST | `/api/auth/login` | `fazerLogin` em `App.jsx` (hoje `admin`/`admin`) | `200` token + usuário; `401` se inválido |
+| POST | `/api/auth/login` | `fazerLogin` em `App.jsx` (hoje login de teste só em dev) | `200` token + usuário; `401` se inválido |
 | GET | `/api/users/{id}` | perfil (`Profile.jsx`) | `200` usuário (sem senha); `404` |
 | GET | `/api/users/{id}/config` | carregar tema e configurações ao logar | `200` configurações |
 | PUT | `/api/users/{id}/config` | salvar alterações em `Configs.jsx` | `200` configurações salvas |
@@ -161,7 +161,7 @@ O GitHub Pages serve apenas arquivos estáticos: o frontend continua lá, mas o 
 ### Fase 3 — Integração do front
 - [x] Remover a divisão incompleta do Login.jsx (`auth/components`, `auth/hooks`, `auth/utils`)
 - [ ] Criar `src/api/client.js` e `.env.development` com `VITE_API_URL`
-- [ ] Trocar o login simulado (`admin`/`admin`) pela API
+- [ ] Trocar o login simulado de dev pela API
 - [ ] Ligar o cadastro (`onRegister`) à API
 - [ ] Estados de carregamento e erro no login e cadastro
 - [ ] Logout (botão "Sair" já existe no cabeçalho) limpando o token; `401` redireciona para o login

@@ -88,10 +88,26 @@ function App() {
         ? dadosLogin?.senha || dadosLogin?.password || ""
         : "";
 
-    if (usuarioInformado === "admin" && senhaInformada === "admin") {
+    // Login de teste só em `npm run dev`, com credenciais de .env.development.local.
+    if (!import.meta.env.DEV) {
+      return {
+        sucesso: false,
+        mensagem: "Login indisponível até a API estar pronta.",
+      };
+    }
+
+    const usuarioDev = import.meta.env.VITE_DEV_USER;
+    const senhaDev = import.meta.env.VITE_DEV_PASS;
+
+    if (
+      usuarioDev &&
+      senhaDev &&
+      usuarioInformado === usuarioDev &&
+      senhaInformada === senhaDev
+    ) {
       const usuarioLogado = {
-        usuario: "admin",
-        nome: "Administrador",
+        usuario: usuarioInformado,
+        nome: "Usuário de teste",
       };
 
       setUsuario(usuarioLogado);
