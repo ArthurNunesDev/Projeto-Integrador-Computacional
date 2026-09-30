@@ -4,7 +4,7 @@
 
 ## Funcionalidades
 
-- **Login e cadastro**: telas simples, com troca direta entre login e cadastro. Por enquanto a autenticação é simulada no navegador (usuário `admin` / senha `admin`); o formulário de cadastro valida os campos, mas ainda não salva nada. O botão "Sair", no menu do avatar do cabeçalho, encerra a sessão.
+- **Login e cadastro**: telas simples, com troca direta entre login e cadastro. Por enquanto a autenticação é simulada no navegador e só funciona em `npm run dev`: copie `MarketPlace/.env.example` para `MarketPlace/.env.development.local` e defina um usuário/senha de teste. No build de produção o login fica desativado até a API existir. O formulário de cadastro valida os campos, mas ainda não salva nada. O botão "Sair", no menu do avatar do cabeçalho, encerra a sessão.
 - **Perfil**: página com os dados do usuário logado.
 - **Configurações**: tema claro/escuro, privacidade (perfil público, mostrar e-mail, permitir mensagens), notificações e a opção de reduzir animações.
 - **Persistência local**: sessão e preferências ficam no `localStorage` (`marketfaesa-auth`, `marketfaesa-theme`, `marketfaesa-config`). Ainda não há chamadas HTTP.
