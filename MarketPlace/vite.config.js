@@ -18,4 +18,8 @@ export default defineConfig({
     },
   ],
   base: '/Projeto-Integrador-Computacional/',
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['@testing-library/jest-dom/vitest'],
+  },
 })
