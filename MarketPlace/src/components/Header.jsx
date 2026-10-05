@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 
-function Header({ paginaAtual, onNavigate, onLogout }) {
+function Header({ paginaAtual, onNavigate, usuario, onLogout }) {
   const [menuAberto, setMenuAberto] = useState(false);
   const [perfilMenuAberto, setPerfilMenuAberto] = useState(false);
   const perfilMenuRef = useRef(null);
   const baseUrl = import.meta.env.BASE_URL;
+  const nome = usuario?.nome || "João Silva";
+  const curso = usuario?.curso || "Ciência da Computação";
+  const iniciais = nome.split(" ").filter(Boolean).slice(0, 2).map((parte) => parte[0]).join("").toUpperCase() || "JS";
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -76,16 +79,16 @@ function Header({ paginaAtual, onNavigate, onLogout }) {
                 setMenuAberto(false);
               }}
             >
-              JS
+              {iniciais}
             </button>
 
             {perfilMenuAberto && (
               <div className="profile-dropdown animate__animated animate__fadeIn">
                 <div className="profile-dropdown__user">
-                  <div className="profile-dropdown__avatar">JS</div>
+                  <div className="profile-dropdown__avatar">{iniciais}</div>
                   <div className="profile-dropdown__user-info">
-                    <strong>João Silva</strong>
-                    <span>Ciência da Computação</span>
+                    <strong>{nome}</strong>
+                    <span>{curso}</span>
                   </div>
                 </div>
                 <div className="profile-dropdown__divider"></div>
