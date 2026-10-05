@@ -24,6 +24,7 @@ const CHAVE_TEMA = "marketfaesa-theme";
 const CHAVE_CONFIG = "marketfaesa-config";
 const CHAVE_AUTENTICACAO = "marketfaesa-auth";
 const CHAVE_USUARIOS = "marketfaesa-users";
+const CHAVE_PAGINA = "marketfaesa-pagina";
 
 function obterTemaInicial() {
   const temaSalvo = localStorage.getItem(CHAVE_TEMA);
@@ -86,7 +87,7 @@ function obterUsuariosLocais() {
 
 function App() {
   const [usuario, setUsuario] = useState(obterUsuarioInicial);
-  const [pagina, setPagina] = useState("inicio");
+  const [pagina, setPagina] = useState(() => localStorage.getItem(CHAVE_PAGINA) || "inicio");
   const [tema, setTema] = useState(obterTemaInicial);
   const [configuracoes, setConfiguracoes] = useState(
     obterConfiguracoesIniciais,
@@ -132,6 +133,7 @@ function App() {
         JSON.stringify(usuarioLogado),
       );
       setPagina("inicio");
+      localStorage.setItem(CHAVE_PAGINA, "inicio");
 
       return { sucesso: true };
     }
@@ -161,6 +163,7 @@ function App() {
     setUsuario(usuarioLogado);
     localStorage.setItem(CHAVE_AUTENTICACAO, JSON.stringify(usuarioLogado));
     setPagina("inicio");
+    localStorage.setItem(CHAVE_PAGINA, "inicio");
 
     return { sucesso: true };
   }
@@ -219,6 +222,7 @@ function App() {
     setUsuario(null);
     localStorage.removeItem(CHAVE_AUTENTICACAO);
     setPagina("inicio");
+    localStorage.setItem(CHAVE_PAGINA, "inicio");
   }
 
   useEffect(() => {
@@ -248,6 +252,7 @@ function App() {
 
   function navegarPara(novaPagina) {
     setPagina(novaPagina);
+    localStorage.setItem(CHAVE_PAGINA, novaPagina);
 
     window.scrollTo({
       top: 0,
