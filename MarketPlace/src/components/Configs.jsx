@@ -87,7 +87,7 @@ function Configs({
     switch (secaoAtiva) {
       case "conta":
         return (
-          <section className="configs-content-card">
+          <section className="configs-content-card animate__animated animate__fadeIn">
             <ConfigHeader
               eyebrow="CONTA"
               title="Informações da conta"
@@ -124,7 +124,7 @@ function Configs({
 
       case "seguranca":
         return (
-          <section className="configs-content-card">
+          <section className="configs-content-card animate__animated animate__fadeIn">
             <ConfigHeader
               eyebrow="SEGURANÇA"
               title="Segurança e acesso"
@@ -158,7 +158,7 @@ function Configs({
 
       case "privacidade":
         return (
-          <section className="configs-content-card">
+          <section className="configs-content-card animate__animated animate__fadeIn">
             <ConfigHeader
               eyebrow="PRIVACIDADE"
               title="Privacidade"
@@ -192,7 +192,7 @@ function Configs({
 
       case "notificacoes":
         return (
-          <section className="configs-content-card">
+          <section className="configs-content-card animate__animated animate__fadeIn">
             <ConfigHeader
               eyebrow="NOTIFICAÇÕES"
               title="Notificações"
@@ -240,7 +240,7 @@ function Configs({
 
       case "aparencia":
         return (
-          <section className="configs-content-card">
+          <section className="configs-content-card animate__animated animate__fadeIn">
             <ConfigHeader
               eyebrow="APARÊNCIA"
               title="Aparência"
@@ -292,7 +292,7 @@ function Configs({
 
       case "preferencias":
         return (
-          <section className="configs-content-card">
+          <section className="configs-content-card animate__animated animate__fadeIn">
             <ConfigHeader
               eyebrow="PREFERÊNCIAS"
               title="Preferências"
@@ -355,7 +355,7 @@ function Configs({
   return (
     <main className="configs-page">
       <div className="configs-container">
-        <header className="configs-page-header">
+        <header className="configs-page-header animate__animated animate__fadeInDown">
           <div>
             <span>PREFERÊNCIAS DA CONTA</span>
 
@@ -379,7 +379,7 @@ function Configs({
         <div className="configs-layout">
           {/* MENU */}
 
-          <aside className="configs-sidebar">
+          <aside className="configs-sidebar animate__animated animate__fadeInLeft">
             <span className="configs-sidebar-title">CONFIGURAÇÕES</span>
 
             <nav>
