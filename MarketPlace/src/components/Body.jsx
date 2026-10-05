@@ -278,7 +278,6 @@ function Body({ onNavigate }) {
           </section>
         </aside>
       </div>
-    </main>
 
       {detalheAberto && (
         <div className="opportunity-modal-backdrop" role="presentation" onClick={(event) => {
@@ -304,6 +303,7 @@ function Body({ onNavigate }) {
           </section>
         </div>
       )}
+    </main>
   );
 }
 
