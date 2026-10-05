@@ -216,7 +216,12 @@ O GitHub Pages serve apenas arquivos estáticos, então o backend precisará de 
         <sub><b>Lucas de Souza Barboza</b></sub>
       </a>
     </td>
-    <td align="center"><sub><b>Daniel Stieg Radaelle</b></sub></td>
+    <td align="center">
+      <a href="https://github.com/DSTIEG">
+        <img src="https://github.com/DSTIEG.png" width="100" alt="Foto de Daniel Stieg Radaelle"><br>
+        <sub><b>Daniel Stieg Radaelle</b></sub>
+      </a>
+    </td>
   </tr>
 </table>
 
