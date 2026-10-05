@@ -39,7 +39,8 @@ function Header({ paginaAtual, onNavigate, onLogout }) {
         </button>
 
         <button className="div-market" type="button" onClick={() => navegar("inicio")} aria-label="Ir para o início">
-          <img className="market-symbol" src={`${baseUrl}marketfaesa-symbol.svg`} alt="" />
+          <img className="market-symbol market-symbol-light" src={`${baseUrl}marketfaesa-symbol.svg`} alt="" />
+          <img className="market-symbol market-symbol-dark" src={`${baseUrl}marketfaesa-symbol-dark.svg`} alt="" />
           <span className="market-text">
             <strong>MARKET</strong>
             <span>FAESA</span>
@@ -117,7 +118,8 @@ function Header({ paginaAtual, onNavigate, onLogout }) {
       <nav className={`menu-lateral ${menuAberto ? "aberto" : ""}`} aria-hidden={!menuAberto}>
         <div className="menu-header">
           <div className="menu-brand">
-            <img className="menu-brand-logo" src={`${baseUrl}marketfaesa-symbol.svg`} alt="" />
+            <img className="menu-brand-logo menu-brand-logo-light" src={`${baseUrl}marketfaesa-symbol.svg`} alt="" />
+            <img className="menu-brand-logo menu-brand-logo-dark" src={`${baseUrl}marketfaesa-symbol-dark.svg`} alt="" />
             <div><strong>MARKET FAESA</strong><small>Marketplace universitário</small></div>
           </div>
         </div>
