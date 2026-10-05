@@ -8,11 +8,11 @@ function chavePerfil(usuario) {
 
 const PERFIL_PADRAO = {
   nome: "",
-  curso: "Ciência da Computação",
-  periodo: "4º período",
-  cidade: "Vitória, ES",
+  curso: "",
+  periodo: "",
+  cidade: "",
   email: "",
-  bio: "Estudante de Ciência da Computação interessado em desenvolvimento web, tecnologia e projetos colaborativos.",
+  bio: "",
 };
 
 function obterPerfil(usuario) {
