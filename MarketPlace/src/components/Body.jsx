@@ -91,7 +91,7 @@ function Body({ onNavigate }) {
                 oportunidades e desenvolva experiência real.
               </p>
 
-              <button className="welcome-button" type="button">+ Publicar habilidade</button>
+              <button className="welcome-button" type="button" onClick={() => onNavigate?.("habilidades")}>+ Publicar habilidade</button>
             </div>
 
             <div className="welcome-decoration">
