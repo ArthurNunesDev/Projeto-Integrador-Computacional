@@ -44,3 +44,63 @@
   .perfil-quick-actions { gap: 4px; }
   .perfil-quick-actions button { grid-template-columns: 21px 1fr auto; padding: 8px; font-size: 8px; }
 }
+
+
+.perfil-completion-card { position: relative; overflow: hidden; }
+.perfil-completion-card > button {
+  grid-column: 1 / -1;
+  justify-self: start;
+  padding: 6px 9px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--mf-navy);
+  color: #fff;
+  font-size: 8px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.perfil-completion-card > button:hover { background: var(--mf-orange); }
+.perfil-completion-finished {
+  background: linear-gradient(135deg, var(--mf-navy), #303b83);
+  color: #fff;
+  border: 0;
+  animation: perfilCompletoPulse 1s ease both;
+}
+.perfil-completion-finished .perfil-completion-icon { animation: perfilCompletoBounce .9s ease both; }
+.perfil-completion-finished > div:nth-child(2) > span {
+  display: block;
+  margin-bottom: 3px;
+  color: #CADCFC;
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+.perfil-completion-finished > div:nth-child(2) > strong { display: block; color: #fff; font-size: 11px; }
+.perfil-completion-finished > div:nth-child(2) > p { color: #E8EEFA; }
+.perfil-completion-sparkles {
+  grid-column: 1 / -1;
+  color: var(--mf-orange);
+  font-size: 13px;
+  animation: perfilCompletoSparkle 1.2s ease infinite;
+}
+@keyframes perfilCompletoPulse {
+  0% { transform: scale(.97); opacity: .5; }
+  60% { transform: scale(1.02); opacity: 1; }
+  100% { transform: scale(1); }
+}
+@keyframes perfilCompletoBounce {
+  0% { transform: scale(.4) rotate(-20deg); opacity: 0; }
+  70% { transform: scale(1.2) rotate(8deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); }
+}
+@keyframes perfilCompletoSparkle {
+  0%,100% { opacity: .45; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-2px); }
+}
+@media (max-width: 600px) {
+  .perfil-completion-card > button { font-size: 6px; padding: 5px 7px; }
+  .perfil-completion-finished > div:nth-child(2) > span { font-size: 5px; }
+  .perfil-completion-finished > div:nth-child(2) > strong { font-size: 9px; }
+  .perfil-completion-finished > div:nth-child(2) > p { font-size: 6px; }
+  .perfil-completion-sparkles { font-size: 9px; }
+}
