@@ -140,3 +140,47 @@
   .header-icon-button { display: none; }
   .profile-button { width: 38px; height: 38px; }
 }
+
+/* Ajustes de contraste para o tema escuro */
+[data-theme="dark"] .menu-button,
+[data-theme="dark"] .div-market,
+[data-theme="dark"] .header-icon-button {
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .market-text,
+[data-theme="dark"] .market-text strong,
+[data-theme="dark"] .market-text span {
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .menu-brand strong {
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .menu-item-icon {
+  color: var(--mf-light);
+}
+
+[data-theme="dark"] .profile-dropdown__icon {
+  background: #252D5B;
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .profile-dropdown__item:hover,
+[data-theme="dark"] .profile-dropdown__item.ativo {
+  background: rgba(202,220,252,.14);
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .profile-dropdown__user-info strong {
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .profile-dropdown__user-info span {
+  color: #CADCFC;
+}
+
+[data-theme="dark"] .menu-section-title {
+  color: #AEBCE0;
+}
