@@ -30,6 +30,8 @@ function Body({ onNavigate, usuario }) {
   const [participando, setParticipando] = useState([]);
   const [detalheAberto, setDetalheAberto] = useState(null);
   const [perfilProgresso, setPerfilProgresso] = useState(() => calcularProgressoPerfil(usuario));
+  const [mostrarPerfilCompleto, setMostrarPerfilCompleto] = useState(false);
+  const [perfilConcluido, setPerfilConcluido] = useState(false);
   const [salvos, setSalvos] = useState(() => {
     try { return JSON.parse(localStorage.getItem("marketfaesa-salvos")) || []; } catch { return []; }
   });
@@ -39,7 +41,16 @@ function Body({ onNavigate, usuario }) {
   }, [salvos]);
 
   useEffect(() => {
-    const atualizarProgresso = () => setPerfilProgresso(calcularProgressoPerfil(usuario));
+    const atualizarProgresso = () => {
+      const novoProgresso = calcularProgressoPerfil(usuario);
+      setPerfilProgresso((anterior) => {
+        if (novoProgresso === 100 && anterior < 100 && !perfilConcluido) {
+          setMostrarPerfilCompleto(true);
+          setTimeout(() => setMostrarPerfilCompleto(false), 4200);
+        }
+        return novoProgresso;
+      });
+    };
     atualizarProgresso();
     window.addEventListener("storage", atualizarProgresso);
     window.addEventListener("marketfaesa-perfil-atualizado", atualizarProgresso);
@@ -47,7 +58,7 @@ function Body({ onNavigate, usuario }) {
       window.removeEventListener("storage", atualizarProgresso);
       window.removeEventListener("marketfaesa-perfil-atualizado", atualizarProgresso);
     };
-  }, [usuario]);
+  }, [usuario, perfilConcluido]);
 
   const areas = ["Todos", "Tecnologia", "Saúde", "Direito", "Engenharia", "Administração", "Design"];
 
@@ -281,27 +292,27 @@ function Body({ onNavigate, usuario }) {
           </section>
 
           {/* COMPLETAR PERFIL */}
-          <section className={"complete-card " + (perfilProgresso === 100 ? "complete-card-finished" : "")}>
-            {perfilProgresso === 100 ? (
-              <>
-                <div className="complete-success-icon" aria-hidden="true">🎉</div>
-                <div className="complete-success-content">
-                  <span className="complete-success-label">PERFIL COMPLETO!</span>
-                  <h3>Seu perfil está pronto para brilhar ✨</h3>
-                  <p>Agora você pode se conectar, mostrar suas habilidades e encontrar novas oportunidades.</p>
-                </div>
-                <div className="complete-confetti" aria-hidden="true">✦　✧　✦</div>
-              </>
-            ) : (
-              <>
-                <h3>✨ Complete seu perfil</h3>
-                <div className="progress-bar"><span style={{ width: perfilProgresso + "%" }}></span></div>
-                <strong>{perfilProgresso}% concluído</strong>
-                <p>Adicione suas informações e habilidades!</p>
-                <button type="button" onClick={() => onNavigate?.("perfil")}>Completar perfil →</button>
-              </>
-            )}
-          </section>
+          {perfilProgresso < 100 && (
+            <section className="complete-card">
+              <h3>✨ Complete seu perfil</h3>
+              <div className="progress-bar"><span style={{ width: perfilProgresso + "%" }}></span></div>
+              <strong>{perfilProgresso}% concluído</strong>
+              <p>Adicione suas informações e habilidades!</p>
+              <button type="button" onClick={() => onNavigate?.("perfil")}>Completar perfil →</button>
+            </section>
+          )}
+
+          {mostrarPerfilCompleto && (
+            <div className="perfil-completo-overlay" role="dialog" aria-modal="true">
+              <div className="perfil-completo-card">
+                <div className="perfil-completo-icon">🎉</div>
+                <span>PERFIL COMPLETO!</span>
+                <h2>Obrigado por completar seu perfil! ✨</h2>
+                <p>Agora sua presença na MarketFAESA está pronta para conectar você a novas oportunidades.</p>
+                <div className="perfil-completo-sparkles">✦　✧　✦</div>
+              </div>
+            </div>
+          )}
 
           {/* MAIS BUSCADAS */}
           <section className="popular-card">
