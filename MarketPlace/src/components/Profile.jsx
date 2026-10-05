@@ -65,7 +65,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
   }
 
   function iniciais(nome) {
-    return nome.split(" ").filter(Boolean).slice(0, 2).map((parte) => parte[0]).join("").toUpperCase() || "JS";
+    return nome.split(" ").filter(Boolean).slice(0, 2).map((parte) => parte[0]).join("").toUpperCase() || "US";
   }
 
   return (
