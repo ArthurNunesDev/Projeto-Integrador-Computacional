@@ -227,7 +227,7 @@ function Body({ onNavigate, usuario }) {
 
             <h3>{nomeUsuario}</h3>
 
-            <p>{cursoUsuario} · {periodoUsuario.replace(" período", "º per.")}</p>
+            <p>{cursoUsuario} · {periodoUsuario.replace(/\s*período$/i, " per.")}</p>
 
             <div className="profile-stats">
               <div>
