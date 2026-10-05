@@ -2,25 +2,32 @@ import { useEffect, useState } from "react";
 
 const CHAVE_PERFIL = "marketfaesa-perfil";
 
+function chavePerfil(usuario) {
+  return usuario?.email ? `${CHAVE_PERFIL}:${usuario.email.toLowerCase()}` : CHAVE_PERFIL;
+}
+
 const PERFIL_PADRAO = {
-  nome: "João Silva",
+  nome: "",
   curso: "Ciência da Computação",
   periodo: "4º período",
   cidade: "Vitória, ES",
-  email: "joao.silva@faesa.br",
+  email: "",
   bio: "Estudante de Ciência da Computação interessado em desenvolvimento web, tecnologia e projetos colaborativos.",
 };
 
 function obterPerfil(usuario) {
-  try {
-    const salvo = localStorage.getItem(CHAVE_PERFIL);
-    if (salvo) return { ...PERFIL_PADRAO, ...JSON.parse(salvo) };
-  } catch {}
-  return {
+  const dadosBase = {
     ...PERFIL_PADRAO,
-    nome: usuario?.nome || PERFIL_PADRAO.nome,
-    email: usuario?.email || PERFIL_PADRAO.email,
+    nome: usuario?.nome || "",
+    email: usuario?.email || "",
   };
+
+  try {
+    const salvo = localStorage.getItem(chavePerfil(usuario));
+    if (salvo) return { ...dadosBase, ...JSON.parse(salvo) };
+  } catch {}
+
+  return dadosBase;
 }
 
 function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsuario, onDeleteAccount }) {
@@ -29,7 +36,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
   const [salvo, setSalvo] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem(CHAVE_PERFIL, JSON.stringify(dados));
+    localStorage.setItem(chavePerfil(usuario), JSON.stringify(dados));
   }, [dados]);
 
   function alterarCampo(campo, valor) {
@@ -44,7 +51,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
 
     const atualizados = { ...dados, nome, email };
     setDados(atualizados);
-    localStorage.setItem(CHAVE_PERFIL, JSON.stringify(atualizados));
+    localStorage.setItem(chavePerfil(usuario), JSON.stringify(atualizados));
     onUpdateUsuario?.({ nome, email, usuario: email });
     setEditando(false);
     setSalvo(true);
