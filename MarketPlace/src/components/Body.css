@@ -56,10 +56,16 @@ body { background: var(--mf-bg); }
 .areas-section, .opportunities-section { margin-top: 28px; }
 .section-title h3, .section-heading h3 { color: var(--mf-text); font-size: 17px; font-weight: 800; }
 .areas-list { display:flex; flex-wrap:wrap; gap:8px; margin-top:13px; }
-.area-pill { height:36px; display:flex; align-items:center; gap:7px; padding:0 14px; border:1px solid var(--mf-border); border-radius:20px; background:var(--mf-surface); color:var(--mf-muted); font-size:10px; font-weight:700; }
-.area-pill span { width:7px; height:7px; border-radius:50%; background:var(--mf-navy); }
-.area-pill:nth-child(3) span { background:#D98324; }
-.area-pill.selecionado { background:var(--mf-navy); border-color:var(--mf-navy); color:#fff; }
+.area-pill { height:36px; display:flex; align-items:center; gap:7px; padding:0 14px; border:1px solid var(--mf-border); border-radius:20px; background:var(--mf-surface); color:#111; font-size:10px; font-weight:700; cursor:pointer; transition:transform .18s ease, background .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease; }
+.area-pill span { width:7px; height:7px; flex:0 0 7px; border-radius:50%; background:#111; box-shadow:none; transition:background .2s ease, box-shadow .2s ease, transform .2s ease; }
+.area-pill:nth-child(2) span { background:#3B82F6; }
+.area-pill:nth-child(3) span { background:#22C55E; }
+.area-pill:nth-child(4) span { background:#8B5CF6; }
+.area-pill:nth-child(5) span { background:#F97316; }
+.area-pill:nth-child(6) span { background:#14B8A6; }
+.area-pill:nth-child(7) span { background:#EC4899; }
+.area-pill.selecionado { background:var(--mf-navy); border-color:var(--mf-navy); color:#fff; box-shadow:0 6px 18px rgba(30,39,97,.16); }
+.area-pill.selecionado span { transform:scale(1.18); box-shadow:0 0 0 3px rgba(255,255,255,.12), 0 0 10px currentColor; }
 
 .section-heading { display:flex; align-items:center; justify-content:space-between; gap:15px; }
 .section-heading button { border:0; background:transparent; color:var(--mf-orange); font-size:11px; font-weight:800; }
@@ -121,8 +127,7 @@ body { background: var(--mf-bg); }
 .see-all-button { cursor: pointer; transition: transform .18s ease, color .18s ease; }
 .see-all-button:hover { color: var(--mf-navy) !important; transform: translateX(2px); }
 
-.area-pill { cursor: pointer; transition: transform .18s ease, background .18s ease, color .18s ease, border-color .18s ease; }
-.area-pill:hover { transform: translateY(-1px); }
+ .area-pill:hover { transform: translateY(-1px); }
 .area-pill.selecionado span { background: #fff; }
 
 .opportunity-card-open {
@@ -178,9 +183,16 @@ body { background: var(--mf-bg); }
 .opportunity-modal-footer > button { padding: 9px 14px; border: 0; border-radius: 18px; background: var(--mf-navy); color: #fff; font-size: 9px; font-weight: 800; cursor: pointer; }
 .opportunity-modal-footer > button.participating-button { background: #2F7D5B; }
 
-[data-theme="dark"] .area-pill span { background: #fff; }
-[data-theme="dark"] .area-pill:nth-child(3) span { background: #fff; }
-[data-theme="dark"] .area-pill.selecionado span { background: #fff; }
+[data-theme="dark"] .area-pill { color:#fff; }
+[data-theme="dark"] .area-pill span { background:#111; }
+[data-theme="dark"] .area-pill:nth-child(2) span { background:#3B82F6; }
+[data-theme="dark"] .area-pill:nth-child(3) span { background:#22C55E; }
+[data-theme="dark"] .area-pill:nth-child(4) span { background:#8B5CF6; }
+[data-theme="dark"] .area-pill:nth-child(5) span { background:#F97316; }
+[data-theme="dark"] .area-pill:nth-child(6) span { background:#14B8A6; }
+[data-theme="dark"] .area-pill:nth-child(7) span { background:#EC4899; }
+[data-theme="dark"] .area-pill.selecionado { color:#111; }
+[data-theme="dark"] .area-pill.selecionado span { background:#111; box-shadow:0 0 0 3px rgba(17,17,17,.12), 0 0 10px currentColor; }
 [data-theme="dark"] .see-all-button:hover { color: #fff !important; }
 [data-theme="dark"] .details-button { background: #252D5B !important; color: #fff !important; }
 [data-theme="dark"] .opportunity-icon,
