@@ -46,7 +46,6 @@ function Marca() {
 function Login({ onLogin, onNavigate, onRegister }) {
   const [modoCadastro, setModoCadastro] = useState(false);
 
-  const [usuario, setUsuario] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
@@ -67,12 +66,12 @@ function Login({ onLogin, onNavigate, onRegister }) {
     event.preventDefault();
     setErro("");
 
-    if (!usuario.trim() || !email.trim() || !senha.trim()) {
-      setErro("Preencha seu usuário, e-mail e senha.");
+    if (!email.trim() || !senha.trim()) {
+      setErro("Preencha seu usuário/e-mail e sua senha.");
       return;
     }
 
-    const resultado = onLogin?.({ usuario: usuario.trim(), email: email.trim(), senha });
+    const resultado = onLogin?.({ usuario: email.trim(), email: email.trim(), senha });
 
     if (resultado && !resultado.sucesso) {
       setErro(resultado.mensagem || "Não foi possível entrar.");
@@ -198,6 +197,17 @@ function Login({ onLogin, onNavigate, onRegister }) {
         <h2>Entrar</h2>
 
         <form className="login-form" onSubmit={handleSubmit}>
+          <div className="login-field">
+            <label htmlFor="login-usuario">Usuário / E-mail</label>
+            <input
+              id="login-usuario"
+              type="text"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="usuário ou seu.email@faesa.br"
+              autoComplete="username"
+            />
+          </div>
 
           <CampoSenha
             id="login-senha"
