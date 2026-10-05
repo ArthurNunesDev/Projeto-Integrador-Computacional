@@ -51,10 +51,12 @@ function MinhasPublicacoes({ onNavigate }) {
             <h1>Minhas Publicações</h1>
             <p>Gerencie as habilidades que você publicou no Market FAESA.</p>
           </div>
-          <button className="publications-create-button" type="button" onClick={() => onNavigate?.("publicar-habilidade")}>+ Criar publicação</button>
-          <div className="publications-total">
+          <div className="publications-header-actions">
+            <button className="publications-create-button" type="button" onClick={() => onNavigate?.("publicar-habilidade")}>+ Criar publicação</button>
+            <div className="publications-total">
             <strong>{publicacoes.length}</strong>
             <span>{publicacoes.length === 1 ? "publicação" : "publicações"}</span>
+            </div>
           </div>
         </section>
 
