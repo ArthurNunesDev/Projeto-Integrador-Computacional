@@ -498,3 +498,105 @@ body { background: var(--mf-bg); }
   .complete-success-content p { font-size: 6px; }
   .complete-confetti { margin-top: 7px; font-size: 9px; }
 }
+
+
+.perfil-completo-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 18, 32, .42);
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+  animation: perfilOverlayIn .35s ease both;
+}
+
+.perfil-completo-card {
+  width: min(460px, 100%);
+  padding: 34px 30px 28px;
+  border: 1px solid rgba(255,255,255,.28);
+  border-radius: 24px;
+  background: linear-gradient(145deg, #1E2761, #303b83);
+  color: #fff;
+  text-align: center;
+  box-shadow: 0 24px 70px rgba(0,0,0,.32);
+  animation: perfilCardIn .75s cubic-bezier(.16,1,.3,1) both;
+}
+
+.perfil-completo-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 14px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255,255,255,.14);
+  font-size: 38px;
+  animation: perfilIconPop .9s .15s cubic-bezier(.16,1,.3,1) both;
+}
+
+.perfil-completo-card > span {
+  display: block;
+  color: #CADCFC;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 2px;
+}
+
+.perfil-completo-card h2 {
+  margin: 9px 0 8px;
+  color: #fff;
+  font-size: 25px;
+  line-height: 1.15;
+}
+
+.perfil-completo-card p {
+  margin: 0 auto;
+  max-width: 370px;
+  color: #edf2ff;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.perfil-completo-sparkles {
+  margin-top: 17px;
+  color: #D98324;
+  font-size: 19px;
+  letter-spacing: 3px;
+  animation: perfilSparkle 1.1s ease-in-out infinite;
+}
+
+@keyframes perfilOverlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes perfilCardIn {
+  from { opacity: 0; transform: translateY(55px) scale(.82); }
+  65% { transform: translateY(-6px) scale(1.025); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes perfilIconPop {
+  from { opacity: 0; transform: scale(.2) rotate(-20deg); }
+  70% { opacity: 1; transform: scale(1.16) rotate(7deg); }
+  to { transform: scale(1) rotate(0); }
+}
+
+@keyframes perfilSparkle {
+  0%,100% { opacity: .45; transform: scale(.95); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
+@media (max-width: 600px) {
+  .perfil-completo-overlay { padding: 15px; backdrop-filter: blur(7px); }
+  .perfil-completo-card { padding: 27px 20px 22px; border-radius: 19px; }
+  .perfil-completo-icon { width: 58px; height: 58px; font-size: 30px; }
+  .perfil-completo-card > span { font-size: 8px; }
+  .perfil-completo-card h2 { font-size: 18px; }
+  .perfil-completo-card p { font-size: 8px; }
+  .perfil-completo-sparkles { font-size: 13px; }
+}
