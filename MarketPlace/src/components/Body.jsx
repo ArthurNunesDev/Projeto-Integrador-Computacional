@@ -31,7 +31,6 @@ function Body({ onNavigate, usuario }) {
   const [detalheAberto, setDetalheAberto] = useState(null);
   const [perfilProgresso, setPerfilProgresso] = useState(() => calcularProgressoPerfil(usuario));
   const [mostrarPerfilCompleto, setMostrarPerfilCompleto] = useState(false);
-  const [perfilConcluido, setPerfilConcluido] = useState(false);
   const [salvos, setSalvos] = useState(() => {
     try { return JSON.parse(localStorage.getItem("marketfaesa-salvos")) || []; } catch { return []; }
   });
@@ -41,24 +40,30 @@ function Body({ onNavigate, usuario }) {
   }, [salvos]);
 
   useEffect(() => {
+    const chaveConclusao = usuario?.email
+      ? "marketfaesa-perfil-completo-pendente:" + usuario.email.trim().toLowerCase()
+      : "";
+
+    if (chaveConclusao && localStorage.getItem(chaveConclusao) === "1") {
+      localStorage.removeItem(chaveConclusao);
+      setMostrarPerfilCompleto(true);
+      const timer = window.setTimeout(() => setMostrarPerfilCompleto(false), 4200);
+      return () => window.clearTimeout(timer);
+    }
+
     const atualizarProgresso = () => {
-      const novoProgresso = calcularProgressoPerfil(usuario);
-      setPerfilProgresso((anterior) => {
-        if (novoProgresso === 100 && anterior < 100 && !perfilConcluido) {
-          setMostrarPerfilCompleto(true);
-          setTimeout(() => setMostrarPerfilCompleto(false), 4200);
-        }
-        return novoProgresso;
-      });
+      setPerfilProgresso(calcularProgressoPerfil(usuario));
     };
+
     atualizarProgresso();
     window.addEventListener("storage", atualizarProgresso);
     window.addEventListener("marketfaesa-perfil-atualizado", atualizarProgresso);
+
     return () => {
       window.removeEventListener("storage", atualizarProgresso);
       window.removeEventListener("marketfaesa-perfil-atualizado", atualizarProgresso);
     };
-  }, [usuario, perfilConcluido]);
+  }, [usuario]);
 
   const areas = ["Todos", "Tecnologia", "Saúde", "Direito", "Engenharia", "Administração", "Design"];
 
