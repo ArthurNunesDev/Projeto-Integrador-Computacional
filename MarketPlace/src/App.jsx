@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Header from "./components/Header.jsx";
 import Body from "./components/Body.jsx";
 import Configs from "./components/Configs.jsx";
+import Oportunidades from "./components/Opportunities.jsx";
 import Perfil from "./components/Profile.jsx";
 
 import Login from "./auth/Login.jsx";
@@ -250,6 +251,9 @@ function App() {
 
   function renderizarPagina() {
     switch (pagina) {
+      case "oportunidades":
+        return <Oportunidades />;
+
       case "perfil":
         return (
           <Perfil
