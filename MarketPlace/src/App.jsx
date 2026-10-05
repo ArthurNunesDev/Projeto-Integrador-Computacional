@@ -282,23 +282,7 @@ function App() {
     localStorage.setItem(CHAVE_PAGINA, "inicio");
   }
 
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", tema);
-    localStorage.setItem(CHAVE_TEMA, tema);
-  }, [tema]);
 
-  useEffect(() => {
-    document.documentElement.setAttribute(
-      "data-reduzir-animacoes",
-      configuracoes.reduzirAnimacoes ? "true" : "false",
-    );
-
-    localStorage.setItem(CHAVE_CONFIG, JSON.stringify(configuracoes));
-  }, [configuracoes]);
-
-  useEffect(() => {
-    localStorage.setItem(CHAVE_PREFERENCIAS, JSON.stringify(preferencias));
-  }, [preferencias]);
 
   function alterarTema(novoTema) {
     setTema(novoTema === "dark" ? "dark" : "light");
@@ -349,6 +333,7 @@ function App() {
             mostrarEmail={configuracoes.mostrarEmail}
             usuario={usuario}
             onLogout={fazerLogout}
+            onUpdateUsuario={atualizarUsuario}
             onUpdateUsuario={atualizarUsuario}
             onDeleteAccount={excluirConta}
           />
