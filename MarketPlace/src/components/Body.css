@@ -304,3 +304,71 @@ body { background: var(--mf-bg); }
     gap: 7px;
   }
 }
+
+
+/* Dashboard mobile compacto */
+@media (max-width: 600px) {
+  .main-content { padding: 10px 9px 28px; }
+  .dashboard-container { gap: 12px; }
+  .welcome-card { padding: 17px; min-height: 0; border-radius: 14px; }
+  .welcome-card h2 { font-size: 20px; line-height: 1.15; }
+  .welcome-card p { margin-top: 6px; font-size: 9px; line-height: 1.45; }
+  .welcome-button { width: auto; min-height: 31px; padding: 7px 11px; margin-top: 11px; font-size: 8px; border-radius: 16px; }
+  .welcome-decoration { right: -75px; top: -82px; width: 175px; height: 175px; }
+  .stats-grid { gap: 8px; }
+  .stat-card { min-height: 74px; padding: 12px; border-radius: 13px; }
+  .stat-card strong { font-size: 17px; }
+  .stat-card span { margin-top: 3px; font-size: 7px; }
+  .dashboard-section { margin-top: 18px; }
+  .section-heading { gap: 8px; }
+  .section-heading h3 { font-size: 12px; }
+  .section-heading button { font-size: 8px; }
+  .section-filter-label { margin-top: 2px; font-size: 7px; }
+  .areas-list { gap: 5px; margin-top: 9px; }
+  .area-pill { height: 28px; padding: 0 8px; gap: 5px; border-radius: 15px; font-size: 7px; }
+  .area-pill span { width: 5px; height: 5px; flex-basis: 5px; }
+  .opportunities-grid { gap: 8px; margin-top: 9px; }
+  .opportunity-card { padding: 12px; border-radius: 13px; }
+  .opportunity-icon { width: 32px; height: 32px; border-radius: 9px; font-size: 14px; }
+  .opportunity-type { padding: 4px 6px; font-size: 6px; }
+  .opportunity-card h4 { margin: 9px 0 5px; font-size: 10px; }
+  .opportunity-info { gap: 6px; font-size: 7px; }
+  .opportunity-footer { gap: 7px; margin-top: 9px; padding-top: 8px; }
+  .person { gap: 6px; }
+  .person-avatar { width: 24px; height: 24px; font-size: 7px; }
+  .person strong { font-size: 7px; }
+  .person span { font-size: 6px; }
+  .opportunity-actions { gap: 4px; }
+  .opportunity-footer button { padding: 6px 8px; border-radius: 13px; font-size: 7px; }
+  .opportunity-actions .save-button { width: 25px; padding: 6px 0 !important; font-size: 13px !important; }
+  .dashboard-sidebar { gap: 8px; }
+  .profile-card, .popular-card, .complete-card { border-radius: 13px; }
+  .profile-card { padding: 14px; }
+  .profile-avatar { width: 48px; height: 48px; margin-bottom: 7px; font-size: 13px; }
+  .profile-card h3 { font-size: 11px; }
+  .profile-card p { margin: 3px 0 10px; font-size: 7px; }
+  .profile-stats { padding-top: 9px; }
+  .profile-stats strong { font-size: 13px; }
+  .profile-stats span { font-size: 6px; }
+  .complete-card, .popular-card { padding: 13px; }
+  .complete-card h3, .popular-card h3 { margin-bottom: 8px; font-size: 9px; }
+  .popular-card li { min-height: 32px; grid-template-columns: 16px 1fr auto; }
+  .popular-card li > span, .popular-card small, .popular-card strong { font-size: 6px; }
+  .opportunity-modal-backdrop { padding: 9px; }
+  .opportunity-modal { padding: 16px; border-radius: 16px; }
+  .opportunity-modal-close { width: 28px; height: 28px; font-size: 18px; }
+  .opportunity-modal-icon { width: 40px; height: 40px; margin-bottom: 8px; border-radius: 11px; font-size: 18px; }
+  .opportunity-modal h2 { margin-top: 7px; font-size: 15px; }
+  .opportunity-modal > p { margin-top: 6px; font-size: 9px; }
+  .opportunity-modal-info { gap: 5px; margin-top: 11px; }
+  .opportunity-modal-info span { padding: 5px 6px; font-size: 6px; }
+  .opportunity-modal-footer { gap: 7px; margin-top: 12px; padding-top: 10px; }
+  .opportunity-modal-footer > button { padding: 7px 10px; font-size: 7px; }
+}
+@media (max-width: 380px) {
+  .main-content { padding-left: 7px; padding-right: 7px; }
+  .welcome-card { padding: 14px; }
+  .welcome-card h2 { font-size: 18px; }
+  .area-pill { padding: 0 6px; }
+  .opportunity-card { padding: 10px; }
+}
