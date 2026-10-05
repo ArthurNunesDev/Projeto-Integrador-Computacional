@@ -28,7 +28,8 @@ function Connections() {
   const [aba, setAba] = useState("conexoes");
   const [busca, setBusca] = useState("");
   const [conexoes, setConexoes] = useState(obterConexoes);
-  const [recebidas, setRecebidas] = useState(solicitacoesRecebidas);\n  const [perfilAberto, setPerfilAberto] = useState(null);
+  const [recebidas, setRecebidas] = useState(solicitacoesRecebidas);
+  const [perfilAberto, setPerfilAberto] = useState(null);
 
   function salvarConexoes(ids) {
     setConexoes(ids);
@@ -64,6 +65,55 @@ function Connections() {
   }, [busca]);
 
   const minhasConexoes = pessoas.filter((pessoa) => conexoes.includes(pessoa.id));
+
+  if (perfilAberto) {
+    const conectado = conexoes.includes(perfilAberto.id);
+
+    return (
+      <main className="connections-page">
+        <div className="connections-container">
+          <section className="connections-profile animate__animated animate__fadeIn">
+            <button type="button" className="connections-back" onClick={() => setPerfilAberto(null)}>← Voltar para pessoas</button>
+
+            <div className="connections-profile-header">
+              <div className="connections-profile-avatar">{perfilAberto.inicial}</div>
+              <div className="connections-profile-main">
+                <span className="connections-label">PERFIL</span>
+                <h1>{perfilAberto.nome}</h1>
+                <p>{perfilAberto.curso}</p>
+                <span className="connections-profile-location">⌖ {perfilAberto.cidade}</span>
+              </div>
+              <button type="button" className={`connections-profile-connect ${conectado ? "connected" : ""}`} onClick={() => conectado ? removerConexao(perfilAberto.id) : conectar(perfilAberto.id)}>
+                {conectado ? "✓ Conectado" : "+ Conectar"}
+              </button>
+            </div>
+
+            <div className="connections-profile-content">
+              <section className="connections-profile-block">
+                <span className="connections-label">SOBRE</span>
+                <h2>Sobre {perfilAberto.nome.split(" ")[0]}</h2>
+                <p>{perfilAberto.bio}</p>
+              </section>
+
+              <section className="connections-profile-block">
+                <span className="connections-label">HABILIDADES</span>
+                <h2>Competências</h2>
+                <div className="profile-skill-grid">
+                  {perfilAberto.habilidades.map((habilidade, index) => (
+                    <article className="profile-skill-card" key={habilidade}>
+                      <span>0{index + 1}</span>
+                      <strong>{habilidade}</strong>
+                      <small>{index === 0 ? "Principal" : "Competência"}</small>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            </div>
+          </section>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="connections-page">
@@ -188,7 +238,7 @@ function Connections() {
               {filtradas.map((pessoa) => {
                 const conectado = conexoes.includes(pessoa.id);
                 return (
-                  <article className="connection-card" key={pessoa.id}>
+                  <article className="connection-card discovery-clickable" key={pessoa.id} onClick={() => setPerfilAberto(pessoa)} role="button" tabIndex={0} onKeyDown={(event) => event.key === "Enter" && setPerfilAberto(pessoa)}>
                     <div className="connection-card-top">
                       <div className="connection-avatar">{pessoa.inicial}</div>
                       <div>
