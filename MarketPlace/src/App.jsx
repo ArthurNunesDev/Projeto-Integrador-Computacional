@@ -11,6 +11,7 @@ import Messages from "./components/Messages.jsx";
 import Salvos from "./components/Saved.jsx";
 import MinhasPublicacoes from "./components/Publications.jsx";
 import Perfil from "./components/Profile.jsx";
+import Footer from "./components/Footer.jsx";
 
 import Login from "./auth/Login.jsx";
 
@@ -25,6 +26,7 @@ import "./components/Connections.css";
 import "./components/Messages.css";
 import "./components/Saved.css";
 import "./components/Publications.css";
+import "./components/Footer.css";
 
 const CHAVE_TEMA = "marketfaesa-theme";
 const CHAVE_CONFIG = "marketfaesa-config";
@@ -335,6 +337,7 @@ function App() {
       />
 
       {renderizarPagina()}
+      <Footer onNavigate={navegarPara} />
     </div>
   );
 }
