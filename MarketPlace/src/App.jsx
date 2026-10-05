@@ -108,6 +108,19 @@ function App() {
     }
   });
 
+  useEffect(() => {
+    localStorage.setItem(CHAVE_CONFIG, JSON.stringify(configuracoes));
+  }, [configuracoes]);
+
+  useEffect(() => {
+    localStorage.setItem(CHAVE_PREFERENCIAS, JSON.stringify(preferencias));
+  }, [preferencias]);
+
+  useEffect(() => {
+    localStorage.setItem(CHAVE_TEMA, tema);
+    document.documentElement.dataset.theme = tema;
+  }, [tema]);
+
   function fazerLogin(dadosLogin) {
     const usuarioInformado =
       typeof dadosLogin === "string"
@@ -169,10 +182,18 @@ function App() {
       };
     }
 
+    let perfilSalvo = {};
+    try {
+      perfilSalvo = JSON.parse(localStorage.getItem(CHAVE_PERFIL) || "{}");
+    } catch {}
+
     const usuarioLogado = {
       usuario: encontrado.usuario,
-      nome: encontrado.nome,
-      email: encontrado.email,
+      nome: perfilSalvo.nome || encontrado.nome,
+      email: perfilSalvo.email || encontrado.email,
+      curso: perfilSalvo.curso || "Ciência da Computação",
+      periodo: perfilSalvo.periodo || "4º período",
+      cidade: perfilSalvo.cidade || "Vitória, ES",
     };
 
     setUsuario(usuarioLogado);
@@ -237,6 +258,16 @@ function App() {
     const usuarioAtualizado = { ...usuario, ...dadosAtualizados };
     setUsuario(usuarioAtualizado);
     localStorage.setItem(CHAVE_AUTENTICACAO, JSON.stringify(usuarioAtualizado));
+
+    try {
+      const perfilAtual = JSON.parse(localStorage.getItem(CHAVE_PERFIL) || "{}");
+      localStorage.setItem(
+        CHAVE_PERFIL,
+        JSON.stringify({ ...perfilAtual, ...dadosAtualizados }),
+      );
+    } catch {
+      localStorage.setItem(CHAVE_PERFIL, JSON.stringify(dadosAtualizados));
+    }
 
     const usuarios = obterUsuariosLocais();
     const emailAnterior = usuario?.email?.toLowerCase();
@@ -359,7 +390,7 @@ function App() {
 
       case "inicio":
       default:
-        return <Body onNavigate={navegarPara} />;
+        return <Body onNavigate={navegarPara} usuario={usuario} />;
     }
   }
 
