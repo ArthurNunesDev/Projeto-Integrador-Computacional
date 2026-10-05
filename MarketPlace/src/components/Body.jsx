@@ -1,9 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function Body({ onNavigate }) {
   const [areaSelecionada, setAreaSelecionada] = useState("Todos");
   const [participando, setParticipando] = useState([]);
   const [detalheAberto, setDetalheAberto] = useState(null);
+  const [salvos, setSalvos] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("marketfaesa-salvos")) || []; } catch { return []; }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("marketfaesa-salvos", JSON.stringify(salvos));
+  }, [salvos]);
 
   const areas = ["Todos", "Tecnologia", "Saúde", "Direito", "Engenharia", "Administração", "Design"];
 
@@ -62,6 +69,12 @@ function Body({ onNavigate }) {
     areaSelecionada === "Todos" ||
     item.area.toLowerCase().includes(areaSelecionada.toLowerCase()),
   );
+
+  function alternarSalvo(item) {
+    setSalvos((estado) => estado.some((salvo) => salvo.id === item.id)
+      ? estado.filter((salvo) => salvo.id !== item.id)
+      : [...estado, item]);
+  }
 
   function alternarParticipacao(id) {
     setParticipando((estado) =>
@@ -184,6 +197,7 @@ function Body({ onNavigate }) {
                         </div>
                         <div className="opportunity-actions">
                           <button className="details-button" type="button" onClick={() => setDetalheAberto(item)}>Detalhes</button>
+                          <button className={salvos.some((salvo) => salvo.id === item.id) ? "save-button salvo" : "save-button"} type="button" onClick={() => alternarSalvo(item)} aria-label={salvos.some((salvo) => salvo.id === item.id) ? "Remover dos salvos" : "Salvar oportunidade"}>{salvos.some((salvo) => salvo.id === item.id) ? "♥" : "♡"}</button>
                           <button className={entrou ? "participating-button" : ""} type="button" onClick={() => alternarParticipacao(item.id)}>
                             {entrou ? "✓ Participando" : "Participar"}
                           </button>
@@ -298,6 +312,7 @@ function Body({ onNavigate }) {
             </div>
             <div className="opportunity-modal-footer">
               <div className="person"><div className="person-avatar">{detalheAberto.inicial}</div><div><strong>{detalheAberto.pessoa}</strong><span>{detalheAberto.curso}</span></div></div>
+              <button className={salvos.some((salvo) => salvo.id === detalheAberto.id) ? "save-button salvo" : "save-button"} type="button" onClick={() => alternarSalvo(detalheAberto)}>{salvos.some((salvo) => salvo.id === detalheAberto.id) ? "♥ Salvo" : "♡ Salvar"}</button>
               <button className={participando.includes(detalheAberto.id) ? "participating-button" : ""} type="button" onClick={() => alternarParticipacao(detalheAberto.id)}>
                 {participando.includes(detalheAberto.id) ? "✓ Participando" : "Participar"}
               </button>
