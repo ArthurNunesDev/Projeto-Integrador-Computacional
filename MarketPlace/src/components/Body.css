@@ -372,3 +372,56 @@ body { background: var(--mf-bg); }
   .area-pill { padding: 0 6px; }
   .opportunity-card { padding: 10px; }
 }
+
+
+/* Manter estatísticas lado a lado no mobile */
+@media (max-width: 600px) {
+  .stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+  }
+
+  .stat-card {
+    min-width: 0;
+    min-height: 62px;
+    padding: 9px 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .stat-card strong {
+    font-size: 15px;
+    line-height: 1;
+  }
+
+  .stat-card span {
+    display: block;
+    margin-top: 4px;
+    font-size: 6px;
+    line-height: 1.15;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 380px) {
+  .stats-grid {
+    gap: 4px;
+  }
+
+  .stat-card {
+    min-height: 56px;
+    padding: 7px 3px;
+    border-radius: 10px;
+  }
+
+  .stat-card strong {
+    font-size: 13px;
+  }
+
+  .stat-card span {
+    font-size: 5px;
+  }
+}
