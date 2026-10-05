@@ -208,3 +208,5 @@ body { background: var(--mf-bg); }
   .opportunity-modal-backdrop { padding: 14px; }
   .opportunity-modal { padding: 22px; }
 }
+
+.opportunity-actions .save-button{width:30px;padding:8px 0!important;background:var(--mf-bg)!important;color:var(--mf-navy)!important;border:1px solid var(--mf-border)!important;font-size:16px!important}.opportunity-actions .save-button:hover{background:var(--mf-light)!important}.opportunity-actions .save-button.salvo{background:var(--mf-navy)!important;color:#fff!important;border-color:var(--mf-navy)!important}
