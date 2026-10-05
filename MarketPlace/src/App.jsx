@@ -8,6 +8,7 @@ import Habilidades from "./components/Skills.jsx";
 import PeopleSkills from "./components/PeopleSkills.jsx";
 import Connections from "./components/Connections.jsx";
 import Messages from "./components/Messages.jsx";
+import Salvos from "./components/Saved.jsx";
 import Perfil from "./components/Profile.jsx";
 
 import Login from "./auth/Login.jsx";
@@ -21,6 +22,7 @@ import "./components/Skills.css";
 import "./components/PeopleSkills.css";
 import "./components/Connections.css";
 import "./components/Messages.css";
+import "./components/Saved.css";
 
 const CHAVE_TEMA = "marketfaesa-theme";
 const CHAVE_CONFIG = "marketfaesa-config";
@@ -275,6 +277,9 @@ function App() {
 
       case "mensagens":
         return <Messages />;
+
+      case "salvos":
+        return <Salvos onNavigate={navegarPara} />;
 
       case "perfil":
         return (
