@@ -210,3 +210,97 @@ body { background: var(--mf-bg); }
 }
 
 .opportunity-actions .save-button{width:30px;padding:8px 0!important;background:var(--mf-bg)!important;color:var(--mf-navy)!important;border:1px solid var(--mf-border)!important;font-size:16px!important}.opportunity-actions .save-button:hover{background:var(--mf-light)!important}.opportunity-actions .save-button.salvo{background:var(--mf-navy)!important;color:#fff!important;border-color:var(--mf-navy)!important}
+
+
+@media (max-width: 620px) {
+  .main-content {
+    padding: 16px 12px 40px;
+  }
+
+  .welcome-card {
+    min-height: 0;
+    padding: 23px 20px;
+    border-radius: 18px;
+  }
+
+  .welcome-card h2 {
+    font-size: clamp(22px, 8vw, 29px);
+  }
+
+  .welcome-card p {
+    font-size: 12px;
+  }
+
+  .welcome-button {
+    width: 100%;
+  }
+
+  .welcome-decoration {
+    right: -95px;
+    top: -105px;
+    width: 230px;
+    height: 230px;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+  }
+
+  .section-heading h3 {
+    font-size: 15px;
+  }
+
+  .section-heading button {
+    white-space: nowrap;
+  }
+
+  .areas-list {
+    gap: 7px;
+  }
+
+  .area-pill {
+    height: 34px;
+    padding: 0 11px;
+    font-size: 9px;
+  }
+
+  .opportunity-card {
+    padding: 16px;
+  }
+
+  .opportunity-modal-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .opportunity-modal-footer > button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 380px) {
+  .main-content {
+    padding-left: 9px;
+    padding-right: 9px;
+  }
+
+  .welcome-card {
+    padding: 20px 16px;
+  }
+
+  .welcome-small {
+    font-size: 9px;
+  }
+
+  .stats-grid {
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 16px;
+  }
+
+  .opportunity-info {
+    gap: 7px;
+  }
+}
