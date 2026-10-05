@@ -204,8 +204,18 @@ O GitHub Pages serve apenas arquivos estáticos, então o backend precisará de 
         <sub><b>Igor Hermann Salgado</b></sub>
       </a>
     </td>
-    <td align="center"><sub><b>Enzo Ceglias Coutinho</b></sub></td>
-    <td align="center"><sub><b>Lucas de Souza Barboza</b></sub></td>
+    <td align="center">
+      <a href="https://github.com/EnzoCoutinh0">
+        <img src="https://github.com/EnzoCoutinh0.png" width="100" alt="Foto de Enzo Ceglias Coutinho"><br>
+        <sub><b>Enzo Ceglias Coutinho</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/lucaszbrz">
+        <img src="https://github.com/lucaszbrz.png" width="100" alt="Foto de Lucas de Souza Barboza"><br>
+        <sub><b>Lucas de Souza Barboza</b></sub>
+      </a>
+    </td>
     <td align="center"><sub><b>Daniel Stieg Radaelle</b></sub></td>
   </tr>
 </table>
