@@ -34,6 +34,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
   const [editando, setEditando] = useState(false);
   const [dados, setDados] = useState(() => obterPerfil(usuario));
   const [salvo, setSalvo] = useState(false);
+  const [mostrarConquista, setMostrarConquista] = useState(false);
 
   useEffect(() => {
     localStorage.setItem(chavePerfil(usuario), JSON.stringify(dados));
@@ -59,11 +60,9 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
     window.setTimeout(() => setSalvo(false), 2500);
 
     const progressoFinal = calcularProgressoPerfil({ ...usuario, ...atualizados });
-    if (progressoFinal === 100 && usuario?.email) {
-      localStorage.setItem(
-        "marketfaesa-perfil-completo-pendente:" + usuario.email.trim().toLowerCase(),
-        "1",
-      );
+    if (progressoFinal === 100) {
+      setMostrarConquista(true);
+      window.setTimeout(() => setMostrarConquista(false), 4200);
     }
   }
 
@@ -86,6 +85,18 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
         </section>
 
         {salvo && <div className="perfil-save-feedback">✓ Perfil atualizado e salvo</div>}
+
+        {mostrarConquista && (
+          <div className="perfil-completo-overlay" role="dialog" aria-modal="true">
+            <div className="perfil-completo-card">
+              <div className="perfil-completo-icon">🎉</div>
+              <span>PERFIL COMPLETO!</span>
+              <h2>Obrigado por completar seu perfil! ✨</h2>
+              <p>Agora sua presença na MarketFAESA está pronta para conectar você a novas oportunidades.</p>
+              <div className="perfil-completo-sparkles">✦　✧　✦</div>
+            </div>
+          </div>
+        )}
 
         <section className="perfil-main-card animate__animated animate__fadeInUp">
           <div className="perfil-main-top">
