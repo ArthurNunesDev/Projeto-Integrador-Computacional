@@ -138,7 +138,7 @@ function Header({ paginaAtual, onNavigate, onLogout }) {
         <div className="menu-section">
           <span className="menu-section-title">MINHA ÁREA</span>
           <ul className="menu-lista">
-            <li><button className="menu-item" type="button"><span className="menu-item-icon">♡</span><span>Salvos</span></button></li>
+            <li><button className={`menu-item ${paginaAtual === "salvos" ? "ativo" : ""}`} type="button" onClick={() => navegar("salvos")}><span className="menu-item-icon">♡</span><span>Salvos</span></button></li>
             <li><button className="menu-item" type="button"><span className="menu-item-icon">▤</span><span>Minhas Publicações</span></button></li>
           </ul>
         </div>
