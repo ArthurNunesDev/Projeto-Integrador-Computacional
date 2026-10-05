@@ -334,7 +334,6 @@ function App() {
             usuario={usuario}
             onLogout={fazerLogout}
             onUpdateUsuario={atualizarUsuario}
-            onUpdateUsuario={atualizarUsuario}
             onDeleteAccount={excluirConta}
           />
         );
@@ -350,6 +349,7 @@ function App() {
             preferencias={preferencias}
             onAlterarPreferencia={alterarPreferencia}
             onAlterarSenha={alterarSenha}
+            onUpdateUsuario={atualizarUsuario}
             onDeleteAccount={excluirConta}
           />
         );
