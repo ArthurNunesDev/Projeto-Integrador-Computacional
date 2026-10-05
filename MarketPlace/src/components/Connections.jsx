@@ -3,10 +3,10 @@ import { useMemo, useState } from "react";
 const CHAVE_CONEXOES = "marketfaesa-conexoes";
 
 const pessoas = [
-  { id: 1, nome: "Ana Souza", curso: "Ciência da Computação · 6º período", cidade: "Vitória, ES", inicial: "AS", habilidades: ["React", "JavaScript", "UX/UI Design"] },
-  { id: 2, nome: "Lucas Martins", curso: "Design · 5º período", cidade: "Vila Velha, ES", inicial: "LM", habilidades: ["Figma", "UI Design", "Branding"] },
-  { id: 3, nome: "Rafael Costa", curso: "Direito · 7º período", cidade: "Vitória, ES", inicial: "RC", habilidades: ["Redação Jurídica", "Contratos", "Pesquisa"] },
-  { id: 4, nome: "Marina Oliveira", curso: "Administração · 4º período", cidade: "Serra, ES", inicial: "MO", habilidades: ["Excel", "Marketing Digital", "Análise de Dados"] },
+  { id: 1, nome: "Ana Souza", curso: "Ciência da Computação · 6º período", cidade: "Vitória, ES", inicial: "AS", bio: "Desenvolvedora front-end interessada em interfaces acessíveis e projetos colaborativos.", habilidades: ["React", "JavaScript", "UX/UI Design"] },
+  { id: 2, nome: "Lucas Martins", curso: "Design · 5º período", cidade: "Vila Velha, ES", inicial: "LM", bio: "Designer focado em identidade visual, prototipação e experiências digitais.", habilidades: ["Figma", "UI Design", "Branding"] },
+  { id: 3, nome: "Rafael Costa", curso: "Direito · 7º período", cidade: "Vitória, ES", inicial: "RC", bio: "Estudante de Direito interessado em pesquisa, contratos e produção de conteúdo jurídico.", habilidades: ["Redação Jurídica", "Contratos", "Pesquisa"] },
+  { id: 4, nome: "Marina Oliveira", curso: "Administração · 4º período", cidade: "Serra, ES", inicial: "MO", bio: "Estudante de Administração apaixonada por dados, marketing e organização de projetos.", habilidades: ["Excel", "Marketing Digital", "Análise de Dados"] },
 ];
 
 const solicitacoesRecebidas = [
@@ -28,7 +28,7 @@ function Connections() {
   const [aba, setAba] = useState("conexoes");
   const [busca, setBusca] = useState("");
   const [conexoes, setConexoes] = useState(obterConexoes);
-  const [recebidas, setRecebidas] = useState(solicitacoesRecebidas);
+  const [recebidas, setRecebidas] = useState(solicitacoesRecebidas);\n  const [perfilAberto, setPerfilAberto] = useState(null);
 
   function salvarConexoes(ids) {
     setConexoes(ids);
@@ -201,7 +201,7 @@ function Connections() {
                     </div>
                     <div className="connection-card-footer">
                       <span>⌖ {pessoa.cidade}</span>
-                      <button type="button" className={conectado ? "connected" : ""} onClick={() => conectado ? removerConexao(pessoa.id) : conectar(pessoa.id)}>
+                      <button type="button" className={conectado ? "connected" : ""} onClick={(event) => { event.stopPropagation(); conectado ? removerConexao(pessoa.id) : conectar(pessoa.id); }}>
                         {conectado ? "✓ Conectado" : "+ Conectar"}
                       </button>
                     </div>
