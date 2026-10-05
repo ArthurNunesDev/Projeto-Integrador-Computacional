@@ -80,7 +80,7 @@ function Header({ paginaAtual, onNavigate, onLogout }) {
             </button>
 
             {perfilMenuAberto && (
-              <div className="profile-dropdown">
+              <div className="profile-dropdown animate__animated animate__fadeIn">
                 <div className="profile-dropdown__user">
                   <div className="profile-dropdown__avatar">JS</div>
                   <div className="profile-dropdown__user-info">
