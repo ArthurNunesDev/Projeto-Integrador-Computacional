@@ -57,6 +57,14 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
     setEditando(false);
     setSalvo(true);
     window.setTimeout(() => setSalvo(false), 2500);
+
+    const progressoFinal = calcularProgressoPerfil({ ...usuario, ...atualizados });
+    if (progressoFinal === 100 && usuario?.email) {
+      localStorage.setItem(
+        "marketfaesa-perfil-completo-pendente:" + usuario.email.trim().toLowerCase(),
+        "1",
+      );
+    }
   }
 
   function cancelarEdicao() {
@@ -189,20 +197,6 @@ function PerfilConclusao({ usuario, onNavigate }) {
       window.removeEventListener("marketfaesa-perfil-atualizado", atualizar);
     };
   }, [usuario]);
-
-  if (progresso === 100) {
-    return (
-      <section className="perfil-completion-card perfil-completion-finished animate__animated animate__fadeInRight">
-        <div className="perfil-completion-icon">🎉</div>
-        <div>
-          <span>PERFIL COMPLETO!</span>
-          <strong>Seu perfil está pronto para brilhar ✨</strong>
-          <p>Mostre suas habilidades e encontre novas oportunidades.</p>
-        </div>
-        <div className="perfil-completion-sparkles" aria-hidden="true">✦ ✧ ✦</div>
-      </section>
-    );
-  }
 
   return (
     <section className="perfil-completion-card animate__animated animate__fadeInRight">
