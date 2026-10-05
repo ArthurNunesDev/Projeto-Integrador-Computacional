@@ -136,18 +136,112 @@
 @media (prefers-reduced-motion: reduce) { .menu-lateral, .menu-lateral.aberto, .menu-lateral .menu-header, .menu-lateral .menu-section { transition: none; } .overlay { animation: none; opacity: 1; } }
 
 @media (max-width: 900px) {
-  .header-conteudo { width: calc(100% - 24px); padding: 0 16px; gap: 14px; }
+  .header-conteudo {
+    width: calc(100% - 24px);
+    padding: 0 16px;
+    gap: 14px;
+  }
+
   .market-text { display: none; }
   .campo-busca { font-size: 14px; }
 }
+
 @media (max-width: 620px) {
-  .header-conteudo { min-height: 64px; margin-top: 10px; border-radius: 17px; }
-  .menu-button { width: 38px; height: 38px; flex-basis: 38px; }
-  .market-symbol { width: 40px; height: 40px; }
-  .campo-busca { height: 44px; padding-left: 44px; font-size: 12px; }
-  .campo-busca-icon { left: 15px; width: 18px; height: 18px; }
+  :root { --header-height: 78px; }
+
+  .header-conteudo {
+    width: calc(100% - 20px);
+    min-height: 58px;
+    margin: 10px auto 2px;
+    padding: 0 10px;
+    gap: 8px;
+    border-radius: 17px;
+  }
+
+  .menu-button {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+  }
+
+  .market-symbol {
+    width: 38px;
+    height: 38px;
+  }
+
+  .campo {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .campo-busca-wrapper {
+    width: 100%;
+  }
+
+  .campo-busca {
+    height: 42px;
+    min-width: 0;
+    padding: 0 10px 0 40px;
+    font-size: 12px;
+  }
+
+  .campo-busca-icon {
+    left: 13px;
+    width: 17px;
+    height: 17px;
+  }
+
   .header-icon-button { display: none; }
-  .profile-button { width: 38px; height: 38px; }
+
+  .profile-button {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+  }
+
+  .profile-dropdown {
+    position: fixed;
+    top: 72px;
+    right: 10px;
+    width: min(270px, calc(100vw - 20px));
+  }
+
+  .menu-lateral {
+    width: min(292px, calc(100vw - 16px));
+    padding-top: 88px;
+  }
+}
+
+@media (max-width: 380px) {
+  .header-conteudo {
+    width: calc(100% - 12px);
+    padding: 0 7px;
+    gap: 6px;
+  }
+
+  .market-symbol,
+  .menu-button,
+  .profile-button {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+  }
+
+  .campo-busca {
+    height: 38px;
+    padding-left: 36px;
+    font-size: 11px;
+  }
+
+  .campo-busca-icon {
+    left: 11px;
+    width: 15px;
+    height: 15px;
+  }
+
+  .menu-lateral {
+    width: calc(100vw - 10px);
+  }
 }
 
 /* Ajustes de contraste para o tema escuro */
