@@ -11,7 +11,7 @@ function lerPublicacoes() {
   }
 }
 
-function MinhasPublicacoes() {
+function MinhasPublicacoes({ onNavigate }) {
   const [publicacoes, setPublicacoes] = useState(lerPublicacoes);
   const [busca, setBusca] = useState("");
   const [editando, setEditando] = useState(null);
@@ -51,6 +51,7 @@ function MinhasPublicacoes() {
             <h1>Minhas Publicações</h1>
             <p>Gerencie as habilidades que você publicou no Market FAESA.</p>
           </div>
+          <button className="publications-create-button" type="button" onClick={() => onNavigate?.("publicar-habilidade")}>+ Criar publicação</button>
           <div className="publications-total">
             <strong>{publicacoes.length}</strong>
             <span>{publicacoes.length === 1 ? "publicação" : "publicações"}</span>
