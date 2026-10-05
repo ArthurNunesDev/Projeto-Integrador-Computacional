@@ -33,6 +33,8 @@ const CHAVE_CONFIG = "marketfaesa-config";
 const CHAVE_AUTENTICACAO = "marketfaesa-auth";
 const CHAVE_USUARIOS = "marketfaesa-users";
 const CHAVE_PAGINA = "marketfaesa-pagina";
+const CHAVE_PERFIL = "marketfaesa-perfil";
+const CHAVE_PREFERENCIAS = "marketfaesa-preferencias";
 
 function obterTemaInicial() {
   const temaSalvo = localStorage.getItem(CHAVE_TEMA);
@@ -48,7 +50,6 @@ const CONFIG_PADRAO = {
   conexoes: true,
   publicacoes: true,
   resumoSemanal: false,
-  reduzirAnimacoes: false,
 };
 
 function obterConfiguracoesIniciais() {
@@ -97,9 +98,15 @@ function App() {
   const [usuario, setUsuario] = useState(obterUsuarioInicial);
   const [pagina, setPagina] = useState(() => localStorage.getItem(CHAVE_PAGINA) || "inicio");
   const [tema, setTema] = useState(obterTemaInicial);
-  const [configuracoes, setConfiguracoes] = useState(
-    obterConfiguracoesIniciais,
-  );
+  const [configuracoes, setConfiguracoes] = useState(obterConfiguracoesIniciais);
+  const [preferencias, setPreferencias] = useState(() => {
+    try {
+      const salvo = localStorage.getItem(CHAVE_PREFERENCIAS);
+      return salvo ? JSON.parse(salvo) : { area: "tecnologia", modalidade: "todas", frequencia: "imediato" };
+    } catch {
+      return { area: "tecnologia", modalidade: "todas", frequencia: "imediato" };
+    }
+  });
 
   function fazerLogin(dadosLogin) {
     const usuarioInformado =
@@ -226,6 +233,48 @@ function App() {
     return { sucesso: true };
   }
 
+  function atualizarUsuario(dadosAtualizados) {
+    const usuarioAtualizado = { ...usuario, ...dadosAtualizados };
+    setUsuario(usuarioAtualizado);
+    localStorage.setItem(CHAVE_AUTENTICACAO, JSON.stringify(usuarioAtualizado));
+
+    const usuarios = obterUsuariosLocais();
+    const emailAnterior = usuario?.email?.toLowerCase();
+    const usuariosAtualizados = usuarios.map((conta) =>
+      conta.email?.toLowerCase() === emailAnterior
+        ? { ...conta, nome: usuarioAtualizado.nome, email: usuarioAtualizado.email, usuario: usuarioAtualizado.email }
+        : conta,
+    );
+    localStorage.setItem(CHAVE_USUARIOS, JSON.stringify(usuariosAtualizados));
+  }
+
+  function excluirConta() {
+    const emailAtual = usuario?.email?.toLowerCase();
+    const usuarios = obterUsuariosLocais().filter((conta) => conta.email?.toLowerCase() !== emailAtual);
+    localStorage.setItem(CHAVE_USUARIOS, JSON.stringify(usuarios));
+    localStorage.removeItem(CHAVE_AUTENTICACAO);
+    localStorage.removeItem(CHAVE_PERFIL);
+    localStorage.removeItem(CHAVE_PREFERENCIAS);
+    setUsuario(null);
+    setPagina("inicio");
+    localStorage.setItem(CHAVE_PAGINA, "inicio");
+  }
+
+  function alterarSenha(senhaAtual, novaSenha) {
+    const usuarios = obterUsuariosLocais();
+    const emailAtual = usuario?.email?.toLowerCase();
+    const indice = usuarios.findIndex((conta) => conta.email?.toLowerCase() === emailAtual);
+    if (indice < 0 || usuarios[indice].senha !== senhaAtual) return false;
+    const atualizados = [...usuarios];
+    atualizados[indice] = { ...atualizados[indice], senha: novaSenha };
+    localStorage.setItem(CHAVE_USUARIOS, JSON.stringify(atualizados));
+    return true;
+  }
+
+  function alterarPreferencia(campo, valor) {
+    setPreferencias((estado) => ({ ...estado, [campo]: valor }));
+  }
+
   function fazerLogout() {
     setUsuario(null);
     localStorage.removeItem(CHAVE_AUTENTICACAO);
@@ -246,6 +295,10 @@ function App() {
 
     localStorage.setItem(CHAVE_CONFIG, JSON.stringify(configuracoes));
   }, [configuracoes]);
+
+  useEffect(() => {
+    localStorage.setItem(CHAVE_PREFERENCIAS, JSON.stringify(preferencias));
+  }, [preferencias]);
 
   function alterarTema(novoTema) {
     setTema(novoTema === "dark" ? "dark" : "light");
@@ -296,6 +349,8 @@ function App() {
             mostrarEmail={configuracoes.mostrarEmail}
             usuario={usuario}
             onLogout={fazerLogout}
+            onUpdateUsuario={atualizarUsuario}
+            onDeleteAccount={excluirConta}
           />
         );
 
@@ -307,6 +362,10 @@ function App() {
             onChangeTema={alterarTema}
             configuracoes={configuracoes}
             onAlterarConfiguracao={alterarConfiguracao}
+            preferencias={preferencias}
+            onAlterarPreferencia={alterarPreferencia}
+            onAlterarSenha={alterarSenha}
+            onDeleteAccount={excluirConta}
           />
         );
 
