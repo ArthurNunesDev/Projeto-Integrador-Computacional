@@ -127,9 +127,9 @@ function App() {
         ? dadosLogin.trim()
         : (dadosLogin?.usuario || dadosLogin?.email || "").trim();
 
-    const emailInformado =
+    const identificadorInformado =
       typeof dadosLogin === "object"
-        ? (dadosLogin?.email || "").trim().toLowerCase()
+        ? (dadosLogin?.email || dadosLogin?.usuario || "").trim().toLowerCase()
         : "";
 
     const senhaInformada =
@@ -137,12 +137,16 @@ function App() {
         ? dadosLogin?.senha || dadosLogin?.password || ""
         : "";
 
-    if (!usuarioInformado || !emailInformado || !senhaInformada) {
+    if (!identificadorInformado || !senhaInformada) {
       return {
         sucesso: false,
-        mensagem: "Preencha seu usuário, e-mail e senha.",
+        mensagem: "Preencha seu usuário/e-mail e sua senha.",
       };
     }
+
+    const emailInformado = identificadorInformado.includes("@")
+      ? identificadorInformado
+      : "";
 
     // Em desenvolvimento, também permite as credenciais definidas no .env.development.local.
     const usuarioDev = import.meta.env.VITE_DEV_USER?.trim();
@@ -181,8 +185,8 @@ function App() {
     const usuarios = obterUsuariosLocais();
     const encontrado = usuarios.find(
       (conta) =>
-        conta.usuario?.toLowerCase() === usuarioInformado.toLowerCase() &&
-        conta.email?.toLowerCase() === emailInformado &&
+        (conta.usuario?.toLowerCase() === identificadorInformado ||
+          conta.email?.toLowerCase() === identificadorInformado) &&
         conta.senha === senhaInformada,
     );
 
