@@ -184,3 +184,19 @@
 [data-theme="dark"] .menu-section-title {
   color: #AEBCE0;
 }
+
+
+.market-symbol-dark,
+.menu-brand-logo-dark {
+  display: none;
+}
+
+[data-theme="dark"] .market-symbol-light,
+[data-theme="dark"] .menu-brand-logo-light {
+  display: none;
+}
+
+[data-theme="dark"] .market-symbol-dark,
+[data-theme="dark"] .menu-brand-logo-dark {
+  display: block;
+}
