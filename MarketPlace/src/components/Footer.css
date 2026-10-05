@@ -165,3 +165,6 @@
     padding-bottom: 18px;
   }
 }
+
+
+@media(max-width:600px){.site-footer{margin-top:18px}.site-footer-inner,.site-footer-bottom{width:calc(100% - 18px)}.site-footer-inner{gap:22px;padding:24px 9px 20px}.site-footer-links{gap:18px 14px}.site-footer-column h4{font-size:8px}.site-footer-column a{font-size:7px}.site-footer-brand p{font-size:7px;line-height:1.5}.site-footer-bottom{padding:10px 9px 13px;font-size:7px}}
