@@ -30,7 +30,7 @@ function Body({ onNavigate, usuario }) {
   const [participando, setParticipando] = useState([]);
   const [detalheAberto, setDetalheAberto] = useState(null);
   const [perfilProgresso, setPerfilProgresso] = useState(() => calcularProgressoPerfil(usuario));
-  const [perfilConcluido, setPerfilConcluido] = useState(false);
+  const [perfilConcluido, setPerfilConcluido] = useState(() => calcularProgressoPerfil(usuario) === 100);
   const [mostrarPerfilCompleto, setMostrarPerfilCompleto] = useState(false);
   const [salvos, setSalvos] = useState(() => {
     try { return JSON.parse(localStorage.getItem("marketfaesa-salvos")) || []; } catch { return []; }
@@ -57,9 +57,7 @@ function Body({ onNavigate, usuario }) {
     const atualizarProgresso = () => {
       const progresso = calcularProgressoPerfil(usuario);
       setPerfilProgresso(progresso);
-      if (progresso < 100) {
-        setPerfilConcluido(false);
-      }
+      setPerfilConcluido(progresso === 100);
     };
 
     atualizarProgresso();
