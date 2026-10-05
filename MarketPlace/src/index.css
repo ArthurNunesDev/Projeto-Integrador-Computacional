@@ -41,3 +41,40 @@ img { max-width: 100%; display: block; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
 
+
+
+/* Base responsiva */
+html,
+body,
+#root {
+  overflow-x: hidden;
+}
+
+@media (max-width: 900px) {
+  html {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 620px) {
+  html {
+    font-size: 14px;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@media (max-width: 380px) {
+  html {
+    min-width: 0;
+  }
+
+  body {
+    min-width: 0;
+  }
+}
