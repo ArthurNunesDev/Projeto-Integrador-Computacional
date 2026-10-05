@@ -124,7 +124,16 @@
 .menu-item:hover, .menu-item.ativo { background: var(--mf-light); color: var(--mf-navy); }
 .menu-item-icon { width: 22px; text-align: center; color: var(--mf-navy); font-size: 17px; }
 .menu-badge { margin-left: auto; min-width: 22px; padding: 3px 6px; border-radius: 20px; background: var(--mf-orange); color: #fff; font-size: 8px; text-align: center; }
-.overlay { position: fixed; inset: 0; z-index: 850; background: rgba(17,22,56,.28); opacity: 0; animation: menuOverlayIn .28s ease forwards; backdrop-filter: blur(2px); }\n\n.menu-lateral .menu-header,\n.menu-lateral .menu-section { opacity: 0; transform: translate3d(-12px, 0, 0); transition: opacity .22s ease, transform .32s cubic-bezier(.22, 1, .36, 1); }\n.menu-lateral.aberto .menu-header { opacity: 1; transform: translate3d(0, 0, 0); transition-delay: .08s; }\n.menu-lateral.aberto .menu-section { opacity: 1; transform: translate3d(0, 0, 0); }\n.menu-lateral.aberto .menu-section:nth-of-type(2) { transition-delay: .13s; }\n.menu-lateral.aberto .menu-section:nth-of-type(3) { transition-delay: .18s; }\n@keyframes menuOverlayIn { from { opacity: 0; } to { opacity: 1; } }\n@media (prefers-reduced-motion: reduce) { .menu-lateral, .menu-lateral.aberto, .menu-lateral .menu-header, .menu-lateral .menu-section { transition: none; } .overlay { animation: none; opacity: 1; } }
+.overlay { position: fixed; inset: 0; z-index: 850; background: rgba(17,22,56,.28); opacity: 0; animation: menuOverlayIn .28s ease forwards; backdrop-filter: blur(2px); }
+
+.menu-lateral .menu-header,
+.menu-lateral .menu-section { opacity: 0; transform: translate3d(-12px, 0, 0); transition: opacity .22s ease, transform .32s cubic-bezier(.22, 1, .36, 1); }
+.menu-lateral.aberto .menu-header { opacity: 1; transform: translate3d(0, 0, 0); transition-delay: .08s; }
+.menu-lateral.aberto .menu-section { opacity: 1; transform: translate3d(0, 0, 0); }
+.menu-lateral.aberto .menu-section:nth-of-type(2) { transition-delay: .13s; }
+.menu-lateral.aberto .menu-section:nth-of-type(3) { transition-delay: .18s; }
+@keyframes menuOverlayIn { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .menu-lateral, .menu-lateral.aberto, .menu-lateral .menu-header, .menu-lateral .menu-section { transition: none; } .overlay { animation: none; opacity: 1; } }
 
 @media (max-width: 900px) {
   .header-conteudo { width: calc(100% - 24px); padding: 0 16px; gap: 14px; }
