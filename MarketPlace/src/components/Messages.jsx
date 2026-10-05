@@ -67,13 +67,13 @@ function Mensagens() {
           <div className="mensagens-total"><strong>{conversas.length}</strong><span>conversas</span></div>
         </div>
         <section className="mensagens-shell">
-          <aside className={\`conversas-panel \${!mostrarLista?"mobile-escondido":""}\`}>
+          <aside className={`conversas-panel ${!mostrarLista?"mobile-escondido":""}`}>
             <div className="conversas-header"><div><strong>Conversas</strong><span>{conversas.reduce((t,c)=>t+c.naoLidas,0)} não lidas</span></div></div>
             <label className="mensagens-busca"><span>⌕</span><input type="search" value={busca} onChange={e=>setBusca(e.target.value)} placeholder="Buscar conversa..." aria-label="Buscar conversa"/></label>
             <div className="conversas-lista">
               {filtradas.length ? filtradas.map(c=>{
                 const ultima=c.mensagens[c.mensagens.length-1];
-                return <button key={c.id} type="button" className={\`conversa-item \${c.id===atual.id?"selecionada":""}\`} onClick={()=>abrirConversa(c.id)}>
+                return <button key={c.id} type="button" className={`conversa-item ${c.id===atual.id?"selecionada":""}`} onClick={()=>abrirConversa(c.id)}>
                   <span className="conversa-avatar">{c.iniciais}{c.online&&<i/>}</span>
                   <span className="conversa-dados"><span className="conversa-topo"><strong>{c.nome}</strong><small>{ultima?.hora}</small></span><span className="conversa-previa">{ultima?.texto||"Nova conversa"}</span></span>
                   {c.naoLidas>0&&<span className="conversa-nao-lidas">{c.naoLidas}</span>}
@@ -82,7 +82,7 @@ function Mensagens() {
             </div>
           </aside>
 
-          <section className={\`chat-panel \${mostrarLista?"":"mobile-visivel"}\`}>
+          <section className={`chat-panel ${mostrarLista?"":"mobile-visivel"}`}>
             <header className="chat-header">
               <button className="chat-voltar" type="button" onClick={()=>setMostrarLista(true)} aria-label="Voltar para conversas">←</button>
               <div className="chat-pessoa-avatar">{atual.iniciais}{atual.online&&<i/>}</div>
@@ -90,7 +90,7 @@ function Mensagens() {
               <button className="chat-acoes" type="button" aria-label="Mais opções">•••</button>
             </header>
             <div className="chat-conteudo"><div className="chat-data">HOJE</div><div className="chat-mensagens">
-              {atual.mensagens.map(m=><div key={m.id} className={\`mensagem-linha \${m.autor==="eu"?"enviada":"recebida"}\`}><div className="mensagem-balao"><span>{m.texto}</span><small>{m.hora}</small></div></div>)}
+              {atual.mensagens.map(m=><div key={m.id} className={`mensagem-linha ${m.autor==="eu"?"enviada":"recebida"}`}><div className="mensagem-balao"><span>{m.texto}</span><small>{m.hora}</small></div></div>)}
             </div></div>
             <form className="chat-compositor" onSubmit={enviar}>
               <button className="chat-anexo" type="button" aria-label="Anexar arquivo">+</button>
