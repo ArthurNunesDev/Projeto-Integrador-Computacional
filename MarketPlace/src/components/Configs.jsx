@@ -18,8 +18,8 @@ function Configs({
   const [conta, setConta] = useState({
     nome: usuario?.nome || "João Silva",
     email: usuario?.email || "joao.silva@faesa.br",
-    curso: "Ciência da Computação",
-    periodo: "4º período",
+    curso: usuario?.curso || "Ciência da Computação",
+    periodo: usuario?.periodo || "4º período",
   });
   const [senha, setSenha] = useState({ atual:"", nova:"", confirmar:"" });
   const [mensagemSenha, setMensagemSenha] = useState("");
