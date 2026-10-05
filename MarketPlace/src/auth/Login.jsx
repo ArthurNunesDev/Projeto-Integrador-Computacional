@@ -102,11 +102,20 @@ function Login({ onLogin, onNavigate, onRegister }) {
       return;
     }
 
-    onRegister?.({
+    const resultado = onRegister?.({
       nome: nome.trim(),
       email: cadastroEmail.trim(),
       senha: cadastroSenha,
     });
+
+    if (!resultado) {
+      setErroCadastro("Não foi possível processar o cadastro.");
+      return;
+    }
+
+    if (!resultado.sucesso) {
+      setErroCadastro(resultado.mensagem || "Não foi possível criar a conta.");
+    }
   }
 
   if (modoCadastro) {
