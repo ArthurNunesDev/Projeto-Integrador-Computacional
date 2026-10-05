@@ -1,6 +1,6 @@
 # MarketFaesa
 
-[MarketFaesa](https://arthunnunesdev.github.io/Projeto-Integrador-Computacional/) é um marketplace universitário desenvolvido no Projeto Integrador Computacional da FAESA.
+[MarketFaesa](https://arthurnunesdev.github.io/Projeto-Integrador-Computacional/) é um marketplace universitário desenvolvido no Projeto Integrador Computacional da FAESA.
 
 A proposta do projeto é conectar estudantes de diferentes cursos para encontrar **freelas, monitorias, aulas, projetos, consultorias e outras oportunidades**, permitindo também divulgar habilidades e criar conexões.
 
