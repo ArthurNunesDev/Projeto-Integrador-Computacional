@@ -34,12 +34,19 @@ function Configs({
     const nome = conta.nome.trim();
     const email = conta.email.trim().toLowerCase();
     if (!nome || !email) return;
+    let perfilExistente = {};
+    try {
+      perfilExistente = JSON.parse(localStorage.getItem("marketfaesa-perfil") || "{}");
+    } catch {}
+
     localStorage.setItem("marketfaesa-perfil", JSON.stringify({
-      nome, email, curso: conta.curso, periodo: conta.periodo,
-      cidade: "Vitória, ES",
-      bio: "Estudante de Ciência da Computação interessado em desenvolvimento web, tecnologia e projetos colaborativos.",
+      ...perfilExistente,
+      nome,
+      email,
+      curso: conta.curso,
+      periodo: conta.periodo,
     }));
-    onUpdateUsuario?.({ nome, email, usuario: email });
+    onUpdateUsuario?.({ nome, email, usuario: email, curso: conta.curso, periodo: conta.periodo });
     mostrarSalvo();
   }
 
