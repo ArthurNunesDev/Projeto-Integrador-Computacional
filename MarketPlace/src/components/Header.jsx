@@ -8,9 +8,6 @@ function Header({ paginaAtual, onNavigate, usuario, onLogout }) {
   const nome = usuario?.nome || "João Silva";
   const curso = usuario?.curso || "Ciência da Computação";
   const iniciais = nome.split(" ").filter(Boolean).slice(0, 2).map((parte) => parte[0]).join("").toUpperCase() || "JS";
-  const nome = usuario?.nome || "João Silva";
-  const curso = usuario?.curso || "Ciência da Computação";
-  const iniciais = nome.split(" ").filter(Boolean).slice(0, 2).map((parte) => parte[0]).join("").toUpperCase() || "JS";
 
   useEffect(() => {
     function handleClickOutside(event) {
