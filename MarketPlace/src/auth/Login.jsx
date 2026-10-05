@@ -198,29 +198,6 @@ function Login({ onLogin, onNavigate, onRegister }) {
         <h2>Entrar</h2>
 
         <form className="login-form" onSubmit={handleSubmit}>
-          <div className="login-field">
-            <label htmlFor="login-usuario">Usuário</label>
-            <input
-              id="login-usuario"
-              type="text"
-              value={usuario}
-              onChange={(event) => setUsuario(event.target.value)}
-              placeholder="seu usuário"
-              autoComplete="username"
-            />
-          </div>
-
-          <div className="login-field">
-            <label htmlFor="login-usuario">Usuário / E-mail</label>
-            <input
-              id="login-usuario"
-              type="text"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="usuário ou seu.email@faesa.br"
-              autoComplete="username"
-            />
-          </div>
 
           <CampoSenha
             id="login-senha"
