@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./Opportunities.css";
 
 const dados = [
@@ -15,11 +15,14 @@ function Oportunidades(){
   const [filtro,setFiltro]=useState("Todos");
   const [busca,setBusca]=useState("");
   const [participando,setParticipando]=useState([]);
+  const [salvos,setSalvos]=useState(()=>{try{return JSON.parse(localStorage.getItem("marketfaesa-salvos"))||[]}catch{return[]}});
+  useEffect(()=>{localStorage.setItem("marketfaesa-salvos",JSON.stringify(salvos))},[salvos]);
   const lista=useMemo(()=>{
     const termo=busca.trim().toLowerCase();
     return dados.filter(item=>(filtro==="Todos"||item.area===filtro)&&(!termo||[item.titulo,item.area,item.tipo,item.modalidade,item.pessoa].join(" ").toLowerCase().includes(termo)));
   },[filtro,busca]);
   function participar(id){setParticipando(estado=>estado.includes(id)?estado.filter(item=>item!==id):[...estado,id]);}
+  function alternarSalvo(item){setSalvos(estado=>estado.some(salvo=>salvo.id===item.id)?estado.filter(salvo=>salvo.id!==item.id):[...estado,item]);}
 
   return <main className="opportunities-page"><div className="opportunities-container">
     <section className="opportunities-header animate__animated animate__fadeInDown">
@@ -31,7 +34,7 @@ function Oportunidades(){
       <div className="opportunities-filters">{filtros.map(item=><button key={item} type="button" className={filtro===item?"selecionado":""} onClick={()=>setFiltro(item)}>{item}</button>)}</div>
     </section>
     {lista.length ? <section className="opportunities-results">{lista.map((item,index)=>{const entrou=participando.includes(item.id);return <article className="opportunity-page-card animate__animated animate__fadeInUp" style={{animationDelay:`${index*70}ms`}} key={item.id}>
-      <div className="opportunity-page-card__top"><div className="opportunity-page-card__icon">{item.icon}</div><span>{item.tipo}</span></div>
+      <div className="opportunity-page-card__top"><div className="opportunity-page-card__icon">{item.icon}</div><div className="opportunity-card-top-actions"><button className={salvos.some(salvo=>salvo.id===item.id)?"opportunity-save salvo":"opportunity-save"} type="button" onClick={()=>alternarSalvo(item)} aria-label={salvos.some(salvo=>salvo.id===item.id)?"Remover dos salvos":"Salvar oportunidade"}>{salvos.some(salvo=>salvo.id===item.id)?"♥":"♡"}</button><span>{item.tipo}</span></div></div>
       <h2>{item.titulo}</h2><p className="opportunity-page-card__description">{item.descricao}</p>
       <div className="opportunity-page-card__info"><span>✦ {item.area}</span><span>◷ {item.modalidade}</span></div>
       <div className="opportunity-page-card__footer"><div className="opportunity-page-card__person"><div>{item.inicial}</div><span><strong>{item.pessoa}</strong>{item.curso}</span></div><button type="button" className={entrou?"participando":""} onClick={()=>participar(item.id)}>{entrou?"✓ Participando":"Participar"}</button></div>
