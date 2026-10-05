@@ -31,13 +31,13 @@ function CampoSenha({ id, label, value, onChange, placeholder, autoComplete }) {
 }
 
 function Marca() {
+  const baseUrl = import.meta.env.BASE_URL;
+
   return (
     <div className="login-brand">
-      <div className="login-logo" aria-hidden="true">
-        M
-      </div>
+      <img className="login-logo" src={`${baseUrl}marketfaesa-symbol.svg`} alt="" />
       <h1>
-        Market<span>Faesa</span>
+        MARKET<span>FAESA</span>
       </h1>
     </div>
   );
