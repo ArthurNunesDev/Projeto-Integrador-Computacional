@@ -425,3 +425,76 @@ body { background: var(--mf-bg); }
     font-size: 5px;
   }
 }
+
+
+.complete-card { position: relative; overflow: hidden; }
+.complete-card > button {
+  margin-top: 9px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--mf-navy);
+  color: #fff;
+  font-size: 8px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform .2s ease, background .2s ease;
+}
+.complete-card > button:hover { background: var(--mf-orange); transform: translateY(-1px); }
+.complete-card-finished {
+  background: linear-gradient(135deg, var(--mf-navy), #303b83);
+  color: #fff;
+  border-color: transparent;
+  animation: perfilCompletoPulse 1s ease both;
+}
+.complete-card-finished h3,
+.complete-card-finished p,
+.complete-card-finished strong,
+.complete-card-finished .complete-success-label { color: #fff; }
+.complete-success-icon {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-size: 22px;
+  animation: perfilCompletoBounce .9s ease both;
+}
+.complete-success-content { padding-right: 28px; }
+.complete-success-label {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: 1.1px;
+  opacity: .8;
+}
+.complete-success-content h3 { margin: 0 0 4px; font-size: 12px; }
+.complete-success-content p { margin: 0; font-size: 8px; line-height: 1.45; }
+.complete-confetti {
+  margin-top: 10px;
+  color: var(--mf-orange);
+  font-size: 13px;
+  letter-spacing: 2px;
+  animation: perfilCompletoSparkle 1.2s ease infinite;
+}
+@keyframes perfilCompletoPulse {
+  0% { transform: scale(.97); opacity: .5; }
+  60% { transform: scale(1.02); opacity: 1; }
+  100% { transform: scale(1); }
+}
+@keyframes perfilCompletoBounce {
+  0% { transform: scale(.4) rotate(-20deg); opacity: 0; }
+  70% { transform: scale(1.2) rotate(8deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); }
+}
+@keyframes perfilCompletoSparkle {
+  0%,100% { opacity: .45; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-2px); }
+}
+@media (max-width: 600px) {
+  .complete-card > button { font-size: 6px; padding: 6px 8px; }
+  .complete-success-icon { top: 10px; right: 11px; font-size: 17px; }
+  .complete-success-label { font-size: 5px; }
+  .complete-success-content h3 { font-size: 9px; }
+  .complete-success-content p { font-size: 6px; }
+  .complete-confetti { margin-top: 7px; font-size: 9px; }
+}
