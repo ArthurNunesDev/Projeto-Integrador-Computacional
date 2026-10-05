@@ -78,8 +78,8 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
               {editando ? <input className="perfil-name-input" value={dados.nome} onChange={(e) => alterarCampo("nome", e.target.value)} /> : (
                 <h2>{dados.nome} <span className={"perfil-visibility-badge " + (perfilPublico ? "" : "is-privado")}>{perfilPublico ? "🌐 Público" : "🔒 Privado"}</span></h2>
               )}
-              <span>{dados.curso}</span>
-              <div className="perfil-meta"><span>🎓 {dados.periodo}</span><span>📍 {dados.cidade}</span></div>
+              {editando ? <input className="perfil-inline-input" value={dados.curso} onChange={(e) => alterarCampo("curso", e.target.value)} /> : <span>{dados.curso}</span>}
+              <div className="perfil-meta">{editando ? <><input className="perfil-inline-input small" value={dados.periodo} onChange={(e) => alterarCampo("periodo", e.target.value)} /><input className="perfil-inline-input small" value={dados.cidade} onChange={(e) => alterarCampo("cidade", e.target.value)} /></> : <><span>🎓 {dados.periodo}</span><span>📍 {dados.cidade}</span></>}</div>
             </div>
             <div className="perfil-actions">
               {editando ? <>
