@@ -35,7 +35,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail }) {
   return (
     <main className="perfil-page">
       <div className="perfil-container">
-        <section className="perfil-page-header">
+        <section className="perfil-page-header animate__animated animate__fadeInDown">
           <div>
             <span className="perfil-eyebrow">MINHA CONTA</span>
 
@@ -56,7 +56,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail }) {
           </button>
         </section>
 
-        <section className="perfil-main-card">
+        <section className="perfil-main-card animate__animated animate__fadeInUp">
           <div className="perfil-main-top">
             <div className="perfil-avatar-large">JS</div>
 
@@ -151,7 +151,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail }) {
           <div className="perfil-column-main">
             {/* SOBRE */}
 
-            <section className="perfil-section-card">
+            <section className="perfil-section-card animate__animated animate__fadeInUp">
               <div className="perfil-section-heading">
                 <div>
                   <span>PERFIL</span>
@@ -174,7 +174,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail }) {
 
             {/* HABILIDADES */}
 
-            <section className="perfil-section-card">
+            <section className="perfil-section-card animate__animated animate__fadeInUp">
               <div className="perfil-section-heading">
                 <div>
                   <span>COMPETÊNCIAS</span>
@@ -198,7 +198,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail }) {
 
             {/* INTERESSES */}
 
-            <section className="perfil-section-card">
+            <section className="perfil-section-card animate__animated animate__fadeInUp">
               <div className="perfil-section-heading">
                 <div>
                   <span>INTERESSES</span>
@@ -222,7 +222,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail }) {
           <aside className="perfil-column-side">
             {/* INFORMAÇÕES */}
 
-            <section className="perfil-side-card">
+            <section className="perfil-side-card animate__animated animate__fadeInRight">
               <div className="perfil-side-title">
                 <h3>Informações</h3>
               </div>
@@ -269,7 +269,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail }) {
 
             {/* PERFIL COMPLETO */}
 
-            <section className="perfil-completion-card">
+            <section className="perfil-completion-card animate__animated animate__fadeInRight">
               <div className="perfil-completion-icon">✨</div>
 
               <div>
