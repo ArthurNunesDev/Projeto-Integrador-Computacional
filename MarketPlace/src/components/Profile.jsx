@@ -209,6 +209,8 @@ function PerfilConclusao({ usuario, onNavigate }) {
     };
   }, [usuario]);
 
+  if (progresso >= 100) return null;
+
   return (
     <section className="perfil-completion-card animate__animated animate__fadeInRight">
       <div className="perfil-completion-icon">✨</div>
