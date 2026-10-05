@@ -11,7 +11,7 @@ const CONFIG_SECTIONS = [
 
 function Configs({
   onNavigate, tema, onChangeTema, configuracoes, onAlterarConfiguracao,
-  preferencias, onAlterarPreferencia, onAlterarSenha, onDeleteAccount, usuario, onLogout,
+  preferencias, onAlterarPreferencia, onAlterarSenha, onDeleteAccount, usuario, onLogout, onUpdateUsuario,
 }) {
   const [secaoAtiva, setSecaoAtiva] = useState("conta");
   const [salvo, setSalvo] = useState(false);
@@ -39,7 +39,7 @@ function Configs({
       cidade: "Vitória, ES",
       bio: "Estudante de Ciência da Computação interessado em desenvolvimento web, tecnologia e projetos colaborativos.",
     }));
-    window.dispatchEvent(new CustomEvent("marketfaesa-perfil-atualizado"));
+    onUpdateUsuario?.({ nome, email, usuario: email });
     mostrarSalvo();
   }
 
