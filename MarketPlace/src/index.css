@@ -1,41 +1,48 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+:root {
+  --mf-navy: #1E2761;
+  --mf-light: #CADCFC;
+  --mf-orange: #D98324;
+  --mf-bg: #F3F6FB;
+  --mf-surface: #FFFFFF;
+  --mf-text: #1E2761;
+  --mf-muted: #5D6B82;
+  --mf-border: #DDE5F0;
+  --mf-shadow: 0 12px 32px rgba(30, 39, 97, .08);
 }
 
-/* Respeita "reduzir movimento" do sistema e o toggle "Reduzir animações"
-   das Configurações (data-reduzir-animacoes no <html>, via App.jsx). */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
+[data-theme="dark"] {
+  --mf-bg: #111638;
+  --mf-surface: #1A214A;
+  --mf-text: #F7F9FF;
+  --mf-muted: #CADCFC;
+  --mf-border: rgba(202, 220, 252, .18);
+  --mf-shadow: 0 16px 36px rgba(0,0,0,.25);
 }
 
-[data-reduzir-animacoes="true"] *,
-[data-reduzir-animacoes="true"] *::before,
-[data-reduzir-animacoes="true"] *::after {
-  animation-duration: 0.01ms !important;
-  transition-duration: 0.01ms !important;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-#root {
-  min-height: 100vh;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.app-container {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  width: 100%;
-}
+html { min-width: 320px; scroll-behavior: smooth; }
 
 body {
-  font-family: system-ui, sans-serif;
+  min-width: 320px;
+  min-height: 100vh;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--mf-bg);
+  color: var(--mf-text);
+}
+
+button, input, textarea, select { font: inherit; }
+button { cursor: pointer; }
+img { max-width: 100%; display: block; }
+
+#root, .app, .app-container { min-height: 100vh; width: 100%; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+
+[data-reduzir-animacoes="true"] *, [data-reduzir-animacoes="true"] *::before, [data-reduzir-animacoes="true"] *::after {
+  animation-duration: .01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: .01ms !important;
 }
