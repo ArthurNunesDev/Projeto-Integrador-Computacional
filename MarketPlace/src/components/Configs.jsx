@@ -1,5 +1,11 @@
 import { useState } from "react";
 
+const CHAVE_PERFIL = "marketfaesa-perfil";
+
+function chavePerfil(usuario) {
+  return usuario?.email ? `${CHAVE_PERFIL}:${usuario.email.toLowerCase()}` : CHAVE_PERFIL;
+}
+
 const CONFIG_SECTIONS = [
   { id:"conta", label:"Conta", description:"Informações pessoais", icon:"👤" },
   { id:"seguranca", label:"Segurança", description:"Senha e acesso", icon:"🔒" },
@@ -16,8 +22,8 @@ function Configs({
   const [secaoAtiva, setSecaoAtiva] = useState("conta");
   const [salvo, setSalvo] = useState(false);
   const [conta, setConta] = useState({
-    nome: usuario?.nome || "João Silva",
-    email: usuario?.email || "joao.silva@faesa.br",
+    nome: usuario?.nome || "",
+    email: usuario?.email || "",
     curso: usuario?.curso || "Ciência da Computação",
     periodo: usuario?.periodo || "4º período",
   });
@@ -36,10 +42,10 @@ function Configs({
     if (!nome || !email) return;
     let perfilExistente = {};
     try {
-      perfilExistente = JSON.parse(localStorage.getItem("marketfaesa-perfil") || "{}");
+      perfilExistente = JSON.parse(localStorage.getItem(chavePerfil(usuario)) || "{}");
     } catch {}
 
-    localStorage.setItem("marketfaesa-perfil", JSON.stringify({
+    localStorage.setItem(chavePerfil(usuario), JSON.stringify({
       ...perfilExistente,
       nome,
       email,
