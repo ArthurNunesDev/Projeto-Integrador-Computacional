@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 
-function Body({ onNavigate }) {
+function Body({ onNavigate, usuario }) {
+  const nomeUsuario = usuario?.nome || "João Silva";
+  const cursoUsuario = usuario?.curso || "Ciência da Computação";
+  const periodoUsuario = usuario?.periodo || "4º período";
+  const iniciaisUsuario = nomeUsuario.split(" ").filter(Boolean).slice(0, 2).map((parte) => parte[0]).join("").toUpperCase() || "JS";
   const [areaSelecionada, setAreaSelecionada] = useState("Todos");
   const [participando, setParticipando] = useState([]);
   const [detalheAberto, setDetalheAberto] = useState(null);
@@ -94,7 +98,7 @@ function Body({ onNavigate }) {
               <span className="welcome-small">MARKETFAESA</span>
 
               <h2>
-                Olá, João! Que habilidade
+                Olá, {nomeUsuario.split(" ")[0]}! Que habilidade
                 <br />
                 você quer explorar hoje?
               </h2>
@@ -219,11 +223,11 @@ function Body({ onNavigate }) {
         <aside className="dashboard-sidebar">
           {/* PERFIL */}
           <section className="profile-card animate__animated animate__fadeInRight">
-            <div className="profile-avatar">JS</div>
+            <div className="profile-avatar">{iniciaisUsuario}</div>
 
-            <h3>João Silva</h3>
+            <h3>{nomeUsuario}</h3>
 
-            <p>Ciência da Computação · 4º per.</p>
+            <p>{cursoUsuario} · {periodoUsuario.replace(" período", "º per.")}</p>
 
             <div className="profile-stats">
               <div>
