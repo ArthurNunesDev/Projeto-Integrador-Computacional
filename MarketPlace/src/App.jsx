@@ -278,7 +278,7 @@ function App() {
 
       case "inicio":
       default:
-        return <Body />;
+        return <Body onNavigate={navegarPara} />;
     }
   }
 
