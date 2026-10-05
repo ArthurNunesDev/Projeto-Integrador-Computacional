@@ -303,3 +303,45 @@
 [data-theme="dark"] .menu-brand-logo-dark {
   display: block;
 }
+
+
+/* Mobile compacto */
+@media (max-width: 600px) {
+  :root { --header-height: 72px; }
+  .header-conteudo {
+    min-height: 52px;
+    margin-top: 7px;
+    padding: 0 7px;
+    gap: 6px;
+    border-radius: 14px;
+  }
+  .menu-button,
+  .profile-button,
+  .market-symbol {
+    width: 32px;
+    height: 32px;
+    flex-basis: 32px;
+  }
+  .menu-lines { width: 15px; gap: 3px; }
+  .campo-busca { height: 36px; padding-left: 33px; padding-right: 8px; font-size: 10px; border-radius: 20px; }
+  .campo-busca-icon { left: 10px; width: 14px; height: 14px; }
+  .profile-button { font-size: 9px; }
+  .menu-lateral { width: min(260px, calc(100vw - 10px)); padding: 78px 12px 18px; }
+  .menu-header { padding-bottom: 13px; }
+  .menu-brand-logo { width: 31px; height: 31px; }
+  .menu-brand { gap: 8px; }
+  .menu-brand strong { font-size: 11px; }
+  .menu-brand small { font-size: 7px; }
+  .menu-section { margin-top: 17px; }
+  .menu-section-title { margin-bottom: 6px; font-size: 7px; }
+  .menu-item { min-height: 37px; gap: 8px; padding: 5px 8px; font-size: 10px; border-radius: 9px; }
+  .menu-item-icon { width: 18px; font-size: 14px; }
+  .menu-badge { min-width: 18px; padding: 2px 5px; font-size: 7px; }
+  .profile-dropdown { top: 61px; right: 7px; width: min(235px, calc(100vw - 14px)); padding: 7px; border-radius: 13px; }
+  .profile-dropdown__user { gap: 8px; padding: 7px; }
+  .profile-dropdown__avatar { width: 32px; height: 32px; border-radius: 9px; font-size: 9px; }
+  .profile-dropdown__user-info strong { font-size: 10px; }
+  .profile-dropdown__user-info span { font-size: 7px; }
+  .profile-dropdown__item { min-height: 38px; gap: 7px; padding: 5px 7px; font-size: 10px; }
+  .profile-dropdown__icon { width: 25px; height: 25px; border-radius: 7px; }
+}
