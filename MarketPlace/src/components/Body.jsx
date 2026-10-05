@@ -30,6 +30,7 @@ function Body({ onNavigate, usuario }) {
   const [participando, setParticipando] = useState([]);
   const [detalheAberto, setDetalheAberto] = useState(null);
   const [perfilProgresso, setPerfilProgresso] = useState(() => calcularProgressoPerfil(usuario));
+  const [perfilConcluido, setPerfilConcluido] = useState(false);
   const [mostrarPerfilCompleto, setMostrarPerfilCompleto] = useState(false);
   const [salvos, setSalvos] = useState(() => {
     try { return JSON.parse(localStorage.getItem("marketfaesa-salvos")) || []; } catch { return []; }
@@ -46,13 +47,19 @@ function Body({ onNavigate, usuario }) {
 
     if (chaveConclusao && localStorage.getItem(chaveConclusao) === "1") {
       localStorage.removeItem(chaveConclusao);
+      setPerfilProgresso(100);
+      setPerfilConcluido(true);
       setMostrarPerfilCompleto(true);
       const timer = window.setTimeout(() => setMostrarPerfilCompleto(false), 4200);
       return () => window.clearTimeout(timer);
     }
 
     const atualizarProgresso = () => {
-      setPerfilProgresso(calcularProgressoPerfil(usuario));
+      const progresso = calcularProgressoPerfil(usuario);
+      setPerfilProgresso(progresso);
+      if (progresso < 100) {
+        setPerfilConcluido(false);
+      }
     };
 
     atualizarProgresso();
@@ -297,7 +304,7 @@ function Body({ onNavigate, usuario }) {
           </section>
 
           {/* COMPLETAR PERFIL */}
-          {perfilProgresso < 100 && (
+          {!perfilConcluido && (
             <section className="complete-card">
               <h3>✨ Complete seu perfil</h3>
               <div className="progress-bar"><span style={{ width: perfilProgresso + "%" }}></span></div>
