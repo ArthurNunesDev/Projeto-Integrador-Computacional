@@ -1,4 +1,10 @@
-function Body() {
+function Body({ onNavigate }) {
+  const [areaSelecionada, setAreaSelecionada] = useState("Todos");
+  const [participando, setParticipando] = useState([]);
+  const [detalheAberto, setDetalheAberto] = useState(null);
+
+  const areas = ["Todos", "Tecnologia", "Saúde", "Direito", "Engenharia", "Administração", "Design"];
+
   const oportunidades = [
     {
       icon: "💻",
@@ -42,6 +48,19 @@ function Body() {
     },
   ];
 
+  const oportunidadesFiltradas = oportunidades.filter((item) =>
+    areaSelecionada === "Todos" ||
+    item.area.toLowerCase().includes(areaSelecionada.toLowerCase()),
+  );
+
+  function alternarParticipacao(id) {
+    setParticipando((estado) =>
+      estado.includes(id)
+        ? estado.filter((item) => item !== id)
+        : [...estado, id],
+    );
+  }
+
   return (
     <main className="main-content">
       <div className="dashboard-container">
@@ -62,7 +81,7 @@ function Body() {
                 oportunidades e desenvolva experiência real.
               </p>
 
-              <button className="welcome-button">+ Publicar habilidade</button>
+              <button className="welcome-button" type="button" onClick={() => onNavigate?.("habilidades")}>+ Publicar habilidade</button>
             </div>
 
             <div className="welcome-decoration">
@@ -105,87 +124,71 @@ function Body() {
             </div>
 
             <div className="areas-list">
-              <button className="area-pill selecionado">
-                <span></span>
-                Todos
-              </button>
-
-              <button className="area-pill">
-                <span></span>
-                Tecnologia
-              </button>
-
-              <button className="area-pill">
-                <span></span>
-                Saúde
-              </button>
-
-              <button className="area-pill">
-                <span></span>
-                Direito
-              </button>
-
-              <button className="area-pill">
-                <span></span>
-                Engenharia
-              </button>
-
-              <button className="area-pill">
-                <span></span>
-                Administração
-              </button>
-
-              <button className="area-pill">
-                <span></span>
-                Design
-              </button>
+              {areas.map((area) => (
+                <button
+                  className={"area-pill " + (areaSelecionada === area ? "selecionado" : "")}
+                  key={area}
+                  type="button"
+                  onClick={() => setAreaSelecionada(area)}
+                >
+                  <span></span>
+                  {area}
+                </button>
+              ))}
             </div>
           </section>
 
           {/* OPORTUNIDADES */}
           <section className="opportunities-section">
             <div className="section-heading">
-              <h3>Oportunidades em Destaque</h3>
-
-              <button>Ver todas →</button>
+              <div>
+                <h3>Oportunidades em Destaque</h3>
+                {areaSelecionada !== "Todos" && (
+                  <span className="section-filter-label">Filtrando por {areaSelecionada}</span>
+                )}
+              </div>
+              <button className="see-all-button" type="button" onClick={() => onNavigate?.("oportunidades")}>Ver todas →</button>
             </div>
 
-            <div className="opportunities-grid">
-              {oportunidades.map((item) => (
-                <article
-                  className="opportunity-card animate__animated animate__fadeInUp"
-                  key={item.titulo}
-                >
-                  <div className="opportunity-top">
-                    <div className="opportunity-icon">{item.icon}</div>
-
-                    <span className="opportunity-type">{item.tipo}</span>
-                  </div>
-
-                  <h4>{item.titulo}</h4>
-
-                  <div className="opportunity-info">
-                    <span>👥 {item.area}</span>
-
-                    <span>◷ {item.modalidade}</span>
-                  </div>
-
-                  <div className="opportunity-footer">
-                    <div className="person">
-                      <div className="person-avatar">{item.inicial}</div>
-
-                      <div>
-                        <strong>{item.pessoa}</strong>
-
-                        <span>{item.curso}</span>
+            {oportunidadesFiltradas.length > 0 ? (
+              <div className="opportunities-grid">
+                {oportunidadesFiltradas.map((item) => {
+                  const entrou = participando.includes(item.id);
+                  return (
+                    <article className="opportunity-card animate__animated animate__fadeInUp" key={item.titulo}>
+                      <button className="opportunity-card-open" type="button" onClick={() => setDetalheAberto(item)} aria-label={"Ver detalhes de " + item.titulo}>
+                        <div className="opportunity-top">
+                          <div className="opportunity-icon">{item.icon}</div>
+                          <span className="opportunity-type">{item.tipo}</span>
+                        </div>
+                        <h4>{item.titulo}</h4>
+                        <div className="opportunity-info">
+                          <span>👥 {item.area}</span>
+                          <span>◷ {item.modalidade}</span>
+                        </div>
+                      </button>
+                      <div className="opportunity-footer">
+                        <div className="person">
+                          <div className="person-avatar">{item.inicial}</div>
+                          <div><strong>{item.pessoa}</strong><span>{item.curso}</span></div>
+                        </div>
+                        <div className="opportunity-actions">
+                          <button className="details-button" type="button" onClick={() => setDetalheAberto(item)}>Detalhes</button>
+                          <button className={entrou ? "participating-button" : ""} type="button" onClick={() => alternarParticipacao(item.id)}>
+                            {entrou ? "✓ Participando" : "Participar"}
+                          </button>
+                        </div>
                       </div>
-                    </div>
-
-                    <button>Participar</button>
-                  </div>
-                </article>
-              ))}
-            </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="opportunities-empty-home">
+                <strong>Nenhuma oportunidade nesta área</strong>
+                <span>Escolha outra área para continuar explorando.</span>
+              </div>
+            )}
           </section>
         </section>
 
@@ -268,6 +271,31 @@ function Body() {
         </aside>
       </div>
     </main>
+
+      {detalheAberto && (
+        <div className="opportunity-modal-backdrop" role="presentation" onClick={(event) => {
+          if (event.target === event.currentTarget) setDetalheAberto(null);
+        }}>
+          <section className="opportunity-modal animate__animated animate__fadeInUp" role="dialog" aria-modal="true">
+            <button className="opportunity-modal-close" type="button" onClick={() => setDetalheAberto(null)} aria-label="Fechar detalhes">×</button>
+            <div className="opportunity-modal-icon">{detalheAberto.icon}</div>
+            <span className="opportunity-type">{detalheAberto.tipo}</span>
+            <h2>{detalheAberto.titulo}</h2>
+            <p>{detalheAberto.descricao}</p>
+            <div className="opportunity-modal-info">
+              <span>👥 {detalheAberto.area}</span>
+              <span>◷ {detalheAberto.modalidade}</span>
+              <span>◉ Publicado por {detalheAberto.pessoa}</span>
+            </div>
+            <div className="opportunity-modal-footer">
+              <div className="person"><div className="person-avatar">{detalheAberto.inicial}</div><div><strong>{detalheAberto.pessoa}</strong><span>{detalheAberto.curso}</span></div></div>
+              <button className={participando.includes(detalheAberto.id) ? "participating-button" : ""} type="button" onClick={() => alternarParticipacao(detalheAberto.id)}>
+                {participando.includes(detalheAberto.id) ? "✓ Participando" : "Participar"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
   );
 }
 
