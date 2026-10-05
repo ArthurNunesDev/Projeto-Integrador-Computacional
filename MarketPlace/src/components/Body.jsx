@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 function Body({ onNavigate }) {
   const [areaSelecionada, setAreaSelecionada] = useState("Todos");
   const [participando, setParticipando] = useState([]);
