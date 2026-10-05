@@ -129,7 +129,7 @@ function Header({ paginaAtual, onNavigate, onLogout }) {
           <ul className="menu-lista">
             <li><button className={`menu-item ${paginaAtual === "inicio" ? "ativo" : ""}`} type="button" onClick={() => navegar("inicio")}><span className="menu-item-icon">⌂</span><span>Início</span></button></li>
             <li><button className={`menu-item ${paginaAtual === "oportunidades" ? "ativo" : ""}`} type="button" onClick={() => navegar("oportunidades")}><span className="menu-item-icon">□</span><span>Oportunidades</span><span className="menu-badge">12</span></button></li>
-            <li><button className="menu-item" type="button"><span className="menu-item-icon">✦</span><span>Habilidades</span></button></li>
+            <li><button className={`menu-item ${paginaAtual === "habilidades" ? "ativo" : ""}`} type="button" onClick={() => navegar("habilidades")}><span className="menu-item-icon">✦</span><span>Habilidades</span></button></li>
             <li><button className="menu-item" type="button"><span className="menu-item-icon">♡</span><span>Conexões</span></button></li>
             <li><button className="menu-item" type="button"><span className="menu-item-icon">□</span><span>Mensagens</span><span className="menu-badge">3</span></button></li>
           </ul>
