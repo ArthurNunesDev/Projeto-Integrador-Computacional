@@ -127,15 +127,20 @@ function App() {
         ? dadosLogin.trim()
         : (dadosLogin?.usuario || dadosLogin?.email || "").trim();
 
+    const emailInformado =
+      typeof dadosLogin === "object"
+        ? (dadosLogin?.email || "").trim().toLowerCase()
+        : "";
+
     const senhaInformada =
       typeof dadosLogin === "object"
         ? dadosLogin?.senha || dadosLogin?.password || ""
         : "";
 
-    if (!usuarioInformado || !senhaInformada) {
+    if (!usuarioInformado || !emailInformado || !senhaInformada) {
       return {
         sucesso: false,
-        mensagem: "Preencha seu usuário e sua senha.",
+        mensagem: "Preencha seu usuário, e-mail e senha.",
       };
     }
 
@@ -152,8 +157,14 @@ function App() {
     ) {
       const usuarioLogado = {
         usuario: usuarioInformado,
-        nome: "Usuário de teste",
+        nome: usuarioInformado,
+        email: emailInformado,
       };
+
+      localStorage.setItem(
+        `${CHAVE_PERFIL}:${emailInformado}`,
+        JSON.stringify({ nome: usuarioLogado.nome, email: usuarioLogado.email }),
+      );
 
       setUsuario(usuarioLogado);
       localStorage.setItem(
@@ -170,8 +181,8 @@ function App() {
     const usuarios = obterUsuariosLocais();
     const encontrado = usuarios.find(
       (conta) =>
-        (conta.usuario?.toLowerCase() === usuarioInformado.toLowerCase() ||
-          conta.email?.toLowerCase() === usuarioInformado.toLowerCase()) &&
+        conta.usuario?.toLowerCase() === usuarioInformado.toLowerCase() &&
+        conta.email?.toLowerCase() === emailInformado &&
         conta.senha === senhaInformada,
     );
 
@@ -182,19 +193,29 @@ function App() {
       };
     }
 
+    const chavePerfilUsuario = `${CHAVE_PERFIL}:${encontrado.email.toLowerCase()}`;
     let perfilSalvo = {};
     try {
-      perfilSalvo = JSON.parse(localStorage.getItem(CHAVE_PERFIL) || "{}");
+      perfilSalvo = JSON.parse(localStorage.getItem(chavePerfilUsuario) || "{}");
     } catch {}
 
     const usuarioLogado = {
       usuario: encontrado.usuario,
-      nome: perfilSalvo.nome || encontrado.nome,
-      email: perfilSalvo.email || encontrado.email,
+      nome: encontrado.nome,
+      email: encontrado.email,
       curso: perfilSalvo.curso || "Ciência da Computação",
       periodo: perfilSalvo.periodo || "4º período",
       cidade: perfilSalvo.cidade || "Vitória, ES",
     };
+
+    localStorage.setItem(
+      chavePerfilUsuario,
+      JSON.stringify({
+        ...perfilSalvo,
+        nome: encontrado.nome,
+        email: encontrado.email,
+      }),
+    );
 
     setUsuario(usuarioLogado);
     localStorage.setItem(CHAVE_AUTENTICACAO, JSON.stringify(usuarioLogado));
@@ -244,6 +265,11 @@ function App() {
       email: novoUsuario.email,
     };
 
+    localStorage.setItem(
+      `${CHAVE_PERFIL}:${email}`,
+      JSON.stringify({ nome, email }),
+    );
+
     setUsuario(usuarioLogado);
     localStorage.setItem(
       CHAVE_AUTENTICACAO,
@@ -259,14 +285,18 @@ function App() {
     setUsuario(usuarioAtualizado);
     localStorage.setItem(CHAVE_AUTENTICACAO, JSON.stringify(usuarioAtualizado));
 
+    const chavePerfilUsuario = usuarioAtualizado?.email
+      ? `${CHAVE_PERFIL}:${usuarioAtualizado.email.toLowerCase()}`
+      : CHAVE_PERFIL;
+
     try {
-      const perfilAtual = JSON.parse(localStorage.getItem(CHAVE_PERFIL) || "{}");
+      const perfilAtual = JSON.parse(localStorage.getItem(chavePerfilUsuario) || "{}");
       localStorage.setItem(
-        CHAVE_PERFIL,
+        chavePerfilUsuario,
         JSON.stringify({ ...perfilAtual, ...dadosAtualizados }),
       );
     } catch {
-      localStorage.setItem(CHAVE_PERFIL, JSON.stringify(dadosAtualizados));
+      localStorage.setItem(chavePerfilUsuario, JSON.stringify(dadosAtualizados));
     }
 
     const usuarios = obterUsuariosLocais();
@@ -284,7 +314,7 @@ function App() {
     const usuarios = obterUsuariosLocais().filter((conta) => conta.email?.toLowerCase() !== emailAtual);
     localStorage.setItem(CHAVE_USUARIOS, JSON.stringify(usuarios));
     localStorage.removeItem(CHAVE_AUTENTICACAO);
-    localStorage.removeItem(CHAVE_PERFIL);
+    if (emailAtual) localStorage.removeItem(`${CHAVE_PERFIL}:${emailAtual}`);
     localStorage.removeItem(CHAVE_PREFERENCIAS);
     setUsuario(null);
     setPagina("inicio");
