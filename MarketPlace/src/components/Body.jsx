@@ -1,5 +1,26 @@
 import { useEffect, useState } from "react";
 
+function calcularProgressoPerfil(usuario) {
+  const email = usuario?.email?.trim().toLowerCase();
+  if (!email) return 0;
+  let perfil = {};
+  let habilidades = [];
+  try {
+    perfil = JSON.parse(localStorage.getItem("marketfaesa-perfil:" + email) || "{}");
+    habilidades = JSON.parse(localStorage.getItem("marketfaesa-habilidades") || "[]");
+  } catch {}
+  const campos = [
+    Boolean((perfil.nome || usuario?.nome || "").trim()),
+    Boolean((perfil.email || usuario?.email || "").trim()),
+    Boolean((perfil.curso || "").trim()),
+    Boolean((perfil.periodo || "").trim()),
+    Boolean((perfil.cidade || "").trim()),
+    Boolean((perfil.bio || "").trim()),
+    habilidades.some((item) => item?.nome?.trim()),
+  ];
+  return Math.round((campos.filter(Boolean).length / campos.length) * 100);
+}
+
 function Body({ onNavigate, usuario }) {
   const nomeUsuario = usuario?.nome || "João Silva";
   const cursoUsuario = usuario?.curso || "Ciência da Computação";
@@ -8,6 +29,7 @@ function Body({ onNavigate, usuario }) {
   const [areaSelecionada, setAreaSelecionada] = useState("Todos");
   const [participando, setParticipando] = useState([]);
   const [detalheAberto, setDetalheAberto] = useState(null);
+  const [perfilProgresso, setPerfilProgresso] = useState(() => calcularProgressoPerfil(usuario));
   const [salvos, setSalvos] = useState(() => {
     try { return JSON.parse(localStorage.getItem("marketfaesa-salvos")) || []; } catch { return []; }
   });
@@ -15,6 +37,17 @@ function Body({ onNavigate, usuario }) {
   useEffect(() => {
     localStorage.setItem("marketfaesa-salvos", JSON.stringify(salvos));
   }, [salvos]);
+
+  useEffect(() => {
+    const atualizarProgresso = () => setPerfilProgresso(calcularProgressoPerfil(usuario));
+    atualizarProgresso();
+    window.addEventListener("storage", atualizarProgresso);
+    window.addEventListener("marketfaesa-perfil-atualizado", atualizarProgresso);
+    return () => {
+      window.removeEventListener("storage", atualizarProgresso);
+      window.removeEventListener("marketfaesa-perfil-atualizado", atualizarProgresso);
+    };
+  }, [usuario]);
 
   const areas = ["Todos", "Tecnologia", "Saúde", "Direito", "Engenharia", "Administração", "Design"];
 
@@ -248,16 +281,26 @@ function Body({ onNavigate, usuario }) {
           </section>
 
           {/* COMPLETAR PERFIL */}
-          <section className="complete-card">
-            <h3>✨ Complete seu perfil</h3>
-
-            <div className="progress-bar">
-              <span></span>
-            </div>
-
-            <strong>68% concluído</strong>
-
-            <p>Adicione suas habilidades!</p>
+          <section className={"complete-card " + (perfilProgresso === 100 ? "complete-card-finished" : "")}>
+            {perfilProgresso === 100 ? (
+              <>
+                <div className="complete-success-icon" aria-hidden="true">🎉</div>
+                <div className="complete-success-content">
+                  <span className="complete-success-label">PERFIL COMPLETO!</span>
+                  <h3>Seu perfil está pronto para brilhar ✨</h3>
+                  <p>Agora você pode se conectar, mostrar suas habilidades e encontrar novas oportunidades.</p>
+                </div>
+                <div className="complete-confetti" aria-hidden="true">✦　✧　✦</div>
+              </>
+            ) : (
+              <>
+                <h3>✨ Complete seu perfil</h3>
+                <div className="progress-bar"><span style={{ width: perfilProgresso + "%" }}></span></div>
+                <strong>{perfilProgresso}% concluído</strong>
+                <p>Adicione suas informações e habilidades!</p>
+                <button type="button" onClick={() => onNavigate?.("perfil")}>Completar perfil →</button>
+              </>
+            )}
           </section>
 
           {/* MAIS BUSCADAS */}
