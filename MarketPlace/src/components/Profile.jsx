@@ -37,6 +37,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
 
   useEffect(() => {
     localStorage.setItem(chavePerfil(usuario), JSON.stringify(dados));
+    window.dispatchEvent(new Event("marketfaesa-perfil-atualizado"));
   }, [dados]);
 
   function alterarCampo(campo, valor) {
@@ -133,10 +134,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
               </div>
             </section>
 
-            <section className="perfil-completion-card animate__animated animate__fadeInRight">
-              <div className="perfil-completion-icon">✨</div><div><strong>Perfil 68% completo</strong><p>Adicione mais informações para aumentar sua visibilidade.</p></div>
-              <div className="perfil-completion-bar"><span></span></div>
-            </section>
+            <PerfilConclusao usuario={usuario} onNavigate={onNavigate} />
 
             <section className="perfil-side-card perfil-quick-actions">
               <h3>Acesso rápido</h3>
@@ -154,6 +152,68 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
         </div>
       </div>
     </main>
+  );
+}
+
+function calcularProgressoPerfil(usuario) {
+  const email = usuario?.email?.trim().toLowerCase();
+  if (!email) return 0;
+  let perfil = {};
+  let habilidades = [];
+  try {
+    perfil = JSON.parse(localStorage.getItem("marketfaesa-perfil:" + email) || "{}");
+    habilidades = JSON.parse(localStorage.getItem("marketfaesa-habilidades") || "[]");
+  } catch {}
+  const campos = [
+    Boolean((perfil.nome || usuario?.nome || "").trim()),
+    Boolean((perfil.email || usuario?.email || "").trim()),
+    Boolean((perfil.curso || "").trim()),
+    Boolean((perfil.periodo || "").trim()),
+    Boolean((perfil.cidade || "").trim()),
+    Boolean((perfil.bio || "").trim()),
+    habilidades.some((item) => item?.nome?.trim()),
+  ];
+  return Math.round((campos.filter(Boolean).length / campos.length) * 100);
+}
+
+function PerfilConclusao({ usuario, onNavigate }) {
+  const [progresso, setProgresso] = useState(() => calcularProgressoPerfil(usuario));
+
+  useEffect(() => {
+    const atualizar = () => setProgresso(calcularProgressoPerfil(usuario));
+    atualizar();
+    window.addEventListener("storage", atualizar);
+    window.addEventListener("marketfaesa-perfil-atualizado", atualizar);
+    return () => {
+      window.removeEventListener("storage", atualizar);
+      window.removeEventListener("marketfaesa-perfil-atualizado", atualizar);
+    };
+  }, [usuario]);
+
+  if (progresso === 100) {
+    return (
+      <section className="perfil-completion-card perfil-completion-finished animate__animated animate__fadeInRight">
+        <div className="perfil-completion-icon">🎉</div>
+        <div>
+          <span>PERFIL COMPLETO!</span>
+          <strong>Seu perfil está pronto para brilhar ✨</strong>
+          <p>Mostre suas habilidades e encontre novas oportunidades.</p>
+        </div>
+        <div className="perfil-completion-sparkles" aria-hidden="true">✦ ✧ ✦</div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="perfil-completion-card animate__animated animate__fadeInRight">
+      <div className="perfil-completion-icon">✨</div>
+      <div>
+        <strong>Perfil {progresso}% completo</strong>
+        <p>Complete suas informações para aumentar sua visibilidade.</p>
+      </div>
+      <div className="perfil-completion-bar"><span style={{ width: progresso + "%" }}></span></div>
+      <button type="button" onClick={() => onNavigate("perfil")}>Continuar preenchendo →</button>
+    </section>
   );
 }
 
