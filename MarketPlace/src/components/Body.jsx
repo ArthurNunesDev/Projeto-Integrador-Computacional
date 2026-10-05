@@ -14,7 +14,9 @@ function Body({ onNavigate }) {
       modalidade: "Remoto",
       pessoa: "Maria Lima",
       curso: "Medicina",
-      inicial: "ML",\n      descricao: "Apoio na criação de um aplicativo para organização de atendimentos.",
+      id: 1,
+      inicial: "ML",
+      descricao: "Apoio na criação de um aplicativo para organização de atendimentos.",
     },
     {
       icon: "⚖️",
@@ -24,7 +26,9 @@ function Body({ onNavigate }) {
       modalidade: "Híbrido",
       pessoa: "Rafael Costa",
       curso: "Direito",
-      inicial: "RC",\n      descricao: "Revisão e organização de contratos para um projeto universitário.",
+      id: 2,
+      inicial: "RC",
+      descricao: "Revisão e organização de contratos para um projeto universitário.",
     },
     {
       icon: "📊",
@@ -34,7 +38,9 @@ function Body({ onNavigate }) {
       modalidade: "Remoto",
       pessoa: "Ana Souza",
       curso: "Computação",
-      inicial: "AS",\n      descricao: "Análise exploratória de dados para uma pesquisa acadêmica.",
+      id: 3,
+      inicial: "AS",
+      descricao: "Análise exploratória de dados para uma pesquisa acadêmica.",
     },
     {
       icon: "🎨",
@@ -44,7 +50,9 @@ function Body({ onNavigate }) {
       modalidade: "Híbrido",
       pessoa: "Lucas Martins",
       curso: "Design",
-      inicial: "LM",\n      descricao: "Criação de identidade visual para uma iniciativa estudantil.",
+      id: 4,
+      inicial: "LM",
+      descricao: "Criação de identidade visual para uma iniciativa estudantil.",
     },
   ];
 
