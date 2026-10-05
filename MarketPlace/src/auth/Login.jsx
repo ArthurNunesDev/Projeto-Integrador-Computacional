@@ -211,14 +211,14 @@ function Login({ onLogin, onNavigate, onRegister }) {
           </div>
 
           <div className="login-field">
-            <label htmlFor="login-email">E-mail</label>
+            <label htmlFor="login-usuario">Usuário / E-mail</label>
             <input
-              id="login-email"
-              type="email"
+              id="login-usuario"
+              type="text"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="seu.email@faesa.br"
-              autoComplete="email"
+              placeholder="usuário ou seu.email@faesa.br"
+              autoComplete="username"
             />
           </div>
 
