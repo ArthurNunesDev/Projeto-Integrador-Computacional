@@ -5,6 +5,7 @@ import Body from "./components/Body.jsx";
 import Configs from "./components/Configs.jsx";
 import Oportunidades from "./components/Opportunities.jsx";
 import Habilidades from "./components/Skills.jsx";
+import PeopleSkills from "./components/PeopleSkills.jsx";
 import Perfil from "./components/Profile.jsx";
 
 import Login from "./auth/Login.jsx";
@@ -15,6 +16,7 @@ import "./components/Body.css";
 import "./components/Profile.css";
 import "./components/Configs.css";
 import "./components/Skills.css";
+import "./components/PeopleSkills.css";
 
 const CHAVE_TEMA = "marketfaesa-theme";
 const CHAVE_CONFIG = "marketfaesa-config";
@@ -257,7 +259,7 @@ function App() {
         return <Oportunidades />;
 
       case "habilidades":
-        return <Habilidades onNavigate={navegarPara} />;
+        return <PeopleSkills onNavigate={navegarPara} />;
 
       case "perfil":
         return (
@@ -280,6 +282,9 @@ function App() {
             onAlterarConfiguracao={alterarConfiguracao}
           />
         );
+
+      case "publicar-habilidade":
+        return <Habilidades onNavigate={navegarPara} />;
 
       case "inicio":
       default:
