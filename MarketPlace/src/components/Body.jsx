@@ -47,7 +47,7 @@ function Body() {
       <div className="dashboard-container">
         <section className="dashboard-main">
           {/* HERO */}
-          <section className="welcome-card">
+          <section className="welcome-card animate__animated animate__fadeInDown">
             <div className="welcome-content">
               <span className="welcome-small">MARKETFAESA</span>
 
@@ -73,7 +73,7 @@ function Body() {
 
           {/* ESTATÍSTICAS */}
           <section className="stats-grid">
-            <div className="stat-card">
+            <div className="stat-card animate__animated animate__zoomIn">
               <strong>1.847</strong>
 
               <span>Estudantes ativos</span>
@@ -81,7 +81,7 @@ function Body() {
               <small>↑ +23 esta semana</small>
             </div>
 
-            <div className="stat-card">
+            <div className="stat-card animate__animated animate__zoomIn">
               <strong>342</strong>
 
               <span>Oportunidades abertas</span>
@@ -89,7 +89,7 @@ function Body() {
               <small>↑ +18 novos hoje</small>
             </div>
 
-            <div className="stat-card">
+            <div className="stat-card animate__animated animate__zoomIn">
               <strong>96</strong>
 
               <span>Habilidades disponíveis</span>
@@ -153,7 +153,7 @@ function Body() {
             <div className="opportunities-grid">
               {oportunidades.map((item) => (
                 <article
-                  className="opportunity-card"
+                  className="opportunity-card animate__animated animate__fadeInUp"
                   key={item.titulo}
                 >
                   <div className="opportunity-top">
@@ -191,7 +191,7 @@ function Body() {
 
         <aside className="dashboard-sidebar">
           {/* PERFIL */}
-          <section className="profile-card">
+          <section className="profile-card animate__animated animate__fadeInRight">
             <div className="profile-avatar">JS</div>
 
             <h3>João Silva</h3>
