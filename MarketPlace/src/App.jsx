@@ -284,7 +284,7 @@ function App() {
         return <Salvos onNavigate={navegarPara} />;
 
       case "publicacoes":
-        return <MinhasPublicacoes />;
+        return <MinhasPublicacoes onNavigate={navegarPara} />;
 
       case "perfil":
         return (
