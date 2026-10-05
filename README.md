@@ -93,6 +93,7 @@ Outros scripts:
 | `npm run build` | gera a versão de produção em `MarketPlace/dist` |
 | `npm run preview` | serve o build localmente |
 | `npm run lint` | roda o ESLint |
+| `npm test` | roda os testes com Vitest em modo watch (para rodar uma vez só: `npx vitest run`) |
 
 ## Como rodar o backend
 
