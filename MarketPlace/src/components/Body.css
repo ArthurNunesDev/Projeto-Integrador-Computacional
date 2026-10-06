@@ -663,3 +663,47 @@ body { background: var(--mf-bg); }
     padding-right: 40px;
   }
 }
+
+/* Botao de salvar do inicio com a mesma formatacao de Oportunidades */
+.opportunity-card > .save-button-home {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 34px;
+  padding: 0;
+  border: 1px solid var(--mf-border);
+  border-radius: 50%;
+  background: var(--mf-bg);
+  color: var(--mf-muted);
+  font-size: 19px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(17,22,56,.07);
+  transition: transform .18s ease, color .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.opportunity-card > .save-button-home:hover {
+  transform: translateY(-2px) scale(1.05);
+  color: #E53935;
+  border-color: rgba(229,57,53,.35);
+  background: #FFF5F5;
+  box-shadow: 0 7px 16px rgba(229,57,53,.13);
+}
+.opportunity-card > .save-button-home.salvo {
+  color: #E53935;
+  border-color: #E53935;
+  background: #FFF0F0;
+  box-shadow: 0 5px 15px rgba(229,57,53,.18);
+}
+.opportunity-card > .save-button-home.salvo:hover {
+  color: #C62828;
+  background: #FFE5E5;
+}
+@media (max-width: 600px) {
+  .opportunity-card > .save-button-home {
+    width: 28px;
+    height: 28px;
+    flex-basis: 28px;
+    font-size: 16px;
+  }
+}
