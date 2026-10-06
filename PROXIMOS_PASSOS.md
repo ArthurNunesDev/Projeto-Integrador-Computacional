@@ -1,6 +1,6 @@
 # Próximos passos
 
-Roadmap para evoluir o backend e ligá-lo ao frontend. Hoje o front funciona sozinho: login simulado só em dev (credenciais de `.env.development.local`, desativado em produção), cadastro sem persistência e todas as preferências no `localStorage`. O backend já roda com Spring Boot 4.1 (Java 21+, Maven Wrapper), mas ainda não tem endpoints: só o modelo `Usuario` e as pastas das camadas, ainda vazias.
+Roadmap para evoluir o backend e ligá-lo ao frontend. Hoje o front funciona sozinho: login simulado só em dev (credenciais de `.env.development.local`, desativado em produção), cadastro sem persistência e todas as preferências no `localStorage`. O backend já roda com Spring Boot 4.1 (Java 21+, Maven Wrapper), já conecta ao PostgreSQL (Neon) com migrations do Flyway, mas ainda não tem endpoints.
 
 ---
 
@@ -8,14 +8,14 @@ Roadmap para evoluir o backend e ligá-lo ao frontend. Hoje o front funciona soz
 
 1. **Ferramenta de build** (feito): Maven com Maven Wrapper (`backend/mvnw`), então ninguém precisa instalar o Maven. As dependências ficam em `backend/pom.xml`.
 2. **Framework** (base feita): Spring Boot 4.1 com Spring Web MVC, que já resolve servidor HTTP, JSON, injeção de dependência e CORS, e Spring Security em `config/SecurityConfig.java` (API stateless: toda rota exige autenticação e responde `401` sem token; CORS liberado para `http://localhost:5173` e o GitHub Pages; BCrypt para senhas). Faltam os starters que entram junto com as funcionalidades que os usam:
-   - `spring-boot-starter-data-jpa` + driver H2, quando o banco for configurado (Fase 1);
+   - `spring-boot-starter-data-jpa`, Flyway e o driver do PostgreSQL já estão no `pom.xml` (banco no Neon, ver item 4);
    - `spring-boot-starter-validation` já está no `pom.xml`; falta usar `@Valid` nos DTOs do cadastro (Fase 2).
 3. **Camadas** (as pastas já existem em `backend/src/main/java/br/com/marketfaesa/`):
    - `model`: entidades (`Usuario`, `ConfiguracaoUsuario`).
    - `repository`: acesso ao banco (interfaces `JpaRepository`).
    - `service`: regras de negócio (cadastro, login, validações).
    - `controller`: endpoints REST, sem regra de negócio.
-4. **Banco de dados**: H2 em arquivo no desenvolvimento (zero instalação) e PostgreSQL em produção. Trocar só pelo `application.properties`/variáveis de ambiente.
+4. **Banco de dados** (feito): PostgreSQL no Neon em desenvolvimento e produção, configurado por variáveis de ambiente (`DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD` e, opcional, `DATABASE_DIRECT_URL` para o Flyway) ou pelo perfil `local` (`backend/application-local.properties`). O schema vem só das migrations do Flyway (`db/migration/`) e o Hibernate roda com `ddl-auto=validate`. Os testes usam um Postgres embutido (zonky) ou o banco de `TEST_DATABASE_URL`. Detalhes no [README](README.md#banco).
 5. **Senhas**: nunca guardar em texto puro. Usar hash BCrypt (bean `PasswordEncoder` em `config/SecurityConfig.java`) e nunca devolver a senha nas respostas.
 6. **Autenticação**: gerar um JWT no login e exigir `Authorization: Bearer <token>` nas rotas de usuário. O usuário só pode ler/alterar os próprios dados.
 
@@ -28,7 +28,7 @@ Base: `http://localhost:8080/api` em desenvolvimento.
 | Método | Rota | Uso no front hoje | Resposta |
 |---|---|---|---|
 | GET | `/api/health` | teste de conexão | `200 {"status":"ok"}` |
-| POST | `/api/auth/register` | formulário de cadastro (`auth/Login.jsx` → `onRegister`) | `201` usuário criado; `409` se usuário/e-mail já existe; `400` se inválido |
+| POST | `/api/auth/register` | formulário de cadastro (`auth/Login.jsx` → `onRegister`) | `201` usuário criado; `409` se o e-mail já existe; `400` se inválido |
 | POST | `/api/auth/login` | `fazerLogin` em `App.jsx` (hoje login de teste só em dev) | `200` token + usuário; `401` se inválido |
 | GET | `/api/users/{id}` | perfil (`Profile.jsx`) | `200` usuário (sem senha); `404` |
 | GET | `/api/users/{id}/config` | carregar tema e configurações ao logar | `200` configurações |
@@ -46,28 +46,28 @@ Erros seguem um formato único:
 
 ```json
 // requisição
-{ "usuario": "maria", "nome": "Maria Silva", "email": "maria@faesa.br", "senha": "segredo123" }
+{ "nome": "Maria Silva", "email": "maria@faesa.br", "senha": "segredo123" }
 
 // resposta 201
-{ "id": 1, "usuario": "maria", "nome": "Maria Silva", "email": "maria@faesa.br" }
+{ "id": 1, "nome": "Maria Silva", "email": "maria@faesa.br" }
 ```
 
-> O formulário de cadastro hoje envia só `nome`, `email` e `senha`. Será preciso adicionar o campo `usuario` ou usar o e-mail como login.
+> O login é pelo e-mail (tabela `usuarios` não tem campo `usuario`), igual ao que o formulário de cadastro já envia: `nome`, `email` e `senha`. O e-mail é gravado em minúsculo (`Usuario.normalizarEmail`).
 
 `POST /api/auth/login`
 
 ```json
 // requisição
-{ "usuario": "maria", "senha": "segredo123" }
+{ "email": "maria@faesa.br", "senha": "segredo123" }
 
 // resposta 200
 {
   "token": "eyJhbGciOiJIUzI1NiJ9...",
-  "usuario": { "id": 1, "usuario": "maria", "nome": "Maria Silva", "email": "maria@faesa.br" }
+  "usuario": { "id": 1, "nome": "Maria Silva", "email": "maria@faesa.br" }
 }
 ```
 
-`GET /api/users/1/config` e `PUT /api/users/1/config` (mesmo corpo). Os campos espelham `CONFIG_PADRAO` de `App.jsx`:
+`GET /api/users/1/config` e `PUT /api/users/1/config` (mesmo corpo). Os campos espelham `CONFIG_PADRAO` de `App.jsx` e a tabela `configuracoes_usuario` (entidade `ConfiguracaoUsuario`):
 
 ```json
 {
@@ -135,7 +135,7 @@ export async function api(caminho, { method = "GET", body } = {}) {
 
 O GitHub Pages serve apenas arquivos estáticos: o frontend continua lá, mas o backend precisa de outra hospedagem (ex.: Render, Railway, Fly.io ou uma VM). Pontos de atenção:
 
-- Banco PostgreSQL gerenciado (o H2 em arquivo se perde em hospedagens com disco efêmero).
+- Banco PostgreSQL gerenciado: o Neon já é usado; na hospedagem, basta definir as variáveis `DATABASE_*` (o pool da aplicação está limitado a 5 conexões, pensando no plano gratuito).
 - Segredos (senha do banco, chave do JWT) em variáveis de ambiente, nunca no repositório.
 - Front e back em domínios diferentes: configurar CORS e usar HTTPS nos dois.
 - Planos gratuitos costumam "dormir"; a primeira requisição pode demorar, então o front deve mostrar carregamento.
@@ -147,12 +147,13 @@ O GitHub Pages serve apenas arquivos estáticos: o frontend continua lá, mas o 
 ### Fase 1 — Base do backend
 - [x] Criar `pom.xml` com Maven Wrapper e migrar para Spring Boot
 - [ ] Endpoint `GET /api/health` (primeiro controller, com teste)
-- [ ] Adicionar Spring Data JPA + H2 e configurar o H2 em arquivo para desenvolvimento
+- [x] Adicionar Spring Data JPA + Flyway e configurar o PostgreSQL no Neon (testes com Postgres embutido)
 - [x] Liberar CORS para `http://localhost:5173`
 - [ ] Rodar `./mvnw test` no GitHub Actions em cada PR (hoje o workflow só faz o build do front, e só na `main`)
 
 ### Fase 2 — Usuários e autenticação
-- [ ] Entidade `Usuario` + repository + service + controller
+- [x] Entidades `Usuario` e `ConfiguracaoUsuario` + repositories (com teste)
+- [ ] Service e controller de usuário
 - [ ] `POST /api/auth/register` com validação (`spring-boot-starter-validation`) e hash BCrypt
 - [ ] `POST /api/auth/login` retornando JWT
 - [ ] `GET /api/users/{id}` protegido por token
@@ -172,7 +173,7 @@ O GitHub Pages serve apenas arquivos estáticos: o frontend continua lá, mas o 
 - [ ] Manter `localStorage` só como cache do tema
 
 ### Fase 5 — Produção
-- [ ] Migrar para PostgreSQL
+- [x] Usar PostgreSQL (Neon)
 - [ ] Hospedar o backend e configurar variáveis de ambiente
 - [ ] Definir `VITE_API_URL` de produção no workflow de deploy
 - [x] Liberar CORS para a origem do GitHub Pages
@@ -190,8 +191,8 @@ O GitHub Pages serve apenas arquivos estáticos: o frontend continua lá, mas o 
 Dentro de `backend/` (JDK 21+):
 
 ```bash
-./mvnw spring-boot:run   # http://localhost:8080
-./mvnw test
+./mvnw spring-boot:run -Dspring-boot.run.profiles=local   # http://localhost:8080 (com backend/application-local.properties)
+./mvnw test                                               # Postgres embutido ou TEST_DATABASE_URL
 ```
 
 No PowerShell ou no CMD, use `.\mvnw.cmd`. Mais detalhes no [README](README.md#como-rodar-o-backend).
