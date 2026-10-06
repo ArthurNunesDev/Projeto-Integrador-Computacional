@@ -36,6 +36,11 @@ class SecurityConfigTests {
     UsuarioRepository usuarios;
 
     @Test
+    void healthEPublico() throws Exception {
+        mvc.perform(get("/api/health")).andExpect(status().isOk());
+    }
+
+    @Test
     void rotaProtegidaSemTokenRetorna401NoFormatoDeErro() throws Exception {
         mvc.perform(get("/api/usuarios/me"))
                 .andExpect(status().isUnauthorized())
