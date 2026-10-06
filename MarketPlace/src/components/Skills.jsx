@@ -190,7 +190,7 @@ function Habilidades({ onNavigate }) {
           ))}
         </section>
 
-        <button className="skills-back-button" type="button" onClick={() => onNavigate("inicio")}>← Voltar ao início</button>
+        <button className="page-back-button skills-back-button" type="button" onClick={() => onNavigate("inicio")}>← Voltar ao início</button>
       </div>
     </main>
   );
