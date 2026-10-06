@@ -36,3 +36,5 @@
   .profile-skill-card strong { font-size: 8px; }
   .profile-skill-card small { font-size: 6px; }
 }
+
+.connections-back.page-back-button{min-height:40px;padding:0 15px;border:1px solid var(--mf-navy);border-radius:12px;background:var(--mf-surface);color:var(--mf-navy);font-size:10px;font-weight:850;box-shadow:0 4px 12px rgba(30,39,97,.10);transition:.18s ease}.connections-back.page-back-button:hover{transform:translateY(-2px);border-color:var(--mf-orange);background:var(--mf-navy);color:#fff;box-shadow:0 8px 18px rgba(30,39,97,.18)}[data-theme="dark"] .connections-back.page-back-button{border-color:#CADCFC;background:#252D5B;color:#fff}[data-theme="dark"] .connections-back.page-back-button:hover{border-color:var(--mf-orange);background:#303B83;color:#fff}@media(max-width:600px){.connections-back.page-back-button{min-height:36px;padding:0 11px;border-radius:10px;font-size:8px}}
