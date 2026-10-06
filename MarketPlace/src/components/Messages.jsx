@@ -84,7 +84,7 @@ function Mensagens() {
 
           <section className={`chat-panel ${mostrarLista?"":"mobile-visivel"}`}>
             <header className="chat-header">
-              <button className="chat-voltar" type="button" onClick={()=>setMostrarLista(true)} aria-label="Voltar para conversas">←</button>
+              <button className="page-back-button chat-voltar" type="button" onClick={()=>setMostrarLista(true)} aria-label="Voltar para conversas">←</button>
               <div className="chat-pessoa-avatar">{atual.iniciais}{atual.online&&<i/>}</div>
               <div className="chat-pessoa-info"><strong>{atual.nome}</strong><span>{atual.online?"Online agora":atual.curso}</span></div>
               <button className="chat-acoes" type="button" aria-label="Mais opções">•••</button>
