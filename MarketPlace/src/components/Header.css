@@ -244,6 +244,17 @@
   }
 }
 
+[data-theme="dark"] .menu-item:hover,
+[data-theme="dark"] .menu-item.ativo {
+  background: #303B83;
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .menu-item:hover .menu-item-icon,
+[data-theme="dark"] .menu-item.ativo .menu-item-icon {
+  color: #FFFFFF;
+}
+
 /* Ajustes de contraste para o tema escuro */
 [data-theme="dark"] .menu-button,
 [data-theme="dark"] .div-market,
