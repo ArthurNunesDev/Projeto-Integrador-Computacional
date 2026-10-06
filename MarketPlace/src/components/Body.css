@@ -707,3 +707,28 @@ body { background: var(--mf-bg); }
     font-size: 16px;
   }
 }
+
+
+/* Salvar no tema escuro */
+[data-theme="dark"] .opportunity-card > .save-button-home {
+  border-color: rgba(202,220,252,.28);
+  background: #252D5B;
+  color: #CADCFC;
+  box-shadow: 0 4px 12px rgba(0,0,0,.24);
+}
+[data-theme="dark"] .opportunity-card > .save-button-home:hover {
+  color: #FF7B7B;
+  border-color: rgba(255,123,123,.55);
+  background: #303B83;
+  box-shadow: 0 7px 16px rgba(0,0,0,.32);
+}
+[data-theme="dark"] .opportunity-card > .save-button-home.salvo {
+  color: #FF6B6B;
+  border-color: #FF6B6B;
+  background: rgba(229,57,53,.18);
+  box-shadow: 0 5px 15px rgba(229,57,53,.22);
+}
+[data-theme="dark"] .opportunity-card > .save-button-home.salvo:hover {
+  color: #FF8F8F;
+  background: rgba(229,57,53,.28);
+}
