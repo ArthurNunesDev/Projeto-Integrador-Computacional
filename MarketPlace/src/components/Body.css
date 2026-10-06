@@ -732,3 +732,35 @@ body { background: var(--mf-bg); }
   color: #FF8F8F;
   background: rgba(229,57,53,.28);
 }
+
+
+/* Botao salvar dentro dos detalhes */
+.opportunity-modal-footer > button.save-button-modal {
+  width: auto;
+  min-width: 94px;
+  height: 34px;
+  min-height: 34px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 13px;
+  border-radius: 18px;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.opportunity-modal-footer > button.save-button-modal:hover {
+  transform: translateY(-1px) scale(1.01);
+}
+
+@media (max-width: 620px) {
+  .opportunity-modal-footer > button.save-button-modal {
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+}
