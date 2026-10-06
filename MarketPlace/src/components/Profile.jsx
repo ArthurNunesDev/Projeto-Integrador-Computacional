@@ -81,7 +81,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
       <div className="perfil-container">
         <section className="perfil-page-header animate__animated animate__fadeInDown">
           <div><span className="perfil-eyebrow">MINHA CONTA</span><h1>Meu Perfil</h1><p>Gerencie suas informações e apresente suas habilidades para outros estudantes.</p></div>
-          <button className="perfil-back-button" type="button" onClick={() => onNavigate("inicio")}>← Voltar ao início</button>
+          <button className="page-back-button perfil-back-button" type="button" onClick={() => onNavigate("inicio")}>← Voltar ao início</button>
         </section>
 
         {salvo && <div className="perfil-save-feedback">✓ Perfil atualizado e salvo</div>}
