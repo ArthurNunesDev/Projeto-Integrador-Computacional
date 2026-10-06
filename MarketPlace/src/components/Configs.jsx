@@ -192,7 +192,7 @@ function Configs({
     <div className="configs-container">
       <header className="configs-page-header animate__animated animate__fadeInDown">
         <div><span>PREFERÊNCIAS DA CONTA</span><h1>Configurações</h1><p>Gerencie sua conta, privacidade, notificações e preferências do MarketFaesa.</p></div>
-        <button type="button" className="configs-back-button" onClick={()=>onNavigate("inicio")}>← Voltar ao início</button>
+        <button type="button" className="page-back-button configs-back-button" onClick={()=>onNavigate("inicio")}>← Voltar ao início</button>
       </header>
       <div className="configs-layout">
         <aside className="configs-sidebar animate__animated animate__fadeInLeft">
