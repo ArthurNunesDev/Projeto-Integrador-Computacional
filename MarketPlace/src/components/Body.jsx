@@ -389,7 +389,7 @@ function Body({ onNavigate, usuario }) {
             </div>
             <div className="opportunity-modal-footer">
               <div className="person"><div className="person-avatar">{detalheAberto.inicial}</div><div><strong>{detalheAberto.pessoa}</strong><span>{detalheAberto.curso}</span></div></div>
-              <button className={salvos.some((salvo) => salvo.id === detalheAberto.id) ? "save-button salvo" : "save-button"} type="button" onClick={() => alternarSalvo(detalheAberto)}>{salvos.some((salvo) => salvo.id === detalheAberto.id) ? "♥ Salvo" : "♡ Salvar"}</button>
+              <button className={salvos.some((salvo) => salvo.id === detalheAberto.id) ? "save-button save-button-modal salvo" : "save-button save-button-modal"} type="button" onClick={() => alternarSalvo(detalheAberto)}>{salvos.some((salvo) => salvo.id === detalheAberto.id) ? "♥ Salvo" : "♡ Salvar"}</button>
               <button className={participando.includes(detalheAberto.id) ? "participating-button" : ""} type="button" onClick={() => alternarParticipacao(detalheAberto.id)}>
                 {participando.includes(detalheAberto.id) ? "✓ Participando" : "Participar"}
               </button>
