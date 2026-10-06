@@ -237,18 +237,20 @@ function Body({ onNavigate, usuario }) {
                   const entrou = participando.includes(item.id);
                   return (
                     <article className="opportunity-card animate__animated animate__fadeInUp" key={item.titulo}>
-                      <button
-                        className={salvos.some((salvo) => salvo.id === item.id) ? "save-button save-button-top salvo" : "save-button save-button-top"}
-                        type="button"
-                        onClick={() => alternarSalvo(item)}
-                        aria-label={salvos.some((salvo) => salvo.id === item.id) ? "Remover dos salvos" : "Salvar oportunidade"}
-                      >
-                        {salvos.some((salvo) => salvo.id === item.id) ? "♥" : "♡"}
-                      </button>
                       <button className="opportunity-card-open" type="button" onClick={() => setDetalheAberto(item)} aria-label={"Ver detalhes de " + item.titulo}>
                         <div className="opportunity-top">
                           <div className="opportunity-icon">{item.icon}</div>
-                          <span className="opportunity-type">{item.tipo}</span>
+                          <div className="opportunity-top-actions">
+                            <span className="opportunity-type">{item.tipo}</span>
+                            <button
+                              className={salvos.some((salvo) => salvo.id === item.id) ? "save-button salvo" : "save-button"}
+                              type="button"
+                              onClick={(event) => { event.stopPropagation(); alternarSalvo(item); }}
+                              aria-label={salvos.some((salvo) => salvo.id === item.id) ? "Remover dos salvos" : "Salvar oportunidade"}
+                            >
+                              {salvos.some((salvo) => salvo.id === item.id) ? "♥" : "♡"}
+                            </button>
+                          </div>
                         </div>
                         <h4>{item.titulo}</h4>
                         <div className="opportunity-info">
