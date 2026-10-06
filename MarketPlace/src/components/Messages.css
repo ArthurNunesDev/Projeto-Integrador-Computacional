@@ -15,3 +15,5 @@
   .chat-enviar { width: 30px; height: 30px; }
   .chat-voltar { font-size: 8px; }
 }
+
+.chat-voltar.page-back-button{display:none;min-height:36px;width:36px;padding:0;border:1px solid var(--mf-navy);border-radius:10px;background:var(--mf-surface);color:var(--mf-navy);font-size:18px;font-weight:900;box-shadow:0 4px 12px rgba(30,39,97,.10)}[data-theme="dark"] .chat-voltar.page-back-button{background:#252D5B;border-color:#CADCFC;color:#fff}@media(max-width:800px){.chat-voltar.page-back-button{display:grid;place-items:center}}
