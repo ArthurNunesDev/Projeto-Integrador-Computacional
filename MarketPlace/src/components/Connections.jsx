@@ -73,7 +73,7 @@ function Connections() {
       <main className="connections-page">
         <div className="connections-container">
           <section className="connections-profile animate__animated animate__fadeIn">
-            <button type="button" className="connections-back" onClick={() => setPerfilAberto(null)}>← Voltar para pessoas</button>
+            <button type="button" className="page-back-button connections-back" onClick={() => setPerfilAberto(null)}>← Voltar para pessoas</button>
 
             <div className="connections-profile-header">
               <div className="connections-profile-avatar">{perfilAberto.inicial}</div>
