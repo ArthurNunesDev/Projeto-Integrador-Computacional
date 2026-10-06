@@ -97,7 +97,7 @@ function Habilidades({ onNavigate }) {
     return (
       <main className="people-skills-page">
         <div className="people-skills-container">
-          <button className="people-back-button" type="button" onClick={() => setPerfilSelecionado(null)}>
+          <button className="page-back-button people-back-button" type="button" onClick={() => setPerfilSelecionado(null)}>
             ← Voltar para Habilidades
           </button>
 
