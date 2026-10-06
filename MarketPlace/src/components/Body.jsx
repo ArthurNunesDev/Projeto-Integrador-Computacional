@@ -237,6 +237,14 @@ function Body({ onNavigate, usuario }) {
                   const entrou = participando.includes(item.id);
                   return (
                     <article className="opportunity-card animate__animated animate__fadeInUp" key={item.titulo}>
+                      <button
+                        className={salvos.some((salvo) => salvo.id === item.id) ? "save-button save-button-top salvo" : "save-button save-button-top"}
+                        type="button"
+                        onClick={() => alternarSalvo(item)}
+                        aria-label={salvos.some((salvo) => salvo.id === item.id) ? "Remover dos salvos" : "Salvar oportunidade"}
+                      >
+                        {salvos.some((salvo) => salvo.id === item.id) ? "♥" : "♡"}
+                      </button>
                       <button className="opportunity-card-open" type="button" onClick={() => setDetalheAberto(item)} aria-label={"Ver detalhes de " + item.titulo}>
                         <div className="opportunity-top">
                           <div className="opportunity-icon">{item.icon}</div>
@@ -255,7 +263,6 @@ function Body({ onNavigate, usuario }) {
                         </div>
                         <div className="opportunity-actions">
                           <button className="details-button" type="button" onClick={() => setDetalheAberto(item)}>Detalhes</button>
-                          <button className={salvos.some((salvo) => salvo.id === item.id) ? "save-button salvo" : "save-button"} type="button" onClick={() => alternarSalvo(item)} aria-label={salvos.some((salvo) => salvo.id === item.id) ? "Remover dos salvos" : "Salvar oportunidade"}>{salvos.some((salvo) => salvo.id === item.id) ? "♥" : "♡"}</button>
                           <button className={entrou ? "participating-button" : ""} type="button" onClick={() => alternarParticipacao(item.id)}>
                             {entrou ? "✓ Participando" : "Participar"}
                           </button>
