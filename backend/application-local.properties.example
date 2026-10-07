@@ -1,0 +1,18 @@
+# Copie este arquivo para backend/application-local.properties (ignorado pelo Git)
+# e preencha com os dados do seu banco no Neon. Depois, dentro de backend/:
+#   ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+#
+# O Neon mostra a conexao como URI, por exemplo:
+#   postgresql://neondb_owner:SENHA@ep-xxxx-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require
+# O JDBC nao aceita esse formato: troque o prefixo por jdbc:postgresql://, tire
+# "usuario:senha@" da URL e coloque usuario e senha nas propriedades separadas.
+
+# Conexao com pooler (host com "-pooler"), usada pela aplicacao
+spring.datasource.url=jdbc:postgresql://ep-xxxx-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require
+spring.datasource.username=neondb_owner
+spring.datasource.password=TROQUE_PELA_SENHA
+
+# Conexao direta (mesmo host sem "-pooler"), usada pelo Flyway nas migrations
+spring.flyway.url=jdbc:postgresql://ep-xxxx.sa-east-1.aws.neon.tech/neondb?sslmode=require
+spring.flyway.user=neondb_owner
+spring.flyway.password=TROQUE_PELA_SENHA

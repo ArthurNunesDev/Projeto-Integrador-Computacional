@@ -15,6 +15,8 @@
   <img src="https://img.shields.io/badge/java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java 21">
   <img src="https://img.shields.io/badge/spring_boot-4.1-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot 4.1">
   <img src="https://img.shields.io/badge/spring_security-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white" alt="Spring Security">
+  <img src="https://img.shields.io/badge/postgresql-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL 16">
+  <img src="https://img.shields.io/badge/flyway-CC0200?style=for-the-badge&logo=flyway&logoColor=white" alt="Flyway">
   <img src="https://img.shields.io/badge/maven-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white" alt="Maven">
   <img src="https://img.shields.io/badge/vitest-6E9F18?style=for-the-badge&logo=vitest&logoColor=white" alt="Vitest">
   <img src="https://img.shields.io/badge/github_pages-222222?style=for-the-badge&logo=githubpages&logoColor=white" alt="GitHub Pages">
@@ -37,6 +39,7 @@
   - [Clonando](#clonando)
   - [Variáveis de ambiente](#variaveis)
   - [Executando](#executando)
+  - [Banco de dados](#banco)
   - [Testes](#testes)
 - [📍 API](#api)
 - [🗂️ Estrutura](#estrutura)
@@ -47,7 +50,7 @@
 
 <h2 id="situacao">📌 Situação atual</h2>
 
-O **frontend em React** tem interface funcional e responsiva, publicada no GitHub Pages. O **backend em Java com Spring Boot** já sobe com Spring Security configurado, mas ainda **não tem endpoints**: existem o modelo `Usuario` e as pastas das camadas, ainda vazias.
+O **frontend em React** tem interface funcional e responsiva, publicada no GitHub Pages. O **backend em Java com Spring Boot** já sobe com Spring Security configurado e se conecta a um **PostgreSQL** (hospedado no [Neon](https://neon.tech)): o schema é criado por migrations do Flyway e as entidades `Usuario` e `ConfiguracaoUsuario` já estão mapeadas, com seus repositórios. Ainda **não tem endpoints**.
 
 Por isso, hoje o front funciona sozinho: os dados ficam no `localStorage` e o login é simulado, disponível só em desenvolvimento.
 
@@ -67,13 +70,14 @@ Por isso, hoje o front funciona sozinho: os dados ficam no `localStorage` e o lo
 
 <h2 id="comecar">🚀 Como começar</h2>
 
-O projeto tem duas partes independentes: o frontend em `MarketPlace/` e o backend em `backend/`. Hoje é possível rodar só o frontend.
+O projeto tem duas partes independentes: o frontend em `MarketPlace/` e o backend em `backend/`. O frontend roda sozinho; o backend precisa de um banco PostgreSQL (veja [Banco de dados](#banco)).
 
 <h3 id="pre-requisitos">Pré-requisitos</h3>
 
 - [Git](https://git-scm.com/)
 - [Node.js 20+](https://nodejs.org/) para o frontend
 - [JDK 21+](https://adoptium.net/) para o backend. O Maven não precisa ser instalado: o projeto usa o Maven Wrapper.
+- Um banco PostgreSQL para rodar o backend: o projeto usa o [Neon](https://neon.tech) (plano gratuito). Para os testes não é preciso nada, veja [Testes](#testes).
 
 <h3 id="clonando">Clonando</h3>
 
@@ -110,10 +114,33 @@ Para gerar a versão de produção: `npm run build`.
 
 ```bash
 cd backend
-./mvnw spring-boot:run
+./mvnw spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
-No Windows (PowerShell ou CMD), use `.\mvnw.cmd spring-boot:run`.
+No Windows (PowerShell ou CMD), use `.\mvnw.cmd` no lugar de `./mvnw` (no PowerShell, coloque `"-Dspring-boot.run.profiles=local"` entre aspas). O perfil `local` lê a conexão do arquivo `backend/application-local.properties`; veja [Banco de dados](#banco). Com as variáveis de ambiente definidas, basta `./mvnw spring-boot:run`.
+
+<h3 id="banco">Banco de dados</h3>
+
+O backend usa PostgreSQL hospedado no [Neon](https://neon.tech). Não há banco em memória nem Docker: tanto o desenvolvimento quanto a produção falam com um Postgres de verdade.
+
+O schema é criado só pelas migrations do Flyway em `backend/src/main/resources/db/migration/`, aplicadas automaticamente ao subir a aplicação. O Hibernate roda com `ddl-auto=validate`: ele só confere se as entidades batem com as tabelas e nunca altera o banco. Para mudar o schema, crie uma nova migration (`V<n>__descricao.sql`); nunca edite uma que já foi aplicada.
+
+A conexão vem de variáveis de ambiente, lidas em `application.properties`:
+
+| Variável | Uso |
+|---|---|
+| `DATABASE_URL` | URL JDBC do Neon **com pooler** (host com `-pooler`), usada pela aplicação |
+| `DATABASE_USERNAME` | usuário do banco |
+| `DATABASE_PASSWORD` | senha do banco |
+| `DATABASE_DIRECT_URL` | opcional: URL JDBC **direta** (host sem `-pooler`), usada pelo Flyway nas migrations; se faltar, usa `DATABASE_URL` |
+
+O Neon mostra a conexão como URI (`postgresql://usuario:senha@host/neondb?sslmode=require`). O JDBC não aceita esse formato: troque o prefixo por `jdbc:postgresql://`, tire `usuario:senha@` da URL e passe usuário e senha nas variáveis separadas. Exemplo:
+
+```env
+DATABASE_URL=jdbc:postgresql://ep-xxxx-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require
+```
+
+Em vez de exportar as variáveis, você pode usar o perfil `local`: copie `backend/application-local.properties.example` para `backend/application-local.properties` (já ignorado pelo Git, nunca faça commit dele) e preencha com os dados do seu banco no Neon.
 
 <h3 id="testes">Testes</h3>
 
@@ -127,6 +154,22 @@ npm run lint
 cd backend
 ./mvnw test
 ```
+
+Os testes do backend não usam o Neon. A classe `backend/src/test/java/br/com/marketfaesa/PostgresDeTeste.java` fornece o banco:
+
+- se a variável `TEST_DATABASE_URL` existir (com `TEST_DATABASE_USERNAME` e `TEST_DATABASE_PASSWORD` opcionais), usa esse banco;
+- senão, sobe um PostgreSQL 16 embutido ([zonky embedded-postgres](https://github.com/zonkyio/embedded-postgres)), baixado como dependência do Maven, sem instalar nada.
+
+O Flyway aplica as migrations nesse banco antes dos testes. Se o Postgres embutido não subir no seu ambiente (ex.: sem permissão para extrair e executar os binários em `/tmp`), ou se preferir usar um Postgres já instalado, aponte `TEST_DATABASE_URL` para ele:
+
+```bash
+TEST_DATABASE_URL=jdbc:postgresql://localhost:5432/mf_test TEST_DATABASE_USERNAME=mf TEST_DATABASE_PASSWORD=mf ./mvnw test
+```
+
+Como escrever testes que usam o banco:
+
+- **`@SpringBootTest`**: não precisa fazer nada. `PostgresDeTeste` é um `@Configuration` no pacote `br.com.marketfaesa`, então o component scan o encontra e o `DataSource` dele (marcado com `@Primary` e `@FlywayDataSource`) substitui o do `application.properties`.
+- **Testes de fatia** (ex.: `@DataJpaTest`, que não fazem component scan): adicione `@Import(PostgresDeTeste.class)` e `@AutoConfigureTestDatabase(replace = Replace.NONE)`.
 
 <h2 id="api">📍 API</h2>
 
@@ -161,12 +204,16 @@ Projeto-Integrador-Computacional/
 │       ├── App.jsx
 │       └── index.css
 ├── backend/                        # API Java + Spring Boot
-│   └── src/main/java/br/com/marketfaesa/
-│       ├── config/                 # SecurityConfig
-│       ├── controller/
-│       ├── model/                  # Usuario
-│       ├── repository/
-│       └── service/
+│   ├── application-local.properties.example  # modelo da config local do banco
+│   └── src/
+│       ├── main/java/br/com/marketfaesa/
+│       │   ├── config/             # SecurityConfig
+│       │   ├── controller/
+│       │   ├── model/              # entidades JPA: Usuario, ConfiguracaoUsuario, Tema
+│       │   ├── repository/         # UsuarioRepository, ConfiguracaoUsuarioRepository
+│       │   └── service/
+│       ├── main/resources/db/migration/  # migrations do Flyway (V1__..., V2__...)
+│       └── test/java/br/com/marketfaesa/ # testes; PostgresDeTeste fornece o banco
 ├── CONTRIBUTING.md
 ├── PROXIMOS_PASSOS.md
 └── README.md
