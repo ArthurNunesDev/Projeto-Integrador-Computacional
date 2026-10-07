@@ -16,3 +16,8 @@ spring.datasource.password=TROQUE_PELA_SENHA
 spring.flyway.url=jdbc:postgresql://ep-xxxx.sa-east-1.aws.neon.tech/neondb?sslmode=require
 spring.flyway.user=neondb_owner
 spring.flyway.password=TROQUE_PELA_SENHA
+
+# Segredo do JWT (HS256), com pelo menos 32 bytes. Gere um com:
+#   openssl rand -base64 48
+# Tambem pode vir da variavel de ambiente JWT_SECRET.
+app.jwt.secret=TROQUE_POR_UM_SEGREDO_ALEATORIO_DE_PELO_MENOS_32_BYTES

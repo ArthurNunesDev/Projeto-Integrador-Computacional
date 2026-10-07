@@ -41,6 +41,7 @@
   - [Executando](#executando)
   - [Banco de dados](#banco)
   - [Testes](#testes)
+  - [CI](#ci)
 - [📍 API](#api)
 - [🗂️ Estrutura](#estrutura)
 - [🎨 Identidade visual](#identidade)
@@ -50,9 +51,9 @@
 
 <h2 id="situacao">📌 Situação atual</h2>
 
-O **frontend em React** tem interface funcional e responsiva, publicada no GitHub Pages. O **backend em Java com Spring Boot** já sobe com Spring Security configurado e se conecta a um **PostgreSQL** (hospedado no [Neon](https://neon.tech)): o schema é criado por migrations do Flyway e as entidades `Usuario` e `ConfiguracaoUsuario` já estão mapeadas, com seus repositórios. Ainda **não tem endpoints**.
+O **frontend em React** tem interface funcional e responsiva, publicada no GitHub Pages. O **backend em Java com Spring Boot** já sobe com Spring Security configurado e se conecta a um **PostgreSQL** (hospedado no [Neon](https://neon.tech)): o schema é criado por migrations do Flyway e as entidades `Usuario` e `ConfiguracaoUsuario` já estão mapeadas, com seus repositórios. A [API](#api) já tem cadastro, login com JWT, perfil e configurações do usuário.
 
-Por isso, hoje o front funciona sozinho: os dados ficam no `localStorage` e o login é simulado, disponível só em desenvolvimento.
+O front ainda **não chama a API**: hoje ele funciona sozinho, os dados ficam no `localStorage` e o login é simulado, disponível só em desenvolvimento. O que falta mudar no front está no [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md#3-integração-com-o-front).
 
 > [!IMPORTANT]
 > O login local serve apenas para desenvolvimento e testes. A versão final usará autenticação pelo backend, com senha armazenada em hash e nunca em texto puro no navegador.
@@ -117,7 +118,7 @@ cd backend
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
-No Windows (PowerShell ou CMD), use `.\mvnw.cmd` no lugar de `./mvnw` (no PowerShell, coloque `"-Dspring-boot.run.profiles=local"` entre aspas). O perfil `local` lê a conexão do arquivo `backend/application-local.properties`; veja [Banco de dados](#banco). Com as variáveis de ambiente definidas, basta `./mvnw spring-boot:run`.
+No Windows (PowerShell ou CMD), use `.\mvnw.cmd` no lugar de `./mvnw` (no PowerShell, coloque `"-Dspring-boot.run.profiles=local"` entre aspas). O perfil `local` lê a conexão do arquivo `backend/application-local.properties`; veja [Banco de dados](#banco). Com as variáveis de ambiente definidas (incluindo `JWT_SECRET`, obrigatória), basta `./mvnw spring-boot:run`.
 
 <h3 id="banco">Banco de dados</h3>
 
@@ -133,6 +134,9 @@ A conexão vem de variáveis de ambiente, lidas em `application.properties`:
 | `DATABASE_USERNAME` | usuário do banco |
 | `DATABASE_PASSWORD` | senha do banco |
 | `DATABASE_DIRECT_URL` | opcional: URL JDBC **direta** (host sem `-pooler`), usada pelo Flyway nas migrations; se faltar, usa `DATABASE_URL` |
+| `JWT_SECRET` | **obrigatória**: segredo que assina o JWT (HS256), com pelo menos 32 bytes. Sem ela a aplicação não sobe. Gere com `openssl rand -base64 48` (o texto gerado é usado como está, sem decodificar) |
+| `JWT_EXPIRACAO` | opcional: validade do token, no formato de `Duration` do Spring (`24h`, `30m`); padrão `24h` |
+| `CORS_ALLOWED_ORIGINS` | opcional: origens liberadas no CORS, separadas por vírgula; padrão `https://arthurnunesdev.github.io,http://localhost:5173` |
 
 O Neon mostra a conexão como URI (`postgresql://usuario:senha@host/neondb?sslmode=require`). O JDBC não aceita esse formato: troque o prefixo por `jdbc:postgresql://`, tire `usuario:senha@` da URL e passe usuário e senha nas variáveis separadas. Exemplo:
 
@@ -140,7 +144,7 @@ O Neon mostra a conexão como URI (`postgresql://usuario:senha@host/neondb?sslmo
 DATABASE_URL=jdbc:postgresql://ep-xxxx-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require
 ```
 
-Em vez de exportar as variáveis, você pode usar o perfil `local`: copie `backend/application-local.properties.example` para `backend/application-local.properties` (já ignorado pelo Git, nunca faça commit dele) e preencha com os dados do seu banco no Neon.
+Em vez de exportar as variáveis, você pode usar o perfil `local`: copie `backend/application-local.properties.example` para `backend/application-local.properties` (já ignorado pelo Git, nunca faça commit dele) e preencha com os dados do seu banco no Neon e um `app.jwt.secret` próprio.
 
 <h3 id="testes">Testes</h3>
 
@@ -171,23 +175,56 @@ Como escrever testes que usam o banco:
 - **`@SpringBootTest`**: não precisa fazer nada. `PostgresDeTeste` é um `@Configuration` no pacote `br.com.marketfaesa`, então o component scan o encontra e o `DataSource` dele (marcado com `@Primary` e `@FlywayDataSource`) substitui o do `application.properties`.
 - **Testes de fatia** (ex.: `@DataJpaTest`, que não fazem component scan): adicione `@Import(PostgresDeTeste.class)` e `@AutoConfigureTestDatabase(replace = Replace.NONE)`.
 
+Os testes de API (`controller/*Tests`, `SecurityConfigTests`) usam MockMvc com o banco acima. O segredo do JWT dos testes fica em `backend/src/test/resources/config/application.properties` e só vale para eles; nunca use esse valor fora dos testes.
+
+<h3 id="ci">CI</h3>
+
+O workflow `.github/workflows/backend.yml` roda `./mvnw -B test` (Java 21) em todo pull request e push que altera `backend/` ou o próprio workflow. Ele usa o PostgreSQL que já vem instalado no runner do GitHub (sem Docker), cria o banco `mf_test` e aponta `TEST_DATABASE_URL` para ele.
+
 <h2 id="api">📍 API</h2>
 
-> [!NOTE]
-> **Nenhum endpoint está implementado ainda.** A tabela abaixo é o contrato **planejado**, descrito em detalhe no [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md#2-contrato-de-api-proposto).
+Base em desenvolvimento: `http://localhost:8080/api`. As rotas de `/api/usuarios/me` exigem `Authorization: Bearer <token>`; o id do usuário sai do token, então não existe `/usuarios/{id}`. O contrato com exemplos de corpo está no [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md#2-contrato-da-api).
 
-Base em desenvolvimento: `http://localhost:8080/api`
+| Método | Rota | Autenticação | Corpo | Respostas |
+|---|---|---|---|---|
+| GET | `/api/health` | pública | | `200 {"status":"ok"}` |
+| POST | `/api/auth/register` | pública | `{nome, email, senha}` | `201` com o usuário (sem token); `400` dados inválidos; `409` e-mail já cadastrado |
+| POST | `/api/auth/login` | pública | `{email, senha}` | `200 {token, usuario}`; `400` campos faltando; `401` e-mail ou senha inválidos |
+| GET | `/api/usuarios/me` | Bearer | | `200 {id, nome, email, curso, periodo, cidade, bio, fotoUrl, criadoEm}` |
+| GET | `/api/usuarios/me/configuracoes` | Bearer | | `200` com `tema` e os 9 booleanos |
+| PUT | `/api/usuarios/me/configuracoes` | Bearer | todos os campos de configuração | `200` com a configuração salva; `400` campo faltando ou tema diferente de `light`/`dark` |
 
-| Rota | Descrição | Status |
-|---|---|---|
-| `GET /api/health` | Teste de conexão com o backend | Planejado |
-| `POST /api/auth/register` | Cadastro de usuário | Planejado |
-| `POST /api/auth/login` | Login, retorna token JWT | Planejado |
-| `GET /api/users/{id}` | Dados do perfil, sem senha | Planejado |
-| `GET /api/users/{id}/config` | Carrega tema e preferências | Planejado |
-| `PUT /api/users/{id}/config` | Salva tema e preferências | Planejado |
+Regras:
 
-O que já está configurado no backend: API stateless em que toda rota exige autenticação e responde `401` sem token, CORS liberado para `http://localhost:5173` e para o GitHub Pages, e BCrypt para hash de senhas.
+- **Senha**: de 8 a 72 caracteres e no máximo 72 bytes em UTF-8 (limite do BCrypt). Fica só como hash BCrypt.
+- **E-mail**: o login é pelo e-mail (não há nome de usuário). Espaços nas pontas são removidos e ele é gravado em minúsculo, então `Ana@Faesa.br` e `ana@faesa.br` são o mesmo usuário.
+- **Login**: e-mail inexistente e senha errada devolvem o mesmo `401`, com o mesmo corpo.
+- **Cadastro**: devolve `201` sem token; para entrar, o front chama `/api/auth/login` em seguida. O cadastro cria também a linha de configurações com os valores padrão.
+- **Erros**: sempre `{status, erro, campos}`, com `campos` só nos erros de validação (`{"campo": "mensagem"}`). Sem token, token inválido ou expirado, ou token de um usuário que não existe mais: `401 {"status":401,"erro":"Não autenticado"}`. As mensagens de validação seguem o idioma do `Accept-Language` da requisição.
+- **Segurança**: API stateless, CORS liberado para `http://localhost:5173` e para o GitHub Pages (configurável por `CORS_ALLOWED_ORIGINS`).
+
+<h3 id="curl">Testando com curl</h3>
+
+Com o backend rodando (veja [Executando](#executando)):
+
+```bash
+curl http://localhost:8080/api/health
+
+curl -X POST http://localhost:8080/api/auth/register -H 'Content-Type: application/json' \
+  -d '{"nome":"Maria Silva","email":"maria@faesa.br","senha":"segredo123"}'
+
+curl -X POST http://localhost:8080/api/auth/login -H 'Content-Type: application/json' \
+  -d '{"email":"maria@faesa.br","senha":"segredo123"}'
+# copie o "token" da resposta
+TOKEN=eyJhbGciOiJIUzI1NiJ9...
+
+curl http://localhost:8080/api/usuarios/me -H "Authorization: Bearer $TOKEN"
+curl http://localhost:8080/api/usuarios/me/configuracoes -H "Authorization: Bearer $TOKEN"
+
+curl -X PUT http://localhost:8080/api/usuarios/me/configuracoes -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"tema":"dark","perfilPublico":true,"mostrarEmail":false,"permitirMensagens":true,"novasOportunidades":true,"mensagens":true,"conexoes":true,"publicacoes":true,"resumoSemanal":false,"reduzirAnimacoes":false}'
+```
 
 <h2 id="estrutura">🗂️ Estrutura</h2>
 
@@ -195,6 +232,7 @@ O que já está configurado no backend: API stateless em que toda rota exige aut
 Projeto-Integrador-Computacional/
 ├── .github/
 │   ├── workflows/deploy.yml        # build e publicação no GitHub Pages
+│   ├── workflows/backend.yml       # testes do backend em cada PR e push que mexe em backend/
 │   └── pull_request_template.md
 ├── MarketPlace/                    # frontend React + Vite
 │   ├── public/                     # símbolo, favicon e imagens
@@ -207,11 +245,13 @@ Projeto-Integrador-Computacional/
 │   ├── application-local.properties.example  # modelo da config local do banco
 │   └── src/
 │       ├── main/java/br/com/marketfaesa/
-│       │   ├── config/             # SecurityConfig
-│       │   ├── controller/
+│       │   ├── config/             # SecurityConfig (rotas, CORS, BCrypt) e JwtConfig (chave HS256)
+│       │   ├── controller/         # HealthController, AuthController, UsuarioController
+│       │   ├── dto/                # records de requisição e resposta (nenhuma entidade sai da API)
+│       │   ├── error/              # ApiExceptionHandler e exceções -> {status, erro, campos}
 │       │   ├── model/              # entidades JPA: Usuario, ConfiguracaoUsuario, Tema
 │       │   ├── repository/         # UsuarioRepository, ConfiguracaoUsuarioRepository
-│       │   └── service/
+│       │   └── service/            # AuthService, UsuarioService, TokenService (emite o JWT)
 │       ├── main/resources/db/migration/  # migrations do Flyway (V1__..., V2__...)
 │       └── test/java/br/com/marketfaesa/ # testes; PostgresDeTeste fornece o banco
 ├── CONTRIBUTING.md
@@ -231,7 +271,7 @@ O símbolo representa um mural com quatro cards, um deles sendo fixado. Os arqui
 
 <h2 id="deploy">🌐 Deploy</h2>
 
-O frontend é publicado automaticamente no **GitHub Pages** pelo GitHub Actions a cada push na `main`.
+O frontend é publicado automaticamente no **GitHub Pages** pelo GitHub Actions a cada push na `main`. Os testes do backend rodam em outro workflow (veja [CI](#ci)).
 
 O GitHub Pages serve apenas arquivos estáticos, então o backend precisará de outra hospedagem quando estiver pronto. Os detalhes estão no [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md#4-deploy).
 
