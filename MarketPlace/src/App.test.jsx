@@ -47,6 +47,21 @@ const CONFIG_API = {
   reduzirAnimacoes: false,
 };
 
+function adiado() {
+  let resolver;
+  let rejeitar;
+  const promessa = new Promise((res, rej) => {
+    resolver = res;
+    rejeitar = rej;
+  });
+  return { promessa, resolver, rejeitar };
+}
+
+async function sairPeloMenu(user) {
+  await user.click(screen.getByRole("button", { name: "Menu do perfil" }));
+  await user.click(screen.getByRole("button", { name: /Sair/ }));
+}
+
 function erroApi(status, mensagem, campos = null) {
   return new ApiError({ status, mensagem, campos });
 }
@@ -235,6 +250,31 @@ describe("sessão", () => {
     expect(screen.getByRole("heading", { name: "Entrar" })).toBeInTheDocument();
   });
 
+  it("logout real apaga o token do localStorage", async () => {
+    const authReal = await vi.importActual("./api/auth.js");
+    vi.mocked(sair).mockImplementation(authReal.sair);
+    salvarToken("jwt");
+    vi.mocked(obterMe).mockResolvedValue(USUARIO_API);
+    render(<App />);
+    const user = userEvent.setup();
+    await screen.findByRole("button", { name: "Menu do perfil" });
+
+    await sairPeloMenu(user);
+
+    expect(localStorage.getItem("marketfaesa-token")).toBeNull();
+    expect(screen.getByRole("heading", { name: "Entrar" })).toBeInTheDocument();
+  });
+
+  it("um 401 nas configurações volta ao login com aviso mesmo sem o gancho", async () => {
+    salvarToken("jwt");
+    vi.mocked(obterMe).mockResolvedValue(USUARIO_API);
+    vi.mocked(obterConfiguracoes).mockRejectedValue(erroApi(401, "Não autenticado"));
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Entrar" })).toBeInTheDocument();
+    expect(screen.getByText("Sua sessão expirou. Entre novamente.")).toBeInTheDocument();
+  });
+
   it("apaga as contas e a sessão antigas do localStorage", () => {
     localStorage.setItem("marketfaesa-users", JSON.stringify([{ email: "a@b.c", senha: "123456" }]));
     localStorage.setItem("marketfaesa-auth", JSON.stringify({ nome: "a" }));
@@ -244,7 +284,116 @@ describe("sessão", () => {
   });
 });
 
+function abrirConfiguracoes() {
+  salvarToken("jwt");
+  localStorage.setItem("marketfaesa-pagina", "configuracoes");
+  vi.mocked(obterMe).mockResolvedValue(USUARIO_API);
+  render(<App />);
+  return userEvent.setup();
+}
+
 describe("configurações", () => {
+  it("não salva nada enquanto o GET de configurações não responde", async () => {
+    const get = adiado();
+    vi.mocked(obterConfiguracoes).mockReturnValue(get.promessa);
+    const user = abrirConfiguracoes();
+
+    await user.click(await screen.findByRole("button", { name: /Privacidade/ }));
+    expect(screen.getByRole("status")).toHaveTextContent("Carregando suas configurações...");
+    const perfilPublico = screen.getByRole("switch", { name: "Perfil público" });
+    expect(perfilPublico).toBeDisabled();
+    await user.click(perfilPublico);
+    expect(salvarConfiguracoes).not.toHaveBeenCalled();
+
+    await act(async () => get.resolver({ ...CONFIG_API, perfilPublico: false }));
+    expect(perfilPublico).toBeEnabled();
+    expect(perfilPublico).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("se o GET falha, mostra o erro e permite tentar de novo", async () => {
+    vi.mocked(obterConfiguracoes).mockRejectedValueOnce(erroApi(500, "Erro interno"));
+    const user = abrirConfiguracoes();
+
+    await user.click(await screen.findByRole("button", { name: /Privacidade/ }));
+    expect(await screen.findByText(/Não foi possível carregar suas configurações. Erro interno/)).toBeInTheDocument();
+    expect(screen.getByRole("switch", { name: "Perfil público" })).toBeDisabled();
+
+    await user.click(screen.getByRole("button", { name: "Tentar novamente" }));
+
+    await waitFor(() => expect(screen.getByRole("switch", { name: "Perfil público" })).toBeEnabled());
+    expect(obterConfiguracoes).toHaveBeenCalledTimes(2);
+    expect(salvarConfiguracoes).not.toHaveBeenCalled();
+  });
+
+  it("ignora a resposta atrasada do GET depois do logout", async () => {
+    localStorage.setItem("marketfaesa-theme", "light");
+    const get = adiado();
+    vi.mocked(obterConfiguracoes).mockReturnValueOnce(get.promessa);
+    const user = abrirConfiguracoes();
+    await screen.findByRole("button", { name: "Menu do perfil" });
+
+    await sairPeloMenu(user);
+    await act(async () => get.resolver(CONFIG_API));
+
+    expect(screen.getByRole("heading", { name: "Entrar" })).toBeInTheDocument();
+    expect(document.documentElement.dataset.theme).toBe("light");
+  });
+
+  it("ignora a resposta atrasada do GET da conta anterior", async () => {
+    localStorage.setItem("marketfaesa-theme", "light");
+    const getAntigo = adiado();
+    vi.mocked(obterConfiguracoes)
+      .mockReturnValueOnce(getAntigo.promessa)
+      .mockResolvedValueOnce({ ...CONFIG_API, tema: "light", perfilPublico: false });
+    vi.mocked(login).mockResolvedValue({ token: "jwt2", usuario: { ...USUARIO_API, id: 8, email: "bia@faesa.br" } });
+    const user = abrirConfiguracoes();
+    await screen.findByRole("button", { name: "Menu do perfil" });
+
+    await sairPeloMenu(user);
+    await entrar("bia@faesa.br", "segredo123");
+    await screen.findByRole("button", { name: "Menu do perfil" });
+    await user.click(screen.getByRole("button", { name: "Configurações" }));
+    await user.click(screen.getByRole("button", { name: /Privacidade/ }));
+    await waitFor(() => expect(screen.getByRole("switch", { name: "Perfil público" })).toBeEnabled());
+
+    await act(async () => getAntigo.resolver(CONFIG_API));
+
+    expect(document.documentElement.dataset.theme).toBe("light");
+    expect(screen.getByRole("switch", { name: "Perfil público" })).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("envia os PUTs em fila, um por vez", async () => {
+    const put = adiado();
+    vi.mocked(salvarConfiguracoes).mockReturnValueOnce(put.promessa);
+    const user = abrirConfiguracoes();
+
+    await user.click(await screen.findByRole("button", { name: /Privacidade/ }));
+    await waitFor(() => expect(screen.getByRole("switch", { name: "Perfil público" })).toBeEnabled());
+    await user.click(screen.getByRole("switch", { name: "Perfil público" }));
+    await user.click(screen.getByRole("switch", { name: "Exibir e-mail" }));
+    expect(salvarConfiguracoes).toHaveBeenCalledTimes(1);
+
+    await act(async () => put.resolver());
+
+    await waitFor(() => expect(salvarConfiguracoes).toHaveBeenCalledTimes(2));
+    expect(salvarConfiguracoes).toHaveBeenLastCalledWith({ ...CONFIG_API, perfilPublico: false, mostrarEmail: true });
+  });
+
+  it("se um PUT falha, recarrega as configurações da API", async () => {
+    vi.mocked(salvarConfiguracoes).mockRejectedValueOnce(erroApi(500, "Erro interno"));
+    const user = abrirConfiguracoes();
+
+    await user.click(await screen.findByRole("button", { name: /Privacidade/ }));
+    await waitFor(() => expect(screen.getByRole("switch", { name: "Perfil público" })).toBeEnabled());
+    await user.click(screen.getByRole("switch", { name: "Perfil público" }));
+
+    expect(await screen.findByText("Não foi possível salvar. Erro interno")).toBeInTheDocument();
+    await waitFor(() => expect(obterConfiguracoes).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(screen.getByRole("switch", { name: "Perfil público" })).toHaveAttribute("aria-checked", "true"),
+    );
+  });
+
   it("salva a configuração completa ao alterar uma opção", async () => {
     salvarToken("jwt");
     localStorage.setItem("marketfaesa-pagina", "configuracoes");

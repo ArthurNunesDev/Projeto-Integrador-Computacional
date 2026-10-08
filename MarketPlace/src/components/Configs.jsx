@@ -11,8 +11,11 @@ const CONFIG_SECTIONS = [
 
 function Configs({
   onNavigate, tema, onChangeTema, configuracoes, onAlterarConfiguracao,
-  erroConfiguracoes, preferencias, onAlterarPreferencia, usuario, onLogout, onUpdateUsuario,
+  erroConfiguracoes, configuracoesCarregadas = true, erroCarregarConfiguracoes = "", onRecarregarConfiguracoes,
+  preferencias, onAlterarPreferencia, usuario, onLogout, onUpdateUsuario,
 }) {
+  // Opções salvas na API ficam travadas até o GET de configurações terminar.
+  const bloqueado = !configuracoesCarregadas;
   const [secaoAtiva, setSecaoAtiva] = useState("conta");
   const [salvo, setSalvo] = useState(false);
   const [conta, setConta] = useState({
@@ -41,11 +44,13 @@ function Configs({
   }
 
   function alterarTema(novoTema) {
+    if (bloqueado) return;
     onChangeTema(novoTema);
     mostrarSalvo();
   }
 
   function alterarConfiguracao(campo) {
+    if (bloqueado) return;
     onAlterarConfiguracao(campo);
     mostrarSalvo();
   }
@@ -61,6 +66,15 @@ function Configs({
     localStorage.setItem("marketfaesa-2fa", String(novoValor));
     mostrarSalvo();
   }
+
+  const avisoCarregamento = erroCarregarConfiguracoes ? (
+    <div className="configs-load-status" role="alert">
+      <span className="configs-action-message">{erroCarregarConfiguracoes}</span>
+      <button type="button" className="configs-action-primary" onClick={onRecarregarConfiguracoes}>Tentar novamente</button>
+    </div>
+  ) : bloqueado ? (
+    <p className="configs-load-status" role="status">Carregando suas configurações...</p>
+  ) : null;
 
   function renderizarConteudo() {
     switch (secaoAtiva) {
@@ -105,31 +119,34 @@ function Configs({
       case "privacidade":
         return <section className="configs-content-card animate__animated animate__fadeIn">
           <ConfigHeader eyebrow="PRIVACIDADE" title="Privacidade" description="Escolha o que outros estudantes podem visualizar." />
+          {avisoCarregamento}
           <div className="configs-options">
-            <ConfigToggle title="Perfil público" description="Permite que outros estudantes encontrem seu perfil." checked={configuracoes.perfilPublico} onChange={()=>alterarConfiguracao("perfilPublico")} />
-            <ConfigToggle title="Exibir e-mail" description="Mostra seu e-mail na página pública do perfil." checked={configuracoes.mostrarEmail} onChange={()=>alterarConfiguracao("mostrarEmail")} />
-            <ConfigToggle title="Permitir mensagens" description="Outros estudantes poderão iniciar uma conversa." checked={configuracoes.permitirMensagens} onChange={()=>alterarConfiguracao("permitirMensagens")} />
+            <ConfigToggle title="Perfil público" description="Permite que outros estudantes encontrem seu perfil." checked={configuracoes.perfilPublico} onChange={()=>alterarConfiguracao("perfilPublico")} disabled={bloqueado} />
+            <ConfigToggle title="Exibir e-mail" description="Mostra seu e-mail na página pública do perfil." checked={configuracoes.mostrarEmail} onChange={()=>alterarConfiguracao("mostrarEmail")} disabled={bloqueado} />
+            <ConfigToggle title="Permitir mensagens" description="Outros estudantes poderão iniciar uma conversa." checked={configuracoes.permitirMensagens} onChange={()=>alterarConfiguracao("permitirMensagens")} disabled={bloqueado} />
           </div>
         </section>;
 
       case "notificacoes":
         return <section className="configs-content-card animate__animated animate__fadeIn">
           <ConfigHeader eyebrow="NOTIFICAÇÕES" title="Notificações" description="Escolha quais atualizações deseja receber." />
+          {avisoCarregamento}
           <div className="configs-options">
-            <ConfigToggle title="Novas oportunidades" description="Receba avisos sobre oportunidades compatíveis com você." checked={configuracoes.novasOportunidades} onChange={()=>alterarConfiguracao("novasOportunidades")} />
-            <ConfigToggle title="Mensagens" description="Seja avisado quando receber uma nova mensagem." checked={configuracoes.mensagens} onChange={()=>alterarConfiguracao("mensagens")} />
-            <ConfigToggle title="Novas conexões" description="Receba avisos sobre solicitações e conexões." checked={configuracoes.conexoes} onChange={()=>alterarConfiguracao("conexoes")} />
-            <ConfigToggle title="Publicações" description="Receba atualizações relacionadas às suas publicações." checked={configuracoes.publicacoes} onChange={()=>alterarConfiguracao("publicacoes")} />
-            <ConfigToggle title="Resumo semanal" description="Receba um resumo semanal das atividades relevantes." checked={configuracoes.resumoSemanal} onChange={()=>alterarConfiguracao("resumoSemanal")} />
+            <ConfigToggle title="Novas oportunidades" description="Receba avisos sobre oportunidades compatíveis com você." checked={configuracoes.novasOportunidades} onChange={()=>alterarConfiguracao("novasOportunidades")} disabled={bloqueado} />
+            <ConfigToggle title="Mensagens" description="Seja avisado quando receber uma nova mensagem." checked={configuracoes.mensagens} onChange={()=>alterarConfiguracao("mensagens")} disabled={bloqueado} />
+            <ConfigToggle title="Novas conexões" description="Receba avisos sobre solicitações e conexões." checked={configuracoes.conexoes} onChange={()=>alterarConfiguracao("conexoes")} disabled={bloqueado} />
+            <ConfigToggle title="Publicações" description="Receba atualizações relacionadas às suas publicações." checked={configuracoes.publicacoes} onChange={()=>alterarConfiguracao("publicacoes")} disabled={bloqueado} />
+            <ConfigToggle title="Resumo semanal" description="Receba um resumo semanal das atividades relevantes." checked={configuracoes.resumoSemanal} onChange={()=>alterarConfiguracao("resumoSemanal")} disabled={bloqueado} />
           </div>
         </section>;
 
       case "aparencia":
         return <section className="configs-content-card animate__animated animate__fadeIn">
           <ConfigHeader eyebrow="APARÊNCIA" title="Aparência" description="Personalize a forma como o MarketFaesa é exibido." />
+          {avisoCarregamento}
           <div className="configs-theme-grid">
-            <button className={"configs-theme-option "+(tema==="light"?"ativo":"")} type="button" onClick={()=>alterarTema("light")} aria-pressed={tema==="light"}><span className="configs-theme-preview light">Aa</span><span>Claro</span><small>{tema==="light"?"Tema atual":"Tema claro"}</small></button>
-            <button className={"configs-theme-option "+(tema==="dark"?"ativo":"")} type="button" onClick={()=>alterarTema("dark")} aria-pressed={tema==="dark"}><span className="configs-theme-preview dark">Aa</span><span>Escuro</span><small>{tema==="dark"?"Tema atual":"Tema escuro"}</small></button>
+            <button className={"configs-theme-option "+(tema==="light"?"ativo":"")} type="button" onClick={()=>alterarTema("light")} aria-pressed={tema==="light"} disabled={bloqueado}><span className="configs-theme-preview light">Aa</span><span>Claro</span><small>{tema==="light"?"Tema atual":"Tema claro"}</small></button>
+            <button className={"configs-theme-option "+(tema==="dark"?"ativo":"")} type="button" onClick={()=>alterarTema("dark")} aria-pressed={tema==="dark"} disabled={bloqueado}><span className="configs-theme-preview dark">Aa</span><span>Escuro</span><small>{tema==="dark"?"Tema atual":"Tema escuro"}</small></button>
           </div>
         </section>;
 
@@ -172,6 +189,6 @@ function ConfigHeader({eyebrow,title,description}) { return <div className="conf
 function ConfigDivider(){return <div className="configs-divider"></div>;}
 function ConfigField({label,value,onChange,type="text",readOnly=false,disabled=false}){return <label className="configs-field"><span>{label}</span><input type={type} value={value} onChange={(e)=>onChange?.(e.target.value)} readOnly={readOnly||!onChange} disabled={disabled} /></label>;}
 function ConfigSelect({label,value,onChange,options}){return <label className="configs-select-field"><span>{label}</span><select value={value} onChange={(e)=>onChange(e.target.value)}>{options.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>;}
-function ConfigToggle({title,description,checked,onChange}){return <div className="configs-toggle-row"><div className="configs-toggle-info"><strong>{title}</strong><p>{description}</p></div><button type="button" className={"configs-switch "+(checked?"ativo":"")} onClick={onChange} role="switch" aria-checked={checked}><span></span></button></div>;}
+function ConfigToggle({title,description,checked,onChange,disabled=false}){return <div className="configs-toggle-row"><div className="configs-toggle-info"><strong>{title}</strong><p>{description}</p></div><button type="button" className={"configs-switch "+(checked?"ativo":"")} onClick={onChange} role="switch" aria-checked={checked} aria-label={title} disabled={disabled}><span></span></button></div>;}
 
 export default Configs;

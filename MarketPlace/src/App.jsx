@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import Header from "./components/Header.jsx";
 import Body from "./components/Body.jsx";
@@ -90,7 +90,16 @@ function App() {
   const [pagina, setPagina] = useState(() => localStorage.getItem(CHAVE_PAGINA) || "inicio");
   const [tema, setTema] = useState(obterTemaInicial);
   const [configuracoes, setConfiguracoes] = useState(CONFIG_PADRAO);
+  // Enquanto o GET não termina, as opções ficam travadas para não salvar os padrões por cima.
+  const [configuracoesCarregadas, setConfiguracoesCarregadas] = useState(false);
+  const [erroCarregarConfiguracoes, setErroCarregarConfiguracoes] = useState("");
   const [erroConfiguracoes, setErroConfiguracoes] = useState("");
+  // Muda a cada login/logout: respostas de uma sessão anterior são ignoradas.
+  const geracaoRef = useRef(0);
+  // PUTs de configuração rodam em fila, um por vez, na ordem dos cliques.
+  const filaSalvarRef = useRef(Promise.resolve());
+  const salvamentosPendentesRef = useRef(0);
+  const falhaAoSalvarRef = useRef(false);
   const [preferencias, setPreferencias] = useState(() => {
     try {
       const salvo = localStorage.getItem(CHAVE_PREFERENCIAS);
@@ -113,42 +122,73 @@ function App() {
     document.documentElement.dataset.theme = tema;
   }, [tema]);
 
-  const encerrarSessao = useCallback((aviso = "") => {
-    setUsuario(null);
+  const novaGeracao = useCallback(() => {
+    geracaoRef.current += 1;
+    salvamentosPendentesRef.current = 0;
+    falhaAoSalvarRef.current = false;
     setConfiguracoes(CONFIG_PADRAO);
+    setConfiguracoesCarregadas(false);
+    setErroCarregarConfiguracoes("");
     setErroConfiguracoes("");
+    return geracaoRef.current;
+  }, []);
+
+  const encerrarSessao = useCallback((aviso = "") => {
+    novaGeracao();
+    setUsuario(null);
     setErroSessao("");
     setAvisoLogin(aviso);
     setPagina("inicio");
     localStorage.setItem(CHAVE_PAGINA, "inicio");
-  }, []);
+  }, [novaGeracao]);
 
-  // Token expirado ou inválido em qualquer requisição: o client já limpou o token.
+  // 401 em qualquer rota autenticada: o client já limpou o token.
   useEffect(
     () => definirOnNaoAutenticado(() => encerrarSessao(MENSAGEM_SESSAO_EXPIRADA)),
     [encerrarSessao],
   );
 
-  const carregarConfiguracoes = useCallback(async () => {
-    try {
-      const { tema: temaSalvo, ...resto } = await obterConfiguracoes();
-      setTema(temaSalvo === "dark" ? "dark" : "light");
-      setConfiguracoes({ ...CONFIG_PADRAO, ...resto });
-      setErroConfiguracoes("");
-    } catch (erro) {
-      if (erro?.status === 401) return; // o gancho de não autenticado já desloga
-      setErroConfiguracoes(`Não foi possível carregar suas configurações. ${mensagemDoErro(erro)}`);
-    }
-  }, []);
+  // Erro de uma requisição da sessão atual. Devolve false se a resposta é de uma sessão já encerrada.
+  // O gancho do client já trata o 401; aqui ele é tratado de novo para nunca ficar sem voltar ao login.
+  const tratarErroDaSessao = useCallback(
+    (geracao, erro) => {
+      if (geracao !== geracaoRef.current) return false;
+      if (erro?.status === 401) {
+        encerrarSessao(MENSAGEM_SESSAO_EXPIRADA);
+        return false;
+      }
+      return true;
+    },
+    [encerrarSessao],
+  );
+
+  const carregarConfiguracoes = useCallback(
+    async (geracao) => {
+      setErroCarregarConfiguracoes("");
+      try {
+        const { tema: temaSalvo, ...resto } = await obterConfiguracoes();
+        if (geracao !== geracaoRef.current) return;
+        setTema(temaSalvo === "dark" ? "dark" : "light");
+        setConfiguracoes({ ...CONFIG_PADRAO, ...resto });
+        setConfiguracoesCarregadas(true);
+      } catch (erro) {
+        if (!tratarErroDaSessao(geracao, erro)) return;
+        setConfiguracoesCarregadas(false);
+        setErroCarregarConfiguracoes(`Não foi possível carregar suas configurações. ${mensagemDoErro(erro)}`);
+      }
+    },
+    [tratarErroDaSessao],
+  );
 
   const entrarComo = useCallback(
     (usuarioApi) => {
+      const geracao = novaGeracao();
       setUsuario(montarUsuario(usuarioApi));
       setErroSessao("");
       setAvisoLogin("");
-      carregarConfiguracoes();
+      carregarConfiguracoes(geracao);
     },
-    [carregarConfiguracoes],
+    [novaGeracao, carregarConfiguracoes],
   );
 
   useEffect(() => {
@@ -160,8 +200,9 @@ function App() {
         if (!cancelado) entrarComo(usuarioApi);
       })
       .catch((erro) => {
-        // 401: o gancho de não autenticado já voltou para o login.
-        if (!cancelado && erro?.status !== 401) setErroSessao(mensagemDoErro(erro));
+        if (cancelado) return;
+        if (erro?.status === 401) encerrarSessao(MENSAGEM_SESSAO_EXPIRADA);
+        else setErroSessao(mensagemDoErro(erro));
       })
       .finally(() => {
         if (!cancelado) setRestaurando(false);
@@ -170,7 +211,7 @@ function App() {
     return () => {
       cancelado = true;
     };
-  }, [restaurando, entrarComo]);
+  }, [restaurando, entrarComo, encerrarSessao]);
 
   async function fazerLogin({ email, senha }) {
     try {
@@ -232,20 +273,55 @@ function App() {
     setPreferencias((estado) => ({ ...estado, [campo]: valor }));
   }
 
-  // Atualiza na hora e envia a configuração completa; se a API recusar, desfaz.
+  // Atualiza na hora e envia a configuração completa. Os PUTs vão em fila, então o
+  // último clique é o último gravado. Se algum falhar, ao fim da fila a tela é
+  // recarregada com o que está salvo na API.
   function persistirConfiguracoes(novoTema, novasConfiguracoes) {
-    const temaAnterior = tema;
-    const configuracoesAnteriores = configuracoes;
+    if (!configuracoesCarregadas) return;
+    const geracao = geracaoRef.current;
+    const corpo = { tema: novoTema, ...novasConfiguracoes };
     setTema(novoTema);
     setConfiguracoes(novasConfiguracoes);
     setErroConfiguracoes("");
+    salvamentosPendentesRef.current += 1;
 
-    salvarConfiguracoes({ tema: novoTema, ...novasConfiguracoes }).catch((erro) => {
-      if (erro?.status === 401) return; // o gancho de não autenticado já desloga
-      setTema(temaAnterior);
-      setConfiguracoes(configuracoesAnteriores);
-      setErroConfiguracoes(`Não foi possível salvar. ${mensagemDoErro(erro)}`);
-    });
+    filaSalvarRef.current = filaSalvarRef.current
+      .then(() => (geracao === geracaoRef.current ? salvarConfiguracoes(corpo) : null))
+      .then(
+        () => terminarSalvamento(geracao),
+        (erro) => {
+          if (!tratarErroDaSessao(geracao, erro)) return;
+          falhaAoSalvarRef.current = true;
+          setErroConfiguracoes(`Não foi possível salvar. ${mensagemDoErro(erro)}`);
+          terminarSalvamento(geracao);
+        },
+      );
+  }
+
+  function terminarSalvamento(geracao) {
+    if (geracao !== geracaoRef.current) return;
+    salvamentosPendentesRef.current -= 1;
+    if (salvamentosPendentesRef.current > 0 || !falhaAoSalvarRef.current) return;
+    falhaAoSalvarRef.current = false;
+    recarregarDepoisDeFalha(geracao);
+  }
+
+  async function recarregarDepoisDeFalha(geracao) {
+    try {
+      const { tema: temaSalvo, ...resto } = await obterConfiguracoes();
+      if (geracao !== geracaoRef.current || salvamentosPendentesRef.current > 0) return;
+      setTema(temaSalvo === "dark" ? "dark" : "light");
+      setConfiguracoes({ ...CONFIG_PADRAO, ...resto });
+    } catch (erro) {
+      if (!tratarErroDaSessao(geracao, erro)) return;
+      // Sem saber o que ficou salvo, trava as opções até recarregar.
+      setConfiguracoesCarregadas(false);
+      setErroCarregarConfiguracoes(`Não foi possível carregar suas configurações. ${mensagemDoErro(erro)}`);
+    }
+  }
+
+  function recarregarConfiguracoes() {
+    carregarConfiguracoes(geracaoRef.current);
   }
 
   function alterarTema(novoTema) {
@@ -306,6 +382,9 @@ function App() {
             configuracoes={configuracoes}
             onAlterarConfiguracao={alterarConfiguracao}
             erroConfiguracoes={erroConfiguracoes}
+            configuracoesCarregadas={configuracoesCarregadas}
+            erroCarregarConfiguracoes={erroCarregarConfiguracoes}
+            onRecarregarConfiguracoes={recarregarConfiguracoes}
             preferencias={preferencias}
             onAlterarPreferencia={alterarPreferencia}
             usuario={usuario}
