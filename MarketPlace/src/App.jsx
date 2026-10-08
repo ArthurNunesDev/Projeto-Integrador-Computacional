@@ -201,7 +201,9 @@ function App() {
     let perfilSalvo = {};
     try {
       perfilSalvo = JSON.parse(localStorage.getItem(chavePerfilUsuario) || "{}");
-    } catch {}
+    } catch {
+      // localStorage indisponível ou com JSON inválido: mantém o valor padrão
+    }
 
     const usuarioLogado = {
       usuario: encontrado.usuario,

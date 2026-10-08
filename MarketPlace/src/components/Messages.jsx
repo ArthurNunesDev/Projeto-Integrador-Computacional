@@ -22,7 +22,9 @@ function obterConversas() {
       const conversas = JSON.parse(salvo);
       if (Array.isArray(conversas) && conversas.length) return conversas;
     }
-  } catch {}
+  } catch {
+    // localStorage indisponível ou com JSON inválido: mantém o valor padrão
+  }
   return CONVERSAS_INICIAIS;
 }
 

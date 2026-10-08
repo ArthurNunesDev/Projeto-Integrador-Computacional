@@ -8,7 +8,9 @@ function calcularProgressoPerfil(usuario) {
   try {
     perfil = JSON.parse(localStorage.getItem("marketfaesa-perfil:" + email) || "{}");
     habilidades = JSON.parse(localStorage.getItem("marketfaesa-habilidades") || "[]");
-  } catch {}
+  } catch {
+    // localStorage indisponível ou com JSON inválido: mantém o valor padrão
+  }
   const campos = [
     Boolean((perfil.nome || usuario?.nome || "").trim()),
     Boolean((perfil.email || usuario?.email || "").trim()),
@@ -21,6 +23,17 @@ function calcularProgressoPerfil(usuario) {
   return Math.round((campos.filter(Boolean).length / campos.length) * 100);
 }
 
+function chaveConclusaoPerfil(usuario) {
+  return usuario?.email
+    ? "marketfaesa-perfil-completo-pendente:" + usuario.email.trim().toLowerCase()
+    : "";
+}
+
+function conclusaoPerfilPendente(usuario) {
+  const chave = chaveConclusaoPerfil(usuario);
+  return Boolean(chave) && localStorage.getItem(chave) === "1";
+}
+
 function Body({ onNavigate, usuario }) {
   const nomeUsuario = usuario?.nome || "João Silva";
   const cursoUsuario = usuario?.curso || "Ciência da Computação";
@@ -29,9 +42,9 @@ function Body({ onNavigate, usuario }) {
   const [areaSelecionada, setAreaSelecionada] = useState("Todos");
   const [participando, setParticipando] = useState([]);
   const [detalheAberto, setDetalheAberto] = useState(null);
-  const [perfilProgresso, setPerfilProgresso] = useState(() => calcularProgressoPerfil(usuario));
-  const [perfilConcluido, setPerfilConcluido] = useState(() => calcularProgressoPerfil(usuario) === 100);
-  const [mostrarPerfilCompleto, setMostrarPerfilCompleto] = useState(false);
+  const [perfilProgresso, setPerfilProgresso] = useState(() => (conclusaoPerfilPendente(usuario) ? 100 : calcularProgressoPerfil(usuario)));
+  const [perfilConcluido, setPerfilConcluido] = useState(() => conclusaoPerfilPendente(usuario) || calcularProgressoPerfil(usuario) === 100);
+  const [mostrarPerfilCompleto, setMostrarPerfilCompleto] = useState(() => conclusaoPerfilPendente(usuario));
   const [salvos, setSalvos] = useState(() => {
     try { return JSON.parse(localStorage.getItem("marketfaesa-salvos")) || []; } catch { return []; }
   });
@@ -41,15 +54,9 @@ function Body({ onNavigate, usuario }) {
   }, [salvos]);
 
   useEffect(() => {
-    const chaveConclusao = usuario?.email
-      ? "marketfaesa-perfil-completo-pendente:" + usuario.email.trim().toLowerCase()
-      : "";
-
-    if (chaveConclusao && localStorage.getItem(chaveConclusao) === "1") {
-      localStorage.removeItem(chaveConclusao);
-      setPerfilProgresso(100);
-      setPerfilConcluido(true);
-      setMostrarPerfilCompleto(true);
+    // O estado inicial já reflete a conclusão pendente; aqui só limpa a marca e agenda o fim do aviso.
+    if (conclusaoPerfilPendente(usuario)) {
+      localStorage.removeItem(chaveConclusaoPerfil(usuario));
       const timer = window.setTimeout(() => setMostrarPerfilCompleto(false), 4200);
       return () => window.clearTimeout(timer);
     }
@@ -328,7 +335,7 @@ function Body({ onNavigate, usuario }) {
                 <span>PERFIL COMPLETO!</span>
                 <h2>Obrigado por completar seu perfil! ✨</h2>
                 <p>Agora sua presença na MarketFAESA está pronta para conectar você a novas oportunidades.</p>
-                <div className="perfil-completo-sparkles">✦　✧　✦</div>
+                <div className="perfil-completo-sparkles">✦{"\u3000"}✧{"\u3000"}✦</div>
               </div>
             </div>
           )}

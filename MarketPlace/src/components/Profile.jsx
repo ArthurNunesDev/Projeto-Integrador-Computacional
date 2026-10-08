@@ -25,7 +25,9 @@ function obterPerfil(usuario) {
   try {
     const salvo = localStorage.getItem(chavePerfil(usuario));
     if (salvo) return { ...dadosBase, ...JSON.parse(salvo) };
-  } catch {}
+  } catch {
+    // localStorage indisponível ou com JSON inválido: mantém o valor padrão
+  }
 
   return dadosBase;
 }
@@ -39,7 +41,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
   useEffect(() => {
     localStorage.setItem(chavePerfil(usuario), JSON.stringify(dados));
     window.dispatchEvent(new Event("marketfaesa-perfil-atualizado"));
-  }, [dados]);
+  }, [dados, usuario]);
 
   function alterarCampo(campo, valor) {
     setDados((estado) => ({ ...estado, [campo]: valor }));
@@ -93,7 +95,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
               <span>PERFIL COMPLETO!</span>
               <h2>Obrigado por completar seu perfil! ✨</h2>
               <p>Agora sua presença na MarketFAESA está pronta para conectar você a novas oportunidades.</p>
-              <div className="perfil-completo-sparkles">✦　✧　✦</div>
+              <div className="perfil-completo-sparkles">✦{"\u3000"}✧{"\u3000"}✦</div>
             </div>
           </div>
         )}
@@ -182,7 +184,9 @@ function calcularProgressoPerfil(usuario) {
   try {
     perfil = JSON.parse(localStorage.getItem("marketfaesa-perfil:" + email) || "{}");
     habilidades = JSON.parse(localStorage.getItem("marketfaesa-habilidades") || "[]");
-  } catch {}
+  } catch {
+    // localStorage indisponível ou com JSON inválido: mantém o valor padrão
+  }
   const campos = [
     Boolean((perfil.nome || usuario?.nome || "").trim()),
     Boolean((perfil.email || usuario?.email || "").trim()),
