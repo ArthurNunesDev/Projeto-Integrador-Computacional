@@ -22,6 +22,20 @@ function lerPerfilLocal(id) {
   }
 }
 
+// Versões anteriores guardavam as edições por e-mail (minúsculo); move para a chave por id.
+function migrarPerfilPorEmail(id, email) {
+  if (!email) return;
+  try {
+    const chaveEmail = chavePerfil(email.trim().toLowerCase());
+    const salvoPorEmail = localStorage.getItem(chaveEmail);
+    if (salvoPorEmail === null || localStorage.getItem(chavePerfil(id)) !== null) return;
+    localStorage.setItem(chavePerfil(id), salvoPorEmail);
+    localStorage.removeItem(chaveEmail);
+  } catch {
+    // sem storage não há o que migrar
+  }
+}
+
 /** Guarda as edições locais do perfil e devolve só os campos editáveis aplicados. */
 export function salvarPerfilLocal(id, dados) {
   const aplicados = {};
@@ -56,6 +70,7 @@ export function montarUsuario(api) {
     criadoEm: api.criadoEm || null,
   };
 
+  migrarPerfilPorEmail(api.id, api.email);
   const local = lerPerfilLocal(api.id);
   for (const campo of CAMPOS_EDITAVEIS) {
     if (typeof local[campo] === "string") usuario[campo] = local[campo];
