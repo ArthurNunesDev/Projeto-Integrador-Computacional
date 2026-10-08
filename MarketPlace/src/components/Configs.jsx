@@ -1,11 +1,5 @@
 import { useState } from "react";
 
-const CHAVE_PERFIL = "marketfaesa-perfil";
-
-function chavePerfil(usuario) {
-  return usuario?.email ? `${CHAVE_PERFIL}:${usuario.email.toLowerCase()}` : CHAVE_PERFIL;
-}
-
 const CONFIG_SECTIONS = [
   { id:"conta", label:"Conta", description:"Informações pessoais", icon:"👤" },
   { id:"seguranca", label:"Segurança", description:"Senha e acesso", icon:"🔒" },
@@ -17,18 +11,16 @@ const CONFIG_SECTIONS = [
 
 function Configs({
   onNavigate, tema, onChangeTema, configuracoes, onAlterarConfiguracao,
-  preferencias, onAlterarPreferencia, onAlterarSenha, onDeleteAccount, usuario, onLogout, onUpdateUsuario,
+  erroConfiguracoes, preferencias, onAlterarPreferencia, usuario, onLogout, onUpdateUsuario,
 }) {
   const [secaoAtiva, setSecaoAtiva] = useState("conta");
   const [salvo, setSalvo] = useState(false);
   const [conta, setConta] = useState({
     nome: usuario?.nome || "",
     email: usuario?.email || "",
-    curso: usuario?.curso || "Ciência da Computação",
-    periodo: usuario?.periodo || "4º período",
+    curso: usuario?.curso || "",
+    periodo: usuario?.periodo || "",
   });
-  const [senha, setSenha] = useState({ atual:"", nova:"", confirmar:"" });
-  const [mensagemSenha, setMensagemSenha] = useState("");
   const [doisFatores, setDoisFatores] = useState(() => localStorage.getItem("marketfaesa-2fa") === "true");
 
   function mostrarSalvo() {
@@ -38,23 +30,9 @@ function Configs({
 
   function salvarConta() {
     const nome = conta.nome.trim();
-    const email = conta.email.trim().toLowerCase();
-    if (!nome || !email) return;
-    let perfilExistente = {};
-    try {
-      perfilExistente = JSON.parse(localStorage.getItem(chavePerfil(usuario)) || "{}");
-    } catch {
-      // localStorage indisponível ou com JSON inválido: mantém o valor padrão
-    }
-
-    localStorage.setItem(chavePerfil(usuario), JSON.stringify({
-      ...perfilExistente,
-      nome,
-      email,
-      curso: conta.curso,
-      periodo: conta.periodo,
-    }));
-    onUpdateUsuario?.({ nome, email, usuario: email, curso: conta.curso, periodo: conta.periodo });
+    if (!nome) return;
+    // Salvo localmente até existir PUT /api/usuarios/me (ver src/perfil.js).
+    onUpdateUsuario?.({ nome, curso: conta.curso, periodo: conta.periodo });
     mostrarSalvo();
   }
 
@@ -77,28 +55,6 @@ function Configs({
     mostrarSalvo();
   }
 
-  function trocarSenha() {
-    setMensagemSenha("");
-    if (!senha.atual || !senha.nova || !senha.confirmar) {
-      setMensagemSenha("Preencha os três campos da senha.");
-      return;
-    }
-    if (senha.nova.length < 6) {
-      setMensagemSenha("A nova senha precisa ter pelo menos 6 caracteres.");
-      return;
-    }
-    if (senha.nova !== senha.confirmar) {
-      setMensagemSenha("A confirmação da nova senha não confere.");
-      return;
-    }
-    if (!onAlterarSenha?.(senha.atual, senha.nova)) {
-      setMensagemSenha("A senha atual está incorreta.");
-      return;
-    }
-    setSenha({ atual:"", nova:"", confirmar:"" });
-    setMensagemSenha("✓ Senha alterada com sucesso.");
-  }
-
   function alternarDoisFatores() {
     const novoValor = !doisFatores;
     setDoisFatores(novoValor);
@@ -113,15 +69,15 @@ function Configs({
           <ConfigHeader eyebrow="CONTA" title="Informações da conta" description="Gerencie suas informações pessoais do MarketFaesa." />
           <div className="configs-form-grid">
             <ConfigField label="Nome completo" value={conta.nome} onChange={(v)=>alterarCampoConta("nome",v)} />
-            <ConfigField label="E-mail" value={conta.email} onChange={(v)=>alterarCampoConta("email",v)} type="email" />
+            <ConfigField label="E-mail" value={conta.email} type="email" readOnly />
             <ConfigField label="Curso" value={conta.curso} onChange={(v)=>alterarCampoConta("curso",v)} />
             <ConfigField label="Período" value={conta.periodo} onChange={(v)=>alterarCampoConta("periodo",v)} />
           </div>
           <div className="configs-inline-save"><button type="button" className="configs-save-button" onClick={salvarConta}>Salvar dados da conta</button></div>
           <ConfigDivider />
           <div className="configs-danger-zone">
-            <div><strong>Excluir conta</strong><p>Esta ação remove os dados locais desta conta e encerra sua sessão.</p></div>
-            <button type="button" className="configs-danger-button" onClick={()=>{if(window.confirm("Deseja realmente excluir sua conta? Esta ação não pode ser desfeita.")) onDeleteAccount?.();}}>Excluir conta</button>
+            <div><strong>Excluir conta</strong><p>Disponível em breve: a exclusão de conta ainda não existe na API.</p></div>
+            <button type="button" className="configs-danger-button" disabled title="Disponível em breve">Excluir conta</button>
           </div>
         </section>;
 
@@ -130,13 +86,14 @@ function Configs({
           <ConfigHeader eyebrow="SEGURANÇA" title="Segurança e acesso" description="Mantenha sua conta protegida." />
           <div className="configs-password-box">
             <h3>Alterar senha</h3>
+            {/* Sem rota na API para trocar a senha ainda. */}
             <div className="configs-password-grid">
-              <ConfigField label="Senha atual" value={senha.atual} onChange={(v)=>setSenha(s=>({...s,atual:v}))} type="password" />
-              <ConfigField label="Nova senha" value={senha.nova} onChange={(v)=>setSenha(s=>({...s,nova:v}))} type="password" />
-              <ConfigField label="Confirmar nova senha" value={senha.confirmar} onChange={(v)=>setSenha(s=>({...s,confirmar:v}))} type="password" />
+              <ConfigField label="Senha atual" value="" type="password" disabled />
+              <ConfigField label="Nova senha" value="" type="password" disabled />
+              <ConfigField label="Confirmar nova senha" value="" type="password" disabled />
             </div>
-            <button type="button" className="configs-action-primary" onClick={trocarSenha}>Alterar senha</button>
-            {mensagemSenha && <p className={"configs-action-message " + (mensagemSenha.startsWith("✓") ? "sucesso" : "")}>{mensagemSenha}</p>}
+            <button type="button" className="configs-action-primary" disabled>Alterar senha</button>
+            <p className="configs-action-message">Disponível em breve.</p>
           </div>
           <ConfigDivider />
           <div className="configs-security-list">
@@ -204,7 +161,7 @@ function Configs({
         </aside>
         <div className="configs-main">
           {renderizarConteudo()}
-          <div className="configs-save-bar"><div>{salvo?<span className="configs-saved">✓ Alterações salvas</span>:<span>As alterações são salvas automaticamente.</span>}</div><button type="button" className="configs-save-button" onClick={mostrarSalvo}>Salvar alterações</button></div>
+          <div className="configs-save-bar"><div>{erroConfiguracoes?<span className="configs-action-message" role="alert">{erroConfiguracoes}</span>:salvo?<span className="configs-saved">✓ Alterações salvas</span>:<span>As alterações são salvas automaticamente.</span>}</div><button type="button" className="configs-save-button" onClick={mostrarSalvo}>Salvar alterações</button></div>
         </div>
       </div>
     </div>
@@ -213,7 +170,7 @@ function Configs({
 
 function ConfigHeader({eyebrow,title,description}) { return <div className="configs-content-header"><span>{eyebrow}</span><h2>{title}</h2><p>{description}</p></div>; }
 function ConfigDivider(){return <div className="configs-divider"></div>;}
-function ConfigField({label,value,onChange,type="text"}){return <label className="configs-field"><span>{label}</span><input type={type} value={value} onChange={(e)=>onChange?.(e.target.value)} /></label>;}
+function ConfigField({label,value,onChange,type="text",readOnly=false,disabled=false}){return <label className="configs-field"><span>{label}</span><input type={type} value={value} onChange={(e)=>onChange?.(e.target.value)} readOnly={readOnly||!onChange} disabled={disabled} /></label>;}
 function ConfigSelect({label,value,onChange,options}){return <label className="configs-select-field"><span>{label}</span><select value={value} onChange={(e)=>onChange(e.target.value)}>{options.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>;}
 function ConfigToggle({title,description,checked,onChange}){return <div className="configs-toggle-row"><div className="configs-toggle-info"><strong>{title}</strong><p>{description}</p></div><button type="button" className={"configs-switch "+(checked?"ativo":"")} onClick={onChange} role="switch" aria-checked={checked}><span></span></button></div>;}
 

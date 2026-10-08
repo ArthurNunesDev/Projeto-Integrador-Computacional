@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import Header from "./components/Header.jsx";
 import Body from "./components/Body.jsx";
@@ -15,6 +15,11 @@ import Footer from "./components/Footer.jsx";
 
 import Login from "./auth/Login.jsx";
 
+import { cadastrar, login, sair } from "./api/auth.js";
+import { ApiError, definirOnNaoAutenticado, obterToken } from "./api/client.js";
+import { obterConfiguracoes, obterMe, salvarConfiguracoes } from "./api/usuarios.js";
+import { montarUsuario, salvarPerfilLocal } from "./perfil.js";
+
 import "./index.css";
 import "./components/Header.css";
 import "./components/Body.css";
@@ -29,18 +34,33 @@ import "./components/Publications.css";
 import "./components/Footer.css";
 
 const CHAVE_TEMA = "marketfaesa-theme";
-const CHAVE_CONFIG = "marketfaesa-config";
-const CHAVE_AUTENTICACAO = "marketfaesa-auth";
-const CHAVE_USUARIOS = "marketfaesa-users";
 const CHAVE_PAGINA = "marketfaesa-pagina";
-const CHAVE_PERFIL = "marketfaesa-perfil";
 const CHAVE_PREFERENCIAS = "marketfaesa-preferencias";
 
-function obterTemaInicial() {
-  const temaSalvo = localStorage.getItem(CHAVE_TEMA);
-  return temaSalvo === "dark" ? "dark" : "light";
+// Chaves de antes da integração com a API: contas com senha em texto puro,
+// sessão e configurações locais. São apagadas na primeira carga.
+const CHAVES_ANTIGAS = ["marketfaesa-users", "marketfaesa-auth", "marketfaesa-config"];
+
+function limparDadosAntigos() {
+  for (const chave of CHAVES_ANTIGAS) {
+    try {
+      localStorage.removeItem(chave);
+    } catch {
+      // sem storage não há o que limpar
+    }
+  }
 }
 
+// O tema fica também no navegador só para não piscar na carga; a fonte é a API.
+function obterTemaInicial() {
+  try {
+    return localStorage.getItem(CHAVE_TEMA) === "dark" ? "dark" : "light";
+  } catch {
+    return "light";
+  }
+}
+
+// Mesmos campos de ConfiguracaoDto (menos o tema): o PUT exige todos.
 const CONFIG_PADRAO = {
   perfilPublico: true,
   mostrarEmail: false,
@@ -50,55 +70,27 @@ const CONFIG_PADRAO = {
   conexoes: true,
   publicacoes: true,
   resumoSemanal: false,
+  reduzirAnimacoes: false,
 };
 
-function obterConfiguracoesIniciais() {
-  try {
-    const salvo = localStorage.getItem(CHAVE_CONFIG);
+const MENSAGEM_ERRO_PADRAO = "Não foi possível concluir a operação. Tente novamente.";
+const MENSAGEM_SESSAO_EXPIRADA = "Sua sessão expirou. Entre novamente.";
 
-    if (salvo) {
-      return {
-        ...CONFIG_PADRAO,
-        ...JSON.parse(salvo),
-      };
-    }
-  } catch {
-    // Usa as configurações padrão.
-  }
-
-  return CONFIG_PADRAO;
-}
-
-function obterUsuarioInicial() {
-  try {
-    const salvo = localStorage.getItem(CHAVE_AUTENTICACAO);
-
-    if (salvo) {
-      return JSON.parse(salvo);
-    }
-  } catch {
-    // Sessão inválida: começa deslogado.
-  }
-
-  return null;
-}
-
-function obterUsuariosLocais() {
-  try {
-    const salvo = localStorage.getItem(CHAVE_USUARIOS);
-    const usuarios = salvo ? JSON.parse(salvo) : [];
-
-    return Array.isArray(usuarios) ? usuarios : [];
-  } catch {
-    return [];
-  }
+function mensagemDoErro(erro, porStatus = {}) {
+  if (!(erro instanceof ApiError)) return MENSAGEM_ERRO_PADRAO;
+  return porStatus[erro.status] || erro.mensagem || MENSAGEM_ERRO_PADRAO;
 }
 
 function App() {
-  const [usuario, setUsuario] = useState(obterUsuarioInicial);
+  const [usuario, setUsuario] = useState(null);
+  // Com token salvo, a sessão é restaurada via GET /api/usuarios/me antes de mostrar o app.
+  const [restaurando, setRestaurando] = useState(() => Boolean(obterToken()));
+  const [erroSessao, setErroSessao] = useState("");
+  const [avisoLogin, setAvisoLogin] = useState("");
   const [pagina, setPagina] = useState(() => localStorage.getItem(CHAVE_PAGINA) || "inicio");
   const [tema, setTema] = useState(obterTemaInicial);
-  const [configuracoes, setConfiguracoes] = useState(obterConfiguracoesIniciais);
+  const [configuracoes, setConfiguracoes] = useState(CONFIG_PADRAO);
+  const [erroConfiguracoes, setErroConfiguracoes] = useState("");
   const [preferencias, setPreferencias] = useState(() => {
     try {
       const salvo = localStorage.getItem(CHAVE_PREFERENCIAS);
@@ -109,8 +101,8 @@ function App() {
   });
 
   useEffect(() => {
-    localStorage.setItem(CHAVE_CONFIG, JSON.stringify(configuracoes));
-  }, [configuracoes]);
+    limparDadosAntigos();
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(CHAVE_PREFERENCIAS, JSON.stringify(preferencias));
@@ -121,245 +113,147 @@ function App() {
     document.documentElement.dataset.theme = tema;
   }, [tema]);
 
-  function fazerLogin(dadosLogin) {
-    const usuarioInformado =
-      typeof dadosLogin === "string"
-        ? dadosLogin.trim()
-        : (dadosLogin?.usuario || dadosLogin?.email || "").trim();
+  const encerrarSessao = useCallback((aviso = "") => {
+    setUsuario(null);
+    setConfiguracoes(CONFIG_PADRAO);
+    setErroConfiguracoes("");
+    setErroSessao("");
+    setAvisoLogin(aviso);
+    setPagina("inicio");
+    localStorage.setItem(CHAVE_PAGINA, "inicio");
+  }, []);
 
-    const identificadorInformado =
-      typeof dadosLogin === "object"
-        ? (dadosLogin?.email || dadosLogin?.usuario || "").trim().toLowerCase()
-        : "";
+  // Token expirado ou inválido em qualquer requisição: o client já limpou o token.
+  useEffect(
+    () => definirOnNaoAutenticado(() => encerrarSessao(MENSAGEM_SESSAO_EXPIRADA)),
+    [encerrarSessao],
+  );
 
-    const senhaInformada =
-      typeof dadosLogin === "object"
-        ? dadosLogin?.senha || dadosLogin?.password || ""
-        : "";
-
-    if (!identificadorInformado || !senhaInformada) {
-      return {
-        sucesso: false,
-        mensagem: "Preencha seu usuário/e-mail e sua senha.",
-      };
+  const carregarConfiguracoes = useCallback(async () => {
+    try {
+      const { tema: temaSalvo, ...resto } = await obterConfiguracoes();
+      setTema(temaSalvo === "dark" ? "dark" : "light");
+      setConfiguracoes({ ...CONFIG_PADRAO, ...resto });
+      setErroConfiguracoes("");
+    } catch (erro) {
+      if (erro?.status === 401) return; // o gancho de não autenticado já desloga
+      setErroConfiguracoes(`Não foi possível carregar suas configurações. ${mensagemDoErro(erro)}`);
     }
+  }, []);
 
-    const emailInformado = identificadorInformado.includes("@")
-      ? identificadorInformado
-      : "";
+  const entrarComo = useCallback(
+    (usuarioApi) => {
+      setUsuario(montarUsuario(usuarioApi));
+      setErroSessao("");
+      setAvisoLogin("");
+      carregarConfiguracoes();
+    },
+    [carregarConfiguracoes],
+  );
 
-    // Em desenvolvimento, também permite as credenciais definidas no .env.development.local.
-    const usuarioDev = import.meta.env.VITE_DEV_USER?.trim();
-    const senhaDev = import.meta.env.VITE_DEV_PASS;
+  useEffect(() => {
+    if (!restaurando) return undefined;
 
-    if (
-      import.meta.env.DEV &&
-      usuarioDev &&
-      senhaDev &&
-      usuarioInformado === usuarioDev &&
-      senhaInformada === senhaDev
-    ) {
-      const usuarioLogado = {
-        usuario: usuarioInformado,
-        nome: usuarioInformado,
-        email: emailInformado,
-      };
+    let cancelado = false;
+    obterMe()
+      .then((usuarioApi) => {
+        if (!cancelado) entrarComo(usuarioApi);
+      })
+      .catch((erro) => {
+        // 401: o gancho de não autenticado já voltou para o login.
+        if (!cancelado && erro?.status !== 401) setErroSessao(mensagemDoErro(erro));
+      })
+      .finally(() => {
+        if (!cancelado) setRestaurando(false);
+      });
 
-      localStorage.setItem(
-        `${CHAVE_PERFIL}:${emailInformado}`,
-        JSON.stringify({ nome: usuarioLogado.nome, email: usuarioLogado.email }),
-      );
+    return () => {
+      cancelado = true;
+    };
+  }, [restaurando, entrarComo]);
 
-      setUsuario(usuarioLogado);
-      localStorage.setItem(
-        CHAVE_AUTENTICACAO,
-        JSON.stringify(usuarioLogado),
-      );
+  async function fazerLogin({ email, senha }) {
+    try {
+      const resposta = await login({ email, senha });
+      entrarComo(resposta.usuario);
       setPagina("inicio");
       localStorage.setItem(CHAVE_PAGINA, "inicio");
-
       return { sucesso: true };
+    } catch (erro) {
+      return { sucesso: false, mensagem: mensagemDoErro(erro, { 401: "E-mail ou senha inválidos." }) };
     }
+  }
 
-    // Login local: aceita usuário ou e-mail de uma conta criada pelo formulário de cadastro.
-    const usuarios = obterUsuariosLocais();
-    const encontrado = usuarios.find(
-      (conta) =>
-        (conta.usuario?.toLowerCase() === identificadorInformado ||
-          conta.email?.toLowerCase() === identificadorInformado) &&
-        conta.senha === senhaInformada,
-    );
-
-    if (!encontrado) {
-      return {
-        sucesso: false,
-        mensagem: "Usuário ou senha inválidos.",
-      };
-    }
-
-    const chavePerfilUsuario = `${CHAVE_PERFIL}:${encontrado.email.toLowerCase()}`;
-    let perfilSalvo = {};
+  async function fazerCadastro({ nome, email, senha }) {
     try {
-      perfilSalvo = JSON.parse(localStorage.getItem(chavePerfilUsuario) || "{}");
-    } catch {
-      // localStorage indisponível ou com JSON inválido: mantém o valor padrão
+      await cadastrar({ nome, email, senha });
+    } catch (erro) {
+      if (erro?.status === 409) {
+        return { sucesso: false, mensagem: "Este e-mail já está cadastrado." };
+      }
+      return { sucesso: false, mensagem: mensagemDoErro(erro), campos: erro?.campos || null };
     }
 
-    const usuarioLogado = {
-      usuario: encontrado.usuario,
-      nome: encontrado.nome,
-      email: encontrado.email,
-      curso: perfilSalvo.curso || "Ciência da Computação",
-      periodo: perfilSalvo.periodo || "4º período",
-      cidade: perfilSalvo.cidade || "Vitória, ES",
-    };
-
-    localStorage.setItem(
-      chavePerfilUsuario,
-      JSON.stringify({
-        ...perfilSalvo,
-        nome: encontrado.nome,
-        email: encontrado.email,
-      }),
-    );
-
-    setUsuario(usuarioLogado);
-    localStorage.setItem(CHAVE_AUTENTICACAO, JSON.stringify(usuarioLogado));
-    setPagina("inicio");
-    localStorage.setItem(CHAVE_PAGINA, "inicio");
-
-    return { sucesso: true };
-  }
-
-  function fazerCadastro(dadosCadastro) {
-    const nome = dadosCadastro?.nome?.trim() || "";
-    const email = dadosCadastro?.email?.trim().toLowerCase() || "";
-    const senha = dadosCadastro?.senha || "";
-
-    if (!nome || !email || !senha) {
+    const resultado = await fazerLogin({ email, senha });
+    if (!resultado.sucesso) {
       return {
         sucesso: false,
-        mensagem: "Preencha todos os campos.",
+        contaCriada: true,
+        mensagem: `Conta criada, mas não foi possível entrar: ${resultado.mensagem}`,
       };
     }
-
-    const usuarios = obterUsuariosLocais();
-
-    if (usuarios.some((conta) => conta.email?.toLowerCase() === email)) {
-      return {
-        sucesso: false,
-        mensagem: "Este e-mail já está cadastrado.",
-      };
-    }
-
-    const novoUsuario = {
-      usuario: email,
-      nome,
-      email,
-      senha,
-    };
-
-    const usuariosAtualizados = [...usuarios, novoUsuario];
-    localStorage.setItem(
-      CHAVE_USUARIOS,
-      JSON.stringify(usuariosAtualizados),
-    );
-
-    const usuarioLogado = {
-      usuario: novoUsuario.usuario,
-      nome: novoUsuario.nome,
-      email: novoUsuario.email,
-    };
-
-    localStorage.setItem(
-      `${CHAVE_PERFIL}:${email}`,
-      JSON.stringify({ nome, email }),
-    );
-
-    setUsuario(usuarioLogado);
-    localStorage.setItem(
-      CHAVE_AUTENTICACAO,
-      JSON.stringify(usuarioLogado),
-    );
-    setPagina("inicio");
-
-    return { sucesso: true };
+    return resultado;
   }
 
+  function fazerLogout() {
+    sair();
+    encerrarSessao();
+  }
+
+  function sairDaSessaoComErro() {
+    sair();
+    setErroSessao("");
+  }
+
+  function tentarRestaurarDeNovo() {
+    setErroSessao("");
+    setRestaurando(true);
+  }
+
+  // Campos do perfil sem rota na API: ficam no navegador (ver src/perfil.js).
   function atualizarUsuario(dadosAtualizados) {
-    const usuarioAtualizado = { ...usuario, ...dadosAtualizados };
-    setUsuario(usuarioAtualizado);
-    localStorage.setItem(CHAVE_AUTENTICACAO, JSON.stringify(usuarioAtualizado));
-
-    const chavePerfilUsuario = usuarioAtualizado?.email
-      ? `${CHAVE_PERFIL}:${usuarioAtualizado.email.toLowerCase()}`
-      : CHAVE_PERFIL;
-
-    try {
-      const perfilAtual = JSON.parse(localStorage.getItem(chavePerfilUsuario) || "{}");
-      localStorage.setItem(
-        chavePerfilUsuario,
-        JSON.stringify({ ...perfilAtual, ...dadosAtualizados }),
-      );
-    } catch {
-      localStorage.setItem(chavePerfilUsuario, JSON.stringify(dadosAtualizados));
-    }
-
-    const usuarios = obterUsuariosLocais();
-    const emailAnterior = usuario?.email?.toLowerCase();
-    const usuariosAtualizados = usuarios.map((conta) =>
-      conta.email?.toLowerCase() === emailAnterior
-        ? { ...conta, nome: usuarioAtualizado.nome, email: usuarioAtualizado.email, usuario: usuarioAtualizado.email }
-        : conta,
-    );
-    localStorage.setItem(CHAVE_USUARIOS, JSON.stringify(usuariosAtualizados));
-  }
-
-  function excluirConta() {
-    const emailAtual = usuario?.email?.toLowerCase();
-    const usuarios = obterUsuariosLocais().filter((conta) => conta.email?.toLowerCase() !== emailAtual);
-    localStorage.setItem(CHAVE_USUARIOS, JSON.stringify(usuarios));
-    localStorage.removeItem(CHAVE_AUTENTICACAO);
-    if (emailAtual) localStorage.removeItem(`${CHAVE_PERFIL}:${emailAtual}`);
-    localStorage.removeItem(CHAVE_PREFERENCIAS);
-    setUsuario(null);
-    setPagina("inicio");
-    localStorage.setItem(CHAVE_PAGINA, "inicio");
-  }
-
-  function alterarSenha(senhaAtual, novaSenha) {
-    const usuarios = obterUsuariosLocais();
-    const emailAtual = usuario?.email?.toLowerCase();
-    const indice = usuarios.findIndex((conta) => conta.email?.toLowerCase() === emailAtual);
-    if (indice < 0 || usuarios[indice].senha !== senhaAtual) return false;
-    const atualizados = [...usuarios];
-    atualizados[indice] = { ...atualizados[indice], senha: novaSenha };
-    localStorage.setItem(CHAVE_USUARIOS, JSON.stringify(atualizados));
-    return true;
+    if (!usuario) return;
+    const aplicados = salvarPerfilLocal(usuario.id, dadosAtualizados);
+    setUsuario((atual) => ({ ...atual, ...aplicados }));
+    window.dispatchEvent(new Event("marketfaesa-perfil-atualizado"));
   }
 
   function alterarPreferencia(campo, valor) {
     setPreferencias((estado) => ({ ...estado, [campo]: valor }));
   }
 
-  function fazerLogout() {
-    setUsuario(null);
-    localStorage.removeItem(CHAVE_AUTENTICACAO);
-    setPagina("inicio");
-    localStorage.setItem(CHAVE_PAGINA, "inicio");
+  // Atualiza na hora e envia a configuração completa; se a API recusar, desfaz.
+  function persistirConfiguracoes(novoTema, novasConfiguracoes) {
+    const temaAnterior = tema;
+    const configuracoesAnteriores = configuracoes;
+    setTema(novoTema);
+    setConfiguracoes(novasConfiguracoes);
+    setErroConfiguracoes("");
+
+    salvarConfiguracoes({ tema: novoTema, ...novasConfiguracoes }).catch((erro) => {
+      if (erro?.status === 401) return; // o gancho de não autenticado já desloga
+      setTema(temaAnterior);
+      setConfiguracoes(configuracoesAnteriores);
+      setErroConfiguracoes(`Não foi possível salvar. ${mensagemDoErro(erro)}`);
+    });
   }
 
-
-
   function alterarTema(novoTema) {
-    setTema(novoTema === "dark" ? "dark" : "light");
+    persistirConfiguracoes(novoTema === "dark" ? "dark" : "light", configuracoes);
   }
 
   function alterarConfiguracao(campo) {
-    setConfiguracoes((estado) => ({
-      ...estado,
-      [campo]: !estado[campo],
-    }));
+    persistirConfiguracoes(tema, { ...configuracoes, [campo]: !configuracoes[campo] });
   }
 
   function navegarPara(novaPagina) {
@@ -399,9 +293,7 @@ function App() {
             perfilPublico={configuracoes.perfilPublico}
             mostrarEmail={configuracoes.mostrarEmail}
             usuario={usuario}
-            onLogout={fazerLogout}
             onUpdateUsuario={atualizarUsuario}
-            onDeleteAccount={excluirConta}
           />
         );
 
@@ -413,11 +305,12 @@ function App() {
             onChangeTema={alterarTema}
             configuracoes={configuracoes}
             onAlterarConfiguracao={alterarConfiguracao}
+            erroConfiguracoes={erroConfiguracoes}
             preferencias={preferencias}
             onAlterarPreferencia={alterarPreferencia}
-            onAlterarSenha={alterarSenha}
+            usuario={usuario}
+            onLogout={fazerLogout}
             onUpdateUsuario={atualizarUsuario}
-            onDeleteAccount={excluirConta}
           />
         );
 
@@ -430,10 +323,44 @@ function App() {
     }
   }
 
+  if (!usuario && restaurando) {
+    return (
+      <div className="app">
+        <main className="login-page">
+          <div className="login-card">
+            <p role="status">Carregando sua sessão...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!usuario && erroSessao) {
+    return (
+      <div className="app">
+        <main className="login-page">
+          <div className="login-card login-form">
+            <div className="login-error" role="alert">
+              Não foi possível carregar sua sessão. {erroSessao}
+            </div>
+            <button type="button" className="login-submit" onClick={tentarRestaurarDeNovo}>
+              Tentar novamente
+            </button>
+            <p className="login-switch">
+              <button type="button" onClick={sairDaSessaoComErro}>
+                Sair e entrar com outra conta
+              </button>
+            </p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   if (!usuario) {
     return (
       <div className="app">
-        <Login onLogin={fazerLogin} onRegister={fazerCadastro} />
+        <Login onLogin={fazerLogin} onRegister={fazerCadastro} aviso={avisoLogin} />
       </div>
     );
   }
