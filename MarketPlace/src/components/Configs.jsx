@@ -43,7 +43,9 @@ function Configs({
     let perfilExistente = {};
     try {
       perfilExistente = JSON.parse(localStorage.getItem(chavePerfil(usuario)) || "{}");
-    } catch {}
+    } catch {
+      // localStorage indisponível ou com JSON inválido: mantém o valor padrão
+    }
 
     localStorage.setItem(chavePerfil(usuario), JSON.stringify({
       ...perfilExistente,

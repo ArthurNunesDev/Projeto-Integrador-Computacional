@@ -28,7 +28,9 @@ function obterHabilidades() {
       const dados = JSON.parse(salvo);
       if (Array.isArray(dados)) return dados;
     }
-  } catch {}
+  } catch {
+    // localStorage indisponível ou com JSON inválido: mantém o valor padrão
+  }
   return habilidadesIniciais;
 }
 

@@ -57,7 +57,7 @@ const perfis = [
 
 const categorias = ["Todas", "Tecnologia", "Design", "Direito", "Administração", "Comunicação"];
 
-function Habilidades({ onNavigate }) {
+function Habilidades() {
   const [busca, setBusca] = useState("");
   const [categoria, setCategoria] = useState("Todas");
   const [perfilSelecionado, setPerfilSelecionado] = useState(null);
