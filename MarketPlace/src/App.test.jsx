@@ -8,7 +8,7 @@ const CHAVE_AUTENTICACAO = "marketfaesa-auth";
 
 async function entrar(usuario, senha) {
   const user = userEvent.setup();
-  if (usuario) await user.type(screen.getByLabelText("Usuário"), usuario);
+  if (usuario) await user.type(screen.getByLabelText("Usuário / E-mail"), usuario);
   if (senha) await user.type(screen.getByLabelText("Senha"), senha);
   await user.click(screen.getByRole("button", { name: "Entrar" }));
   return user;
@@ -31,7 +31,7 @@ describe("login", () => {
     render(<App />);
     await entrar();
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Preencha seu usuário e sua senha.",
+      "Preencha seu usuário/e-mail e sua senha.",
     );
   });
 
@@ -39,7 +39,7 @@ describe("login", () => {
     render(<App />);
     await entrar("dev", "   ");
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Preencha seu usuário e sua senha.",
+      "Preencha seu usuário/e-mail e sua senha.",
     );
   });
 
@@ -80,16 +80,17 @@ describe("login", () => {
     ).toBeInTheDocument();
     expect(JSON.parse(localStorage.getItem(CHAVE_AUTENTICACAO))).toEqual({
       usuario: "dev",
-      nome: "Usuário de teste",
+      nome: "dev",
+      email: "",
     });
   });
 
-  it("fora do modo dev mostra que a API está indisponível", async () => {
+  it("fora do modo dev não aceita as credenciais de dev", async () => {
     vi.stubEnv("DEV", false);
     render(<App />);
     await entrar("dev", "segredo");
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Login indisponível até a API estar pronta.",
+      "Usuário ou senha inválidos.",
     );
     expect(localStorage.getItem(CHAVE_AUTENTICACAO)).toBeNull();
   });
