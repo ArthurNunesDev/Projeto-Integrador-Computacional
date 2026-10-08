@@ -1,6 +1,6 @@
 # Próximos passos
 
-Roadmap para evoluir o backend e ligá-lo ao frontend. Hoje o front funciona sozinho: login simulado só em dev (credenciais de `.env.development.local`, desativado em produção), cadastro sem persistência e todas as preferências no `localStorage`. O backend já roda com Spring Boot 4.1 (Java 21+, Maven Wrapper), já conecta ao PostgreSQL (Neon) com migrations do Flyway e já tem os endpoints de health, cadastro, login (JWT), perfil e configurações (lista no [README](README.md#api)). Falta o front chamá-los.
+Roadmap para evoluir o backend e ligá-lo ao frontend. O backend já roda com Spring Boot 4.1 (Java 21+, Maven Wrapper), já conecta ao PostgreSQL (Neon) com migrations do Flyway e já tem os endpoints de health, cadastro, login (JWT), perfil e configurações (lista no [README](README.md#api)), e o front já os usa para login, cadastro, sessão, leitura do perfil e configurações. Falta a API para editar o perfil, trocar a senha e excluir a conta.
 
 ---
 
@@ -29,9 +29,9 @@ Base: `http://localhost:8080/api` em desenvolvimento.
 | Método | Rota | Uso no front hoje | Resposta |
 |---|---|---|---|
 | GET | `/api/health` | teste de conexão | `200 {"status":"ok"}` |
-| POST | `/api/auth/register` | formulário de cadastro (`auth/Login.jsx` → `onRegister`) | `201` usuário criado; `409` se o e-mail já existe; `400` se inválido |
-| POST | `/api/auth/login` | `fazerLogin` em `App.jsx` (hoje login de teste só em dev) | `200` token + usuário; `401` se inválido |
-| GET | `/api/usuarios/me` | perfil (`Profile.jsx`) | `200` usuário (sem senha); `401` sem token |
+| POST | `/api/auth/register` | cadastro (`fazerCadastro` em `App.jsx`, chamado por `auth/Login.jsx`) | `201` usuário criado; `409` se o e-mail já existe; `400` se inválido |
+| POST | `/api/auth/login` | `fazerLogin` em `App.jsx` (também logo após o cadastro) | `200` token + usuário; `401` se inválido |
+| GET | `/api/usuarios/me` | restaurar a sessão ao abrir o app; dados do perfil (`src/perfil.js`) | `200` usuário (sem senha); `401` sem token |
 | GET | `/api/usuarios/me/configuracoes` | carregar tema e configurações ao logar | `200` configurações |
 | PUT | `/api/usuarios/me/configuracoes` | salvar alterações em `Configs.jsx` | `200` configurações salvas; `400` se faltar campo |
 
@@ -92,31 +92,25 @@ Erros seguem um formato único:
 
 ## 3. Integração com o front
 
-### O que o front ainda precisa mudar para falar com a API
+### O que já está integrado
 
-- **Senha mínima de 8 caracteres**: o cadastro valida 6 (`Login.jsx`); a API recusa menos de 8 com `400`.
-- **Login depois do cadastro**: `POST /api/auth/register` devolve `201` com o usuário, sem token. O front chama `POST /api/auth/login` logo em seguida (ou leva o usuário para a tela de login).
-- **Corpo do login `{email, senha}`**: o formulário mostra o campo "Usuário / E-mail" e envia `{usuario, email, senha}` com o mesmo valor; a API só aceita e-mail, então o campo passa a ser "E-mail" com `type="email"` e o corpo fica `{email, senha}`.
-- **Bearer**: guardar o token do login e mandar `Authorization: Bearer <token>` nas rotas de `/api/usuarios/me`. Um `401` limpa a sessão e volta para o login.
-- **CSP** (feito): o `vite.config.js` inclui no `connect-src` a origem de `VITE_API_URL`.
-- **Erros**: ler `erro` e `campos` do corpo (`{status, erro, campos}`) no lugar do `{sucesso, mensagem}` do cadastro local.
+- **Login** (`App.jsx` → `fazerLogin`): campo "E-mail" (`type="email"`) e corpo `{email, senha}`. O token fica no `localStorage` (`marketfaesa-token`); `401` mostra "E-mail ou senha inválidos." e falha de rede mostra a mensagem do client. O botão fica desabilitado enquanto envia.
+- **Cadastro** (`fazerCadastro`): senha de 8 a 72 caracteres validada no front, como na API; erros de `campos` aparecem embaixo de cada campo; `409` mostra "Este e-mail já está cadastrado."; depois do cadastro o front faz o login automaticamente.
+- **Sessão**: ao abrir o app com token salvo, `GET /api/usuarios/me` restaura o usuário (tela "Carregando sua sessão..."). Um `401` em qualquer requisição autenticada volta para o login com o aviso de sessão expirada (`definirOnNaoAutenticado`). O "Sair" descarta o token.
+- **Perfil**: nome, e-mail, curso (`curso.nome`), período (`Nº período`), cidade e bio vêm da API (`src/perfil.js` converte para o formato das telas).
+- **Configurações e tema**: carregados com `GET /api/usuarios/me/configuracoes` após o login e salvos com `PUT` (objeto completo) a cada alteração; se o `PUT` falhar, a tela desfaz a mudança e mostra o erro. O tema continua copiado no `localStorage` (`marketfaesa-theme`) só para não piscar na carga.
+- **Limpeza**: o login de dev (`VITE_DEV_USER`/`VITE_DEV_PASS`) e as contas locais com senha em texto puro foram removidos; na primeira carga o front apaga as chaves antigas `marketfaesa-users`, `marketfaesa-auth` e `marketfaesa-config`.
 
-### Chaves do `localStorage` → API
+### O que ainda falta
 
-Toda a leitura e escrita dessas chaves está em `MarketPlace/src/App.jsx`.
-
-| Chave atual | Substituir por | Onde mudar |
-|---|---|---|
-| `marketfaesa-auth` | `POST /api/auth/login`; guardar só o token + dados básicos do usuário | `App.jsx` (`fazerLogin`, `fazerLogout`, `obterUsuarioInicial`) |
-| *(cadastro não persiste)* | `POST /api/auth/register` | `App.jsx` (passar `onRegister` para `<Login>`) e `auth/Login.jsx` (que já aceita `onRegister`) |
-| `marketfaesa-theme` | campo `tema` de `GET/PUT /api/usuarios/me/configuracoes` | `App.jsx` (`obterTemaInicial`, `useEffect` do tema) |
-| `marketfaesa-config` | `GET/PUT /api/usuarios/me/configuracoes` | `App.jsx` (`obterConfiguracoesIniciais`, `useEffect` de configurações), `components/Configs.jsx` |
-
-Sugestão: manter o `localStorage` como cache do tema, para ele não "piscar" ao carregar (antes de logar ainda não existe usuário para buscar a config).
+- **`PUT /api/usuarios/me`**: as edições do perfil (nome, curso, período, cidade, bio) ainda ficam só no navegador, em `marketfaesa-perfil:<id do usuário>` (`src/perfil.js`, com TODO). O e-mail não é editável no front.
+- **Troca de senha** e **exclusão de conta**: sem rota na API; os controles em `Configs.jsx` e `Profile.jsx` estão desabilitados com "Disponível em breve".
+- **Catálogo de cursos** (`/api/cursos`): o curso hoje é texto livre na edição local.
+- Habilidades, conexões, mensagens, salvos, preferências e verificação em duas etapas continuam só no `localStorage`.
 
 ### Cliente de API
 
-Já existe em `MarketPlace/src/api/` (ainda sem uso nas telas):
+Fica em `MarketPlace/src/api/`:
 
 - `client.js`: `requisicao(caminho, {method, body, signal})` monta a URL a partir de `VITE_API_URL`, envia JSON e o `Authorization: Bearer` quando há token (`localStorage`, chave `marketfaesa-token`). Erros viram `ApiError` com `status`, `mensagem` (o `erro` da API) e `campos`; falha de rede vira `status: 0` com mensagem amigável. Um `401` em requisição com token limpa o token e chama o callback registrado em `definirOnNaoAutenticado(fn)`.
 - `auth.js`: `cadastrar({nome, email, senha})`, `login({email, senha})` (salva o token) e `sair()`.
@@ -124,8 +118,6 @@ Já existe em `MarketPlace/src/api/` (ainda sem uso nas telas):
 
 - **Variável de ambiente**: `VITE_API_URL` (padrão `http://localhost:8080`, sem `/api`; veja `MarketPlace/.env.example`). Falta configurar a URL de produção no build (secret/variável no workflow de deploy).
 - **CORS**: o backend já libera `http://localhost:5173` (Vite) e `https://arthurnunesdev.github.io`; outras origens entram por `CORS_ALLOWED_ORIGINS` (separadas por vírgula).
-- **Token**: salvar o JWT após o login, enviar em todas as requisições e, ao receber `401`, limpar a sessão e voltar para o login.
-- **Estados de tela**: mostrar carregamento (desabilitar o botão de "Entrar"/"Salvar"), exibir a mensagem de erro da API nos campos já existentes (`erro`, `erroCadastro`) e tratar falha de rede ("Servidor indisponível").
 
 ---
 
@@ -162,16 +154,19 @@ O GitHub Pages serve apenas arquivos estáticos: o frontend continua lá, mas o 
 - [x] Remover a divisão incompleta do Login.jsx (`auth/components`, `auth/hooks`, `auth/utils`)
 - [x] Criar `src/api/client.js` e a variável `VITE_API_URL`
 - [x] Incluir a origem da API no `connect-src` da CSP (`vite.config.js`)
-- [ ] Login com `{email, senha}` e campo "E-mail"; senha mínima 8 no cadastro; login logo após o cadastro
-- [ ] Trocar o login simulado de dev pela API
-- [ ] Ligar o cadastro (`onRegister`) à API
-- [ ] Estados de carregamento e erro no login e cadastro
-- [ ] Logout (botão "Sair" já existe no cabeçalho) limpando o token; `401` redireciona para o login
+- [x] Login com `{email, senha}` e campo "E-mail"; senha mínima 8 no cadastro; login logo após o cadastro
+- [x] Trocar o login simulado de dev pela API
+- [x] Ligar o cadastro (`onRegister`) à API
+- [x] Estados de carregamento e erro no login e cadastro
+- [x] Logout (botão "Sair" já existe no cabeçalho) limpando o token; `401` redireciona para o login
+- [x] Restaurar a sessão com `GET /api/usuarios/me` e apagar as contas locais antigas
+- [ ] Enviar as edições do perfil para `PUT /api/usuarios/me` (quando existir) e remover `marketfaesa-perfil:<id>`
+- [ ] Troca de senha e exclusão de conta (rotas na API e ligar os controles desabilitados)
 
 ### Fase 4 — Configurações
 - [x] `GET/PUT /api/usuarios/me/configuracoes`
-- [ ] Carregar configurações após o login e salvar ao alterar em `Configs.jsx`
-- [ ] Manter `localStorage` só como cache do tema
+- [x] Carregar configurações após o login e salvar ao alterar em `Configs.jsx`
+- [x] Manter `localStorage` só como cache do tema
 
 ### Fase 5 — Produção
 - [x] Usar PostgreSQL (Neon)
