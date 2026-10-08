@@ -7,6 +7,11 @@ export const API_URL = (import.meta.env.VITE_API_URL || URL_PADRAO).replace(/\/+
 
 const CHAVE_TOKEN = 'marketfaesa-token'
 
+// Rotas públicas de autenticação: não recebem Bearer e um 401 nelas é credencial errada.
+function ehRotaDeAuth(caminho) {
+  return caminho.startsWith('/api/auth/')
+}
+
 export const MENSAGEM_FALHA_REDE =
   'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.'
 
@@ -49,9 +54,9 @@ export function limparToken() {
 let aoNaoAutenticado = null
 
 /**
- * Registra a função chamada quando uma requisição autenticada volta 401
- * (token expirado ou inválido). O token já foi limpo quando ela roda.
- * Devolve uma função que desfaz o registro.
+ * Registra a função chamada quando uma rota fora de /api/auth/* volta 401
+ * (sem token, token expirado ou inválido). Quando ela roda, o token usado na
+ * requisição já foi limpo. Devolve uma função que desfaz o registro.
  */
 export function definirOnNaoAutenticado(callback) {
   aoNaoAutenticado = callback
@@ -73,11 +78,12 @@ async function lerCorpo(resposta) {
 /**
  * Faz uma requisição JSON para a API.
  * caminho: rota a partir da raiz do backend, ex.: '/api/usuarios/me'.
- * Envia o Bearer quando há token salvo. Devolve o corpo já convertido (ou null)
+ * Envia o Bearer quando há token salvo (exceto em /api/auth/*). Devolve o corpo já convertido (ou null)
  * e lança ApiError em resposta de erro ou falha de rede.
  */
 export async function requisicao(caminho, { method = 'GET', body, signal } = {}) {
-  const token = obterToken()
+  const rotaDeAuth = ehRotaDeAuth(caminho)
+  const token = rotaDeAuth ? null : obterToken()
   const headers = { Accept: 'application/json' }
   if (body !== undefined) headers['Content-Type'] = 'application/json'
   if (token) headers.Authorization = `Bearer ${token}`
@@ -98,9 +104,10 @@ export async function requisicao(caminho, { method = 'GET', body, signal } = {})
   const dados = await lerCorpo(resposta)
   if (resposta.ok) return dados
 
-  // 401 sem token enviado (ex.: senha errada no login) não é sessão expirada.
-  if (resposta.status === 401 && token) {
-    limparToken()
+  // 401 em /api/auth/* (ex.: senha errada no login) não é sessão expirada.
+  if (resposta.status === 401 && !rotaDeAuth) {
+    // Só apaga o token se ainda for o usado aqui: outra aba pode ter feito login no meio.
+    if (token && obterToken() === token) limparToken()
     aoNaoAutenticado?.()
   }
 

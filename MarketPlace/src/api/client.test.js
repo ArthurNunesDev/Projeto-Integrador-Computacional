@@ -93,7 +93,21 @@ describe('requisicao', () => {
     expect(gancho).toHaveBeenCalledTimes(1)
   })
 
-  it('401 sem token (senha errada no login) não chama o gancho', async () => {
+  it('401 sem token fora de /api/auth chama o gancho', async () => {
+    const gancho = vi.fn()
+    const remover = definirOnNaoAutenticado(gancho)
+    fetchMock.mockResolvedValue(respostaJson(401, { status: 401, erro: 'Não autenticado' }))
+
+    const erro = await obterMe().catch((e) => e)
+    remover()
+
+    expect(erro).toMatchObject({ status: 401 })
+    expect(fetchMock.mock.calls[0][1].headers.Authorization).toBeUndefined()
+    expect(gancho).toHaveBeenCalledTimes(1)
+  })
+
+  it('401 em /api/auth/login (senha errada) não limpa o token nem chama o gancho', async () => {
+    salvarToken('sessao-atual')
     const gancho = vi.fn()
     const remover = definirOnNaoAutenticado(gancho)
     fetchMock.mockResolvedValue(respostaJson(401, { status: 401, erro: 'E-mail ou senha inválidos' }))
@@ -102,7 +116,35 @@ describe('requisicao', () => {
     remover()
 
     expect(erro).toMatchObject({ status: 401, mensagem: 'E-mail ou senha inválidos' })
+    expect(obterToken()).toBe('sessao-atual')
     expect(gancho).not.toHaveBeenCalled()
+  })
+
+  it('rotas /api/auth/* não enviam o Bearer', async () => {
+    salvarToken('abc')
+    fetchMock.mockResolvedValue(respostaJson(200, { token: 'novo', usuario: { id: 1 } }))
+
+    await login({ email: 'ana@faesa.br', senha: '12345678' })
+
+    expect(fetchMock.mock.calls[0][1].headers.Authorization).toBeUndefined()
+  })
+
+  it('401 não apaga um token trocado durante a requisição', async () => {
+    salvarToken('antigo')
+    const gancho = vi.fn()
+    const remover = definirOnNaoAutenticado(gancho)
+    fetchMock.mockImplementation(async () => {
+      // Outra aba faz login enquanto a requisição está em andamento.
+      salvarToken('novo')
+      return respostaJson(401, { status: 401, erro: 'Não autenticado' })
+    })
+
+    const erro = await obterMe().catch((e) => e)
+    remover()
+
+    expect(erro).toMatchObject({ status: 401 })
+    expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer antigo')
+    expect(obterToken()).toBe('novo')
   })
 
   it('falha de rede vira ApiError com status 0 e mensagem amigável', async () => {
