@@ -1,11 +1,13 @@
 function Footer({ onNavigate }) {
+  const baseUrl = import.meta.env.BASE_URL;
+
   return (
     <footer className="site-footer">
       <div className="site-footer-inner">
         <div className="site-footer-brand">
           <button className="site-footer-logo" type="button" onClick={() => onNavigate?.("inicio")} aria-label="Voltar para o início">
-            <img src="/marketfaesa-symbol.svg" alt="" className="site-footer-logo-light" />
-            <img src="/marketfaesa-symbol-dark.svg" alt="" className="site-footer-logo-dark" />
+            <img src={`${baseUrl}marketfaesa-symbol.svg`} alt="" className="site-footer-logo-light" />
+            <img src={`${baseUrl}marketfaesa-symbol-dark.svg`} alt="" className="site-footer-logo-dark" />
           </button>
           <div>
             <strong>MARKETFAESA</strong>
