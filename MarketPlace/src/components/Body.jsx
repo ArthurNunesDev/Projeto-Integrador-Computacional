@@ -13,6 +13,17 @@ function conclusaoPerfilPendente(usuario) {
   return Boolean(chave) && localStorage.getItem(chave) === "1";
 }
 
+function chaveConclusaoPerfil(usuario) {
+  return usuario?.email
+    ? "marketfaesa-perfil-completo-pendente:" + usuario.email.trim().toLowerCase()
+    : "";
+}
+
+function conclusaoPerfilPendente(usuario) {
+  const chave = chaveConclusaoPerfil(usuario);
+  return Boolean(chave) && localStorage.getItem(chave) === "1";
+}
+
 function Body({ onNavigate, usuario }) {
   const nomeUsuario = usuario?.nome || "João Silva";
   const cursoUsuario = usuario?.curso || "Ciência da Computação";
