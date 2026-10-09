@@ -115,3 +115,17 @@
 [data-theme="dark"] .login-field-error {
   color: #FF9D9D;
 }
+
+
+/* Usar a mesma versão da marca exibida no cabeçalho para cada tema */
+.login-logo-dark {
+  display: none;
+}
+
+[data-theme="dark"] .login-logo-light {
+  display: none;
+}
+
+[data-theme="dark"] .login-logo-dark {
+  display: block;
+}
