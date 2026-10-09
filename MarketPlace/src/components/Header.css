@@ -356,3 +356,23 @@
   .profile-dropdown__item { min-height: 38px; gap: 7px; padding: 5px 7px; font-size: 10px; }
   .profile-dropdown__icon { width: 25px; height: 25px; border-radius: 7px; }
 }
+
+/* Campo de pesquisa: contraste adequado no tema escuro */
+[data-theme="dark"] .campo-busca {
+  background: #252D5B;
+  color: #FFFFFF;
+  caret-color: #FFFFFF;
+  -webkit-text-fill-color: #FFFFFF;
+  border: 1px solid rgba(202, 220, 252, .24);
+}
+
+[data-theme="dark"] .campo-busca::placeholder {
+  color: #CADCFC;
+  opacity: 1;
+}
+
+[data-theme="dark"] .campo-busca:focus {
+  background: #252D5B;
+  border-color: #D98324;
+  box-shadow: 0 0 0 3px rgba(217, 131, 36, .2);
+}
