@@ -1,5 +1,5 @@
 import { useState } from "react";
-import "./Login.css";
+import "./Login.scss";
 
 // Mesmos limites da API (CadastroRequisicao): 8 a 72 caracteres, até 72 bytes em UTF-8.
 const SENHA_MINIMA = 8;
