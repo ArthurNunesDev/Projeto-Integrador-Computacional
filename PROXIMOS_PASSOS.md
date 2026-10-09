@@ -98,7 +98,7 @@ Erros seguem um formato único:
 - **Login depois do cadastro**: `POST /api/auth/register` devolve `201` com o usuário, sem token. O front chama `POST /api/auth/login` logo em seguida (ou leva o usuário para a tela de login).
 - **Corpo do login `{email, senha}`**: o formulário mostra o campo "Usuário / E-mail" e envia `{usuario, email, senha}` com o mesmo valor; a API só aceita e-mail, então o campo passa a ser "E-mail" com `type="email"` e o corpo fica `{email, senha}`.
 - **Bearer**: guardar o token do login e mandar `Authorization: Bearer <token>` nas rotas de `/api/usuarios/me`. Um `401` limpa a sessão e volta para o login.
-- **CSP**: `connect-src 'self'` em `vite.config.js` bloqueia o `fetch` para a API em outro domínio. A diretiva precisa incluir a origem de `VITE_API_URL`.
+- **CSP** (feito): o `vite.config.js` inclui no `connect-src` a origem de `VITE_API_URL`.
 - **Erros**: ler `erro` e `campos` do corpo (`{status, erro, campos}`) no lugar do `{sucesso, mensagem}` do cadastro local.
 
 ### Chaves do `localStorage` → API
@@ -116,28 +116,13 @@ Sugestão: manter o `localStorage` como cache do tema, para ele não "piscar" ao
 
 ### Cliente de API
 
-Criar um único módulo, por exemplo `MarketPlace/src/api/client.js`, usando `fetch`:
+Já existe em `MarketPlace/src/api/` (ainda sem uso nas telas):
 
-```js
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080/api";
+- `client.js`: `requisicao(caminho, {method, body, signal})` monta a URL a partir de `VITE_API_URL`, envia JSON e o `Authorization: Bearer` quando há token (`localStorage`, chave `marketfaesa-token`). Erros viram `ApiError` com `status`, `mensagem` (o `erro` da API) e `campos`; falha de rede vira `status: 0` com mensagem amigável. Um `401` em requisição com token limpa o token e chama o callback registrado em `definirOnNaoAutenticado(fn)`.
+- `auth.js`: `cadastrar({nome, email, senha})`, `login({email, senha})` (salva o token) e `sair()`.
+- `usuarios.js`: `obterMe()`, `obterConfiguracoes()` e `salvarConfiguracoes(config)`.
 
-export async function api(caminho, { method = "GET", body } = {}) {
-  const token = localStorage.getItem("marketfaesa-token");
-  const resposta = await fetch(`${API_URL}${caminho}`, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
-    body: body && JSON.stringify(body),
-  });
-  const dados = resposta.status === 204 ? null : await resposta.json();
-  if (!resposta.ok) throw Object.assign(new Error(dados?.erro ?? "Erro na requisição"), { status: resposta.status, dados });
-  return dados;
-}
-```
-
-- **Variável de ambiente**: criar `MarketPlace/.env.development` com `VITE_API_URL=http://localhost:8080/api` e configurar a URL de produção no build (secret/variável no workflow de deploy).
+- **Variável de ambiente**: `VITE_API_URL` (padrão `http://localhost:8080`, sem `/api`; veja `MarketPlace/.env.example`). Falta configurar a URL de produção no build (secret/variável no workflow de deploy).
 - **CORS**: o backend já libera `http://localhost:5173` (Vite) e `https://arthurnunesdev.github.io`; outras origens entram por `CORS_ALLOWED_ORIGINS` (separadas por vírgula).
 - **Token**: salvar o JWT após o login, enviar em todas as requisições e, ao receber `401`, limpar a sessão e voltar para o login.
 - **Estados de tela**: mostrar carregamento (desabilitar o botão de "Entrar"/"Salvar"), exibir a mensagem de erro da API nos campos já existentes (`erro`, `erroCadastro`) e tratar falha de rede ("Servidor indisponível").
@@ -175,8 +160,8 @@ O GitHub Pages serve apenas arquivos estáticos: o frontend continua lá, mas o 
 
 ### Fase 3 — Integração do front
 - [x] Remover a divisão incompleta do Login.jsx (`auth/components`, `auth/hooks`, `auth/utils`)
-- [ ] Criar `src/api/client.js` e `.env.development` com `VITE_API_URL`
-- [ ] Incluir a origem da API no `connect-src` da CSP (`vite.config.js`)
+- [x] Criar `src/api/client.js` e a variável `VITE_API_URL`
+- [x] Incluir a origem da API no `connect-src` da CSP (`vite.config.js`)
 - [ ] Login com `{email, senha}` e campo "E-mail"; senha mínima 8 no cadastro; login logo após o cadastro
 - [ ] Trocar o login simulado de dev pela API
 - [ ] Ligar o cadastro (`onRegister`) à API

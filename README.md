@@ -98,6 +98,10 @@ VITE_DEV_PASS=sua-senha-de-teste
 
 O Vite só carrega esse arquivo em `npm run dev`. Em produção o login de teste fica desativado.
 
+O endereço do backend vem de `VITE_API_URL` (padrão `http://localhost:8080`, sem `/api` no final). No build, a origem dessa URL também entra no `connect-src` da CSP; para gerar a versão de produção apontando para outro servidor, defina a variável antes do build (ex.: `VITE_API_URL=https://api.exemplo.com npm run build`). O cliente HTTP fica em `MarketPlace/src/api/`.
+
+Se `VITE_API_URL` não estiver definida num build de produção, o build continua mas avisa no console que o site vai apontar para `http://localhost:8080`. O deploy do GitHub Pages (`.github/workflows/deploy.yml`) lê a variável do repositório `VITE_API_URL`: quando a API estiver publicada, crie-a em Settings > Secrets and variables > Actions > Variables com a URL pública da API (ex.: `https://api.exemplo.com`). Enquanto ela não existir, o site publicado aponta para `localhost` e o login não funciona fora da máquina de quem roda a API.
+
 <h3 id="executando">Executando</h3>
 
 **Frontend** — abre em `http://localhost:5173`

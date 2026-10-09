@@ -31,6 +31,9 @@ jobs:
 
       - name: Criar versão de produção
         working-directory: MarketPlace
+        env:
+          # Variável do repositório; enquanto não existir, o build avisa e usa localhost.
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
         run: npm run build
 
       - name: Configurar GitHub Pages
