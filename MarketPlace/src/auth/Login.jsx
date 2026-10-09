@@ -1,7 +1,24 @@
 import { useState } from "react";
 import "./Login.css";
 
-function CampoSenha({ id, label, value, onChange, placeholder, autoComplete }) {
+// Mesmos limites da API (CadastroRequisicao): 8 a 72 caracteres, até 72 bytes em UTF-8.
+const SENHA_MINIMA = 8;
+const SENHA_MAXIMA = 72;
+
+function tamanhoEmBytes(texto) {
+  return new TextEncoder().encode(texto).length;
+}
+
+function ErroCampo({ id, mensagem }) {
+  if (!mensagem) return null;
+  return (
+    <span id={id} className="login-field-error">
+      {mensagem}
+    </span>
+  );
+}
+
+function CampoSenha({ id, label, value, onChange, placeholder, autoComplete, erro }) {
   const [visivel, setVisivel] = useState(false);
 
   return (
@@ -15,6 +32,8 @@ function CampoSenha({ id, label, value, onChange, placeholder, autoComplete }) {
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
           autoComplete={autoComplete}
+          aria-invalid={erro ? true : undefined}
+          aria-describedby={erro ? `${id}-erro` : undefined}
         />
         <button
           type="button"
@@ -26,6 +45,7 @@ function CampoSenha({ id, label, value, onChange, placeholder, autoComplete }) {
           {visivel ? "Ocultar" : "Mostrar"}
         </button>
       </div>
+      <ErroCampo id={`${id}-erro`} mensagem={erro} />
     </div>
   );
 }
@@ -43,8 +63,9 @@ function Marca() {
   );
 }
 
-function Login({ onLogin, onNavigate, onRegister }) {
+function Login({ onLogin, onNavigate, onRegister, aviso }) {
   const [modoCadastro, setModoCadastro] = useState(false);
+  const [enviando, setEnviando] = useState(false);
 
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -55,32 +76,38 @@ function Login({ onLogin, onNavigate, onRegister }) {
   const [cadastroSenha, setCadastroSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [erroCadastro, setErroCadastro] = useState("");
+  const [errosCampos, setErrosCampos] = useState({});
 
   function alternarModo(cadastro) {
     setErro("");
     setErroCadastro("");
+    setErrosCampos({});
     setModoCadastro(cadastro);
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     setErro("");
 
     if (!email.trim() || !senha.trim()) {
-      setErro("Preencha seu usuário/e-mail e sua senha.");
+      setErro("Preencha seu e-mail e sua senha.");
       return;
     }
 
-    const resultado = onLogin?.({ usuario: email.trim(), email: email.trim(), senha });
+    setEnviando(true);
+    const resultado = await onLogin?.({ email: email.trim(), senha });
 
-    if (resultado && !resultado.sucesso) {
-      setErro(resultado.mensagem || "Não foi possível entrar.");
+    // Com sucesso o App troca de tela e este componente sai.
+    if (!resultado?.sucesso) {
+      setEnviando(false);
+      setErro(resultado?.mensagem || "Não foi possível entrar.");
     }
   }
 
-  function handleCadastro(event) {
+  async function handleCadastro(event) {
     event.preventDefault();
     setErroCadastro("");
+    setErrosCampos({});
 
     if (
       !nome.trim() ||
@@ -92,8 +119,13 @@ function Login({ onLogin, onNavigate, onRegister }) {
       return;
     }
 
-    if (cadastroSenha.length < 6) {
-      setErroCadastro("A senha deve ter pelo menos 6 caracteres.");
+    if (cadastroSenha.length < SENHA_MINIMA) {
+      setErroCadastro(`A senha deve ter pelo menos ${SENHA_MINIMA} caracteres.`);
+      return;
+    }
+
+    if (tamanhoEmBytes(cadastroSenha) > SENHA_MAXIMA) {
+      setErroCadastro(`A senha deve ter no máximo ${SENHA_MAXIMA} caracteres.`);
       return;
     }
 
@@ -102,20 +134,31 @@ function Login({ onLogin, onNavigate, onRegister }) {
       return;
     }
 
-    const resultado = onRegister?.({
+    setEnviando(true);
+    const resultado = await onRegister?.({
       nome: nome.trim(),
       email: cadastroEmail.trim(),
       senha: cadastroSenha,
     });
+
+    if (resultado?.sucesso) return;
+    setEnviando(false);
 
     if (!resultado) {
       setErroCadastro("Não foi possível processar o cadastro.");
       return;
     }
 
-    if (!resultado.sucesso) {
-      setErroCadastro(resultado.mensagem || "Não foi possível criar a conta.");
+    // Conta criada mas o login automático falhou: volta para a tela de entrar.
+    if (resultado.contaCriada) {
+      alternarModo(false);
+      setEmail(cadastroEmail.trim());
+      setErro(resultado.mensagem);
+      return;
     }
+
+    setErrosCampos(resultado.campos || {});
+    setErroCadastro(resultado.mensagem || "Não foi possível criar a conta.");
   }
 
   if (modoCadastro) {
@@ -135,7 +178,10 @@ function Login({ onLogin, onNavigate, onRegister }) {
                 onChange={(event) => setNome(event.target.value)}
                 placeholder="Seu nome completo"
                 autoComplete="name"
+                aria-invalid={errosCampos.nome ? true : undefined}
+                aria-describedby={errosCampos.nome ? "cadastro-nome-erro" : undefined}
               />
+              <ErroCampo id="cadastro-nome-erro" mensagem={errosCampos.nome} />
             </div>
 
             <div className="login-field">
@@ -147,7 +193,10 @@ function Login({ onLogin, onNavigate, onRegister }) {
                 onChange={(event) => setCadastroEmail(event.target.value)}
                 placeholder="seu.email@faesa.br"
                 autoComplete="email"
+                aria-invalid={errosCampos.email ? true : undefined}
+                aria-describedby={errosCampos.email ? "cadastro-email-erro" : undefined}
               />
+              <ErroCampo id="cadastro-email-erro" mensagem={errosCampos.email} />
             </div>
 
             <CampoSenha
@@ -155,8 +204,9 @@ function Login({ onLogin, onNavigate, onRegister }) {
               label="Senha"
               value={cadastroSenha}
               onChange={setCadastroSenha}
-              placeholder="Crie uma senha"
+              placeholder={`Crie uma senha (mínimo ${SENHA_MINIMA} caracteres)`}
               autoComplete="new-password"
+              erro={errosCampos.senha}
             />
 
             <CampoSenha
@@ -174,8 +224,8 @@ function Login({ onLogin, onNavigate, onRegister }) {
               </div>
             )}
 
-            <button type="submit" className="login-submit">
-              Cadastrar
+            <button type="submit" className="login-submit" disabled={enviando}>
+              {enviando ? "Cadastrando..." : "Cadastrar"}
             </button>
           </form>
 
@@ -197,15 +247,21 @@ function Login({ onLogin, onNavigate, onRegister }) {
         <h2>Entrar</h2>
 
         <form className="login-form" onSubmit={handleSubmit}>
+          {aviso && !erro && (
+            <div className="login-error" role="status">
+              {aviso}
+            </div>
+          )}
+
           <div className="login-field">
-            <label htmlFor="login-usuario">Usuário / E-mail</label>
+            <label htmlFor="login-email">E-mail</label>
             <input
-              id="login-usuario"
-              type="text"
+              id="login-email"
+              type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="usuário ou seu.email@faesa.br"
-              autoComplete="username"
+              placeholder="seu.email@faesa.br"
+              autoComplete="email"
             />
           </div>
 
@@ -232,8 +288,8 @@ function Login({ onLogin, onNavigate, onRegister }) {
             </div>
           )}
 
-          <button type="submit" className="login-submit">
-            Entrar
+          <button type="submit" className="login-submit" disabled={enviando}>
+            {enviando ? "Entrando..." : "Entrar"}
           </button>
         </form>
 

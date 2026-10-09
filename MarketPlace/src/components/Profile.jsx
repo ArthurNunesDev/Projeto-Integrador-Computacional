@@ -1,47 +1,23 @@
 import { useEffect, useState } from "react";
 
-const CHAVE_PERFIL = "marketfaesa-perfil";
-
-function chavePerfil(usuario) {
-  return usuario?.email ? `${CHAVE_PERFIL}:${usuario.email.toLowerCase()}` : CHAVE_PERFIL;
-}
-
-const PERFIL_PADRAO = {
-  nome: "",
-  curso: "",
-  periodo: "",
-  cidade: "",
-  email: "",
-  bio: "",
-};
+import { calcularProgressoPerfil } from "../perfil.js";
 
 function obterPerfil(usuario) {
-  const dadosBase = {
-    ...PERFIL_PADRAO,
+  return {
     nome: usuario?.nome || "",
+    curso: usuario?.curso || "",
+    periodo: usuario?.periodo || "",
+    cidade: usuario?.cidade || "",
     email: usuario?.email || "",
+    bio: usuario?.bio || "",
   };
-
-  try {
-    const salvo = localStorage.getItem(chavePerfil(usuario));
-    if (salvo) return { ...dadosBase, ...JSON.parse(salvo) };
-  } catch {
-    // localStorage indisponível ou com JSON inválido: mantém o valor padrão
-  }
-
-  return dadosBase;
 }
 
-function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsuario, onDeleteAccount }) {
+function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsuario }) {
   const [editando, setEditando] = useState(false);
   const [dados, setDados] = useState(() => obterPerfil(usuario));
   const [salvo, setSalvo] = useState(false);
   const [mostrarConquista, setMostrarConquista] = useState(false);
-
-  useEffect(() => {
-    localStorage.setItem(chavePerfil(usuario), JSON.stringify(dados));
-    window.dispatchEvent(new Event("marketfaesa-perfil-atualizado"));
-  }, [dados, usuario]);
 
   function alterarCampo(campo, valor) {
     setDados((estado) => ({ ...estado, [campo]: valor }));
@@ -50,13 +26,12 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
 
   function salvarPerfil() {
     const nome = dados.nome.trim();
-    const email = dados.email.trim().toLowerCase();
-    if (!nome || !email) return;
+    if (!nome) return;
 
-    const atualizados = { ...dados, nome, email };
+    // O e-mail é o login e não muda por aqui; o resto fica salvo localmente (ver src/perfil.js).
+    const atualizados = { ...dados, nome };
     setDados(atualizados);
-    localStorage.setItem(chavePerfil(usuario), JSON.stringify(atualizados));
-    onUpdateUsuario?.({ nome, email, usuario: email });
+    onUpdateUsuario?.({ nome, curso: dados.curso, periodo: dados.periodo, cidade: dados.cidade, bio: dados.bio });
     setEditando(false);
     setSalvo(true);
     window.setTimeout(() => setSalvo(false), 2500);
@@ -148,7 +123,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
             <section className="perfil-side-card animate__animated animate__fadeInRight">
               <div className="perfil-side-title"><h3>Informações</h3></div>
               <div className="perfil-information">
-                <div className="perfil-information-item"><span>E-mail</span>{editando ? <input value={dados.email} onChange={(e) => alterarCampo("email", e.target.value)} /> : mostrarEmail ? <strong>{dados.email}</strong> : <strong className="perfil-info-oculto">Oculto · ative em Configurações</strong>}</div>
+                <div className="perfil-information-item"><span>E-mail</span>{editando ? <strong>{dados.email}</strong> : mostrarEmail ? <strong>{dados.email}</strong> : <strong className="perfil-info-oculto">Oculto · ative em Configurações</strong>}</div>
                 <div className="perfil-information-item"><span>Curso</span><strong>{dados.curso}</strong></div>
                 <div className="perfil-information-item"><span>Período</span><strong>{dados.periodo}</strong></div>
                 <div className="perfil-information-item"><span>Localização</span><strong>{dados.cidade}</strong></div>
@@ -166,37 +141,14 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
 
             <section className="perfil-side-card perfil-danger-card">
               <h3>Conta</h3>
-              <p>Excluir sua conta remove os dados locais desta conta e encerra a sessão.</p>
-              <button type="button" onClick={() => { if (window.confirm("Deseja realmente excluir sua conta? Esta ação não pode ser desfeita.")) onDeleteAccount?.(); }}>Excluir minha conta</button>
+              <p>Disponível em breve: a exclusão de conta ainda não existe na API.</p>
+              <button type="button" disabled title="Disponível em breve">Excluir minha conta</button>
             </section>
           </aside>
         </div>
       </div>
     </main>
   );
-}
-
-function calcularProgressoPerfil(usuario) {
-  const email = usuario?.email?.trim().toLowerCase();
-  if (!email) return 0;
-  let perfil = {};
-  let habilidades = [];
-  try {
-    perfil = JSON.parse(localStorage.getItem("marketfaesa-perfil:" + email) || "{}");
-    habilidades = JSON.parse(localStorage.getItem("marketfaesa-habilidades") || "[]");
-  } catch {
-    // localStorage indisponível ou com JSON inválido: mantém o valor padrão
-  }
-  const campos = [
-    Boolean((perfil.nome || usuario?.nome || "").trim()),
-    Boolean((perfil.email || usuario?.email || "").trim()),
-    Boolean((perfil.curso || "").trim()),
-    Boolean((perfil.periodo || "").trim()),
-    Boolean((perfil.cidade || "").trim()),
-    Boolean((perfil.bio || "").trim()),
-    habilidades.some((item) => item?.nome?.trim()),
-  ];
-  return Math.round((campos.filter(Boolean).length / campos.length) * 100);
 }
 
 function PerfilConclusao({ usuario, onNavigate }) {

@@ -1,26 +1,16 @@
 import { useEffect, useState } from "react";
 
-function calcularProgressoPerfil(usuario) {
-  const email = usuario?.email?.trim().toLowerCase();
-  if (!email) return 0;
-  let perfil = {};
-  let habilidades = [];
-  try {
-    perfil = JSON.parse(localStorage.getItem("marketfaesa-perfil:" + email) || "{}");
-    habilidades = JSON.parse(localStorage.getItem("marketfaesa-habilidades") || "[]");
-  } catch {
-    // localStorage indisponível ou com JSON inválido: mantém o valor padrão
-  }
-  const campos = [
-    Boolean((perfil.nome || usuario?.nome || "").trim()),
-    Boolean((perfil.email || usuario?.email || "").trim()),
-    Boolean((perfil.curso || "").trim()),
-    Boolean((perfil.periodo || "").trim()),
-    Boolean((perfil.cidade || "").trim()),
-    Boolean((perfil.bio || "").trim()),
-    habilidades.some((item) => item?.nome?.trim()),
-  ];
-  return Math.round((campos.filter(Boolean).length / campos.length) * 100);
+import { calcularProgressoPerfil } from "../perfil.js";
+
+function chaveConclusaoPerfil(usuario) {
+  return usuario?.email
+    ? "marketfaesa-perfil-completo-pendente:" + usuario.email.trim().toLowerCase()
+    : "";
+}
+
+function conclusaoPerfilPendente(usuario) {
+  const chave = chaveConclusaoPerfil(usuario);
+  return Boolean(chave) && localStorage.getItem(chave) === "1";
 }
 
 function chaveConclusaoPerfil(usuario) {

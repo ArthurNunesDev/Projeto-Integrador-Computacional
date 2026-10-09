@@ -53,16 +53,13 @@
 
 O **frontend em React** tem interface funcional e responsiva, publicada no GitHub Pages. O **backend em Java com Spring Boot** já sobe com Spring Security configurado e se conecta a um **PostgreSQL** (hospedado no [Neon](https://neon.tech)): o schema é criado por migrations do Flyway e as entidades `Usuario` e `ConfiguracaoUsuario` já estão mapeadas, com seus repositórios. A [API](#api) já tem cadastro, login com JWT, perfil e configurações do usuário.
 
-O front ainda **não chama a API**: hoje ele funciona sozinho, os dados ficam no `localStorage` e o login é simulado, disponível só em desenvolvimento. O que falta mudar no front está no [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md#3-integração-com-o-front).
-
-> [!IMPORTANT]
-> O login local serve apenas para desenvolvimento e testes. A versão final usará autenticação pelo backend, com senha armazenada em hash e nunca em texto puro no navegador.
+O front já usa a API para **login, cadastro, sessão, perfil (leitura) e configurações**: para entrar é preciso o backend rodando (veja [Executando](#executando)). O navegador guarda só o token JWT; nenhuma senha fica no `localStorage`. As demais telas (habilidades, conexões, mensagens, salvos) e as edições do perfil ainda ficam no `localStorage`, e trocar a senha e excluir a conta aparecem como "Disponível em breve" até existirem as rotas. O que falta está no [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md#3-integração-com-o-front).
 
 <h2 id="funcionalidades">✨ Funcionalidades</h2>
 
 | Disponível no frontend | |
 |---|---|
-| 🔐 Login e cadastro locais para testes | 🏠 Dashboard com estatísticas e oportunidades |
+| 🔐 Login e cadastro pela API (JWT) | 🏠 Dashboard com estatísticas e oportunidades |
 | 👤 Perfil com progresso de preenchimento | 🏆 Animação de conquista ao completar o perfil |
 | 🛠️ Publicação e gestão de habilidades | 👥 Busca de estudantes e conexões |
 | 💬 Mensagens entre usuários | 🔖 Itens salvos |
@@ -71,7 +68,7 @@ O front ainda **não chama a API**: hoje ele funciona sozinho, os dados ficam no
 
 <h2 id="comecar">🚀 Como começar</h2>
 
-O projeto tem duas partes independentes: o frontend em `MarketPlace/` e o backend em `backend/`. O frontend roda sozinho; o backend precisa de um banco PostgreSQL (veja [Banco de dados](#banco)).
+O projeto tem duas partes independentes: o frontend em `MarketPlace/` e o backend em `backend/`. O frontend abre sozinho, mas para entrar precisa do backend rodando; o backend precisa de um banco PostgreSQL (veja [Banco de dados](#banco)).
 
 <h3 id="pre-requisitos">Pré-requisitos</h3>
 
@@ -89,16 +86,7 @@ cd Projeto-Integrador-Computacional
 
 <h3 id="variaveis">Variáveis de ambiente</h3>
 
-Use o `MarketPlace/.env.example` como referência para criar o arquivo `MarketPlace/.env.development.local` com as credenciais do login de teste:
-
-```env
-VITE_DEV_USER=seu-usuario-de-teste
-VITE_DEV_PASS=sua-senha-de-teste
-```
-
-O Vite só carrega esse arquivo em `npm run dev`. Em produção o login de teste fica desativado.
-
-O endereço do backend vem de `VITE_API_URL` (padrão `http://localhost:8080`, sem `/api` no final). No build, a origem dessa URL também entra no `connect-src` da CSP; para gerar a versão de produção apontando para outro servidor, defina a variável antes do build (ex.: `VITE_API_URL=https://api.exemplo.com npm run build`). O cliente HTTP fica em `MarketPlace/src/api/`.
+O front só tem uma variável, documentada em `MarketPlace/.env.example`. O endereço do backend vem de `VITE_API_URL` (padrão `http://localhost:8080`, sem `/api` no final). No build, a origem dessa URL também entra no `connect-src` da CSP; para gerar a versão de produção apontando para outro servidor, defina a variável antes do build (ex.: `VITE_API_URL=https://api.exemplo.com npm run build`). O cliente HTTP fica em `MarketPlace/src/api/`.
 
 Se `VITE_API_URL` não estiver definida num build de produção, o build continua mas avisa no console que o site vai apontar para `http://localhost:8080`. O deploy do GitHub Pages (`.github/workflows/deploy.yml`) lê a variável do repositório `VITE_API_URL`: quando a API estiver publicada, crie-a em Settings > Secrets and variables > Actions > Variables com a URL pública da API (ex.: `https://api.exemplo.com`). Enquanto ela não existir, o site publicado aponta para `localhost` e o login não funciona fora da máquina de quem roda a API.
 
