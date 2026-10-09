@@ -55,7 +55,8 @@ function Marca() {
 
   return (
     <div className="login-brand">
-      <img className="login-logo" src={`${baseUrl}marketfaesa-symbol.svg`} alt="" />
+      <img className="login-logo login-logo-light" src={`${baseUrl}marketfaesa-symbol.svg`} alt="" />
+      <img className="login-logo login-logo-dark" src={`${baseUrl}marketfaesa-symbol-dark.svg`} alt="" />
       <h1>
         MARKET<span>FAESA</span>
       </h1>
