@@ -1,3 +1,5 @@
+@use "../styles/abstracts/mixins" as *;
+
 body { background: var(--mf-bg); }
 .main-content { width: 100%; min-height: calc(100vh - var(--header-height)); padding: 26px 24px 60px; background: var(--mf-bg); }
 .dashboard-container { width: min(1418px, 100%); margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 24px; }
@@ -125,8 +127,8 @@ body { background: var(--mf-bg); }
 .popular-card li > span, .popular-card small { color:var(--mf-muted); font-size:8px; }
 .popular-card strong { color:var(--mf-text); font-size:8px; font-weight:700; }
 
-@media (max-width: 1050px) { .dashboard-container { grid-template-columns:1fr; } .dashboard-sidebar { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; } .complete-card,.popular-card { margin-top:0; } }
-@media (max-width: 760px) {
+@include respond-max(1050px) { .dashboard-container { grid-template-columns:1fr; } .dashboard-sidebar { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; } .complete-card,.popular-card { margin-top:0; } }
+@include respond-max(760px) {
   .main-content { padding:18px 14px 45px; }
   .welcome-card { padding:26px; min-height:250px; }
   .welcome-button {
@@ -228,7 +230,7 @@ body { background: var(--mf-bg); }
 [data-theme="dark"] .opportunity-modal-close:hover { background: #303A70; }
 [data-theme="dark"] .opportunity-modal-info span { background: #171D3D; color: #CADCFC; }
 
-@media (max-width: 620px) {
+@include respond-max(620px) {
   .opportunity-footer { align-items: flex-start; flex-direction: column; }
   .opportunity-actions { width: 100%; }
   .opportunity-actions button { flex: 1; }
@@ -241,7 +243,7 @@ body { background: var(--mf-bg); }
 
 
 
-@media (max-width: 620px) {
+@include respond-max(620px) {
   .main-content {
     padding: 16px 12px 40px;
   }
@@ -307,7 +309,7 @@ body { background: var(--mf-bg); }
   }
 }
 
-@media (max-width: 380px) {
+@include respond-max(380px) {
   .main-content {
     padding-left: 9px;
     padding-right: 9px;
@@ -336,7 +338,7 @@ body { background: var(--mf-bg); }
 
 
 /* Dashboard mobile compacto */
-@media (max-width: 600px) {
+@include respond-max(600px) {
   .main-content { padding: 10px 9px 28px; }
   .dashboard-container { gap: 12px; }
   .welcome-card { padding: 17px; min-height: 0; border-radius: 14px; }
@@ -394,7 +396,7 @@ body { background: var(--mf-bg); }
   .opportunity-modal-footer { gap: 7px; margin-top: 12px; padding-top: 10px; }
   .opportunity-modal-footer > button { padding: 7px 10px; font-size: 7px; }
 }
-@media (max-width: 380px) {
+@include respond-max(380px) {
   .main-content { padding-left: 7px; padding-right: 7px; }
   .welcome-card { padding: 14px; }
   .welcome-card h2 { font-size: 18px; }
@@ -404,7 +406,7 @@ body { background: var(--mf-bg); }
 
 
 /* Manter estatísticas lado a lado no mobile */
-@media (max-width: 600px) {
+@include respond-max(600px) {
   .stats-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
@@ -435,7 +437,7 @@ body { background: var(--mf-bg); }
   }
 }
 
-@media (max-width: 380px) {
+@include respond-max(380px) {
   .stats-grid {
     gap: 4px;
   }
@@ -519,7 +521,7 @@ body { background: var(--mf-bg); }
   0%,100% { opacity: .45; transform: translateY(0); }
   50% { opacity: 1; transform: translateY(-2px); }
 }
-@media (max-width: 600px) {
+@include respond-max(600px) {
   .complete-card > button { font-size: 6px; padding: 6px 8px; }
   .complete-success-icon { top: 10px; right: 11px; font-size: 17px; }
   .complete-success-label { font-size: 5px; }
@@ -620,7 +622,7 @@ body { background: var(--mf-bg); }
   50% { opacity: 1; transform: scale(1.08); }
 }
 
-@media (max-width: 600px) {
+@include respond-max(600px) {
   .perfil-completo-overlay { padding: 15px; backdrop-filter: blur(7px); }
   .perfil-completo-card { padding: 27px 20px 22px; border-radius: 19px; }
   .perfil-completo-icon { width: 58px; height: 58px; font-size: 30px; }
@@ -631,7 +633,7 @@ body { background: var(--mf-bg); }
 }
 
 
-@media (max-width: 600px) {
+@include respond-max(600px) {
   .save-button-top {
     top: 9px;
     right: 9px;
@@ -654,7 +656,7 @@ body { background: var(--mf-bg); }
 .opportunity-card > .opportunity-card-open .opportunity-top {
   padding-right: 48px;
 }
-@media (max-width: 600px) {
+@include respond-max(600px) {
   .opportunity-card > .save-button-home {
     top: 12px;
     right: 12px;
@@ -699,7 +701,7 @@ body { background: var(--mf-bg); }
   color: #C62828;
   background: #FFE5E5;
 }
-@media (max-width: 600px) {
+@include respond-max(600px) {
   .opportunity-card > .save-button-home {
     width: 28px;
     height: 28px;
@@ -757,7 +759,7 @@ body { background: var(--mf-bg); }
   transform: translateY(-1px) scale(1.01);
 }
 
-@media (max-width: 620px) {
+@include respond-max(620px) {
   .opportunity-modal-footer > button.save-button-modal {
     width: 100%;
     min-width: 0;
