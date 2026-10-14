@@ -346,3 +346,99 @@
   .perfil-main-info { width: 100%; }
   .perfil-actions { width: 100%; }
 }
+
+
+/* Campos de edição com rótulos explícitos e boa leitura em telas pequenas. */
+.perfil-edit-field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  min-width: 0;
+  color: var(--mf-text);
+}
+.perfil-edit-field > span {
+  color: var(--mf-muted);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+.perfil-edit-field .perfil-name-input,
+.perfil-edit-field .perfil-inline-input,
+.perfil-edit-field .perfil-bio-input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.perfil-edit-field .perfil-inline-input.small {
+  width: 100%;
+  margin: 0;
+}
+.perfil-meta-editando {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 12px;
+  width: 100%;
+}
+.perfil-bio-edit-field { width: 100%; }
+.perfil-bio-edit-field small {
+  color: var(--mf-muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+.perfil-edit-field input::placeholder,
+.perfil-edit-field textarea::placeholder {
+  color: var(--mf-muted);
+  opacity: .8;
+}
+[data-theme="dark"] .perfil-edit-field > span { color: #CADCFC; }
+[data-theme="dark"] .perfil-bio-edit-field small { color: #CADCFC; }
+@media (max-width: 600px) {
+  .perfil-main-top {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+  .perfil-avatar-area {
+    align-self: center;
+    width: 100%;
+    margin: 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--mf-border);
+  }
+  .perfil-avatar-large { width: 88px; height: 88px; font-size: 22px; }
+  .perfil-main-info {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
+  }
+  .perfil-main-info h2 {
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+  .perfil-main-info > span { text-align: center; }
+  .perfil-main-info > .perfil-edit-field { width: 100%; }
+  .perfil-meta-editando {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    margin: 0;
+  }
+  .perfil-edit-field > span { font-size: 12px; }
+  .perfil-edit-field .perfil-name-input,
+  .perfil-edit-field .perfil-inline-input,
+  .perfil-edit-field .perfil-bio-input {
+    min-height: 42px;
+    padding: 11px 12px;
+    border-radius: 10px;
+    font-size: 14px;
+  }
+  .perfil-edit-field .perfil-bio-input { min-height: 120px; }
+  .perfil-bio-edit-field small { font-size: 11px; }
+  .perfil-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .perfil-actions .perfil-button { min-height: 40px; font-size: 11px; }
+}
