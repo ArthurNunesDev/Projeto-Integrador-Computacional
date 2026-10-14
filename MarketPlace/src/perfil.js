@@ -3,9 +3,10 @@
 // TODO: enviar essas edições para PUT /api/usuarios/me quando a rota existir e
 // remover o armazenamento local.
 
+import { chaveUsuario } from "./storage.js";
+
 const CHAVE_PERFIL = "marketfaesa-perfil";
 const CHAVE_HABILIDADES = "marketfaesa-habilidades";
-import { chaveUsuario } from "./storage.js";
 
 // Campos do perfil que a tela permite editar (o e-mail é o login e não muda aqui).
 const CAMPOS_EDITAVEIS = ["nome", "curso", "periodo", "cidade", "bio"];
