@@ -1,23 +1,25 @@
 import { useEffect, useMemo, useState } from "react";
+import { chaveUsuario } from "../storage.js";
 
 const CHAVE_SALVOS = "marketfaesa-salvos";
 
-function lerSalvos() {
+function lerSalvos(chave) {
   try {
-    const dados = JSON.parse(localStorage.getItem(CHAVE_SALVOS));
+    const dados = JSON.parse(localStorage.getItem(chave));
     return Array.isArray(dados) ? dados : [];
   } catch {
     return [];
   }
 }
 
-function Salvos({ onNavigate }) {
-  const [salvos, setSalvos] = useState(lerSalvos);
+function Salvos({ onNavigate, usuarioId }) {
+  const chave = chaveUsuario(CHAVE_SALVOS, usuarioId);
+  const [salvos, setSalvos] = useState(() => lerSalvos(chave));
   const [busca, setBusca] = useState("");
 
   useEffect(() => {
-    localStorage.setItem(CHAVE_SALVOS, JSON.stringify(salvos));
-  }, [salvos]);
+    localStorage.setItem(chave, JSON.stringify(salvos));
+  }, [chave, salvos]);
 
   const filtrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
