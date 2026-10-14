@@ -3,25 +3,6 @@ import { chaveUsuario } from "../storage.js";
 
 const CHAVE_HABILIDADES = "marketfaesa-habilidades";
 
-const habilidadesIniciais = [
-  {
-    id: 1,
-    nome: "JavaScript",
-    categoria: "Tecnologia",
-    nivel: "Avançado",
-    descricao: "Desenvolvimento de interfaces e aplicações web.",
-    disponibilidade: "Projetos e freelas",
-  },
-  {
-    id: 2,
-    nome: "React",
-    categoria: "Tecnologia",
-    nivel: "Intermediário",
-    descricao: "Criação de interfaces modernas e componentes reutilizáveis.",
-    disponibilidade: "Projetos acadêmicos",
-  },
-];
-
 function obterHabilidades(chave) {
   try {
     const salvo = localStorage.getItem(chave);
@@ -32,7 +13,7 @@ function obterHabilidades(chave) {
   } catch {
     // localStorage indisponível ou com JSON inválido: mantém o valor padrão
   }
-  return habilidadesIniciais;
+  return [];
 }
 
 function Habilidades({ onNavigate, usuarioId }) {
