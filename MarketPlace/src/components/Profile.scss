@@ -245,3 +245,104 @@
     box-shadow: 0 10px 24px rgba(0,0,0,.24);
   }
 }
+
+/* Foto de perfil opcional, armazenada separadamente para cada conta demonstrativa. */
+.perfil-avatar-area {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.perfil-avatar-large {
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.perfil-avatar-large img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.perfil-photo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  max-width: 150px;
+}
+.perfil-photo-upload,
+.perfil-photo-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 6px 9px;
+  border: 1px solid var(--mf-border);
+  border-radius: 16px;
+  background: var(--mf-bg);
+  color: var(--mf-navy);
+  font-size: 9px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background .18s ease, color .18s ease, border-color .18s ease, transform .18s ease;
+}
+.perfil-photo-upload:hover,
+.perfil-photo-remove:hover {
+  transform: translateY(-1px);
+  border-color: var(--mf-orange);
+  background: var(--mf-navy);
+  color: #fff;
+}
+.perfil-photo-upload input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+.perfil-photo-optional {
+  width: 100%;
+  color: var(--mf-muted);
+  font-size: 8px;
+  text-align: center;
+}
+.perfil-photo-error {
+  max-width: 150px;
+  margin: 0;
+  color: #B42318;
+  font-size: 9px;
+  line-height: 1.4;
+  text-align: center;
+}
+[data-theme="dark"] .perfil-photo-upload,
+[data-theme="dark"] .perfil-photo-remove {
+  border-color: rgba(202,220,252,.25);
+  background: #252D5B;
+  color: #F7F9FF;
+}
+[data-theme="dark"] .perfil-photo-upload:hover,
+[data-theme="dark"] .perfil-photo-remove:hover {
+  border-color: var(--mf-orange);
+  background: #303B83;
+  color: #fff;
+}
+[data-theme="dark"] .perfil-photo-error { color: #FFB4B4; }
+@media (max-width: 850px) {
+  .perfil-avatar-area { align-self: center; }
+}
+@media (max-width: 600px) {
+  .perfil-main-top { align-items: stretch; }
+  .perfil-avatar-area { width: 100%; margin-bottom: 4px; }
+  .perfil-avatar-large { width: 82px; height: 82px; font-size: 21px; }
+  .perfil-photo-actions { max-width: 100%; gap: 7px; }
+  .perfil-photo-upload,
+  .perfil-photo-remove { min-height: 32px; padding: 7px 11px; font-size: 10px; }
+  .perfil-photo-optional { font-size: 9px; }
+  .perfil-photo-error { max-width: 240px; font-size: 10px; }
+  .perfil-main-info { width: 100%; }
+  .perfil-actions { width: 100%; }
+}
