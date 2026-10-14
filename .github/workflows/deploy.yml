@@ -5,6 +5,11 @@ on:
     branches:
       - main
 
+# Evita que vários pushes tentem publicar no GitHub Pages ao mesmo tempo.
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
 permissions:
   contents: read
   pages: write
