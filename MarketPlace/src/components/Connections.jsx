@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { chaveUsuario } from "../storage.js";
 
 const CHAVE_CONEXOES = "marketfaesa-conexoes";
 
@@ -14,9 +15,9 @@ const solicitacoesRecebidas = [
   { id: 6, nome: "Pedro Henrique", curso: "Engenharia de Software · 5º período", cidade: "Vila Velha, ES", inicial: "PH", habilidades: ["Java", "Spring", "Git"] },
 ];
 
-function obterConexoes() {
+function obterConexoes(chave) {
   try {
-    const salvo = localStorage.getItem(CHAVE_CONEXOES);
+    const salvo = localStorage.getItem(chave);
     const ids = salvo ? JSON.parse(salvo) : [];
     return Array.isArray(ids) ? ids : [];
   } catch {
@@ -24,17 +25,31 @@ function obterConexoes() {
   }
 }
 
-function Connections() {
+function Connections({ usuarioId }) {
+  const chaveConexoes = chaveUsuario(CHAVE_CONEXOES, usuarioId);
+  const chaveRecebidas = chaveUsuario("marketfaesa-solicitacoes-recebidas", usuarioId);
   const [aba, setAba] = useState("conexoes");
   const [busca, setBusca] = useState("");
-  const [conexoes, setConexoes] = useState(obterConexoes);
-  const [recebidas, setRecebidas] = useState(solicitacoesRecebidas);
+  const [conexoes, setConexoes] = useState(() => obterConexoes(chaveConexoes));
+  const [recebidas, setRecebidas] = useState(() => {
+    try {
+      const salvo = localStorage.getItem(chaveRecebidas);
+      const dados = salvo ? JSON.parse(salvo) : solicitacoesRecebidas;
+      return Array.isArray(dados) ? dados : solicitacoesRecebidas;
+    } catch {
+      return solicitacoesRecebidas;
+    }
+  });
   const [perfilAberto, setPerfilAberto] = useState(null);
 
   function salvarConexoes(ids) {
     setConexoes(ids);
-    localStorage.setItem(CHAVE_CONEXOES, JSON.stringify(ids));
+    localStorage.setItem(chaveConexoes, JSON.stringify(ids));
   }
+
+  useEffect(() => {
+    localStorage.setItem(chaveRecebidas, JSON.stringify(recebidas));
+  }, [chaveRecebidas, recebidas]);
 
   function conectar(id) {
     salvarConexoes([...new Set([...conexoes, id])]);
