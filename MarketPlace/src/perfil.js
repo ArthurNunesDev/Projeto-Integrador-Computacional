@@ -99,3 +99,26 @@ export function calcularProgressoPerfil(usuario) {
   ];
   return Math.round((campos.filter(Boolean).length / campos.length) * 100);
 }
+
+
+const CHAVE_CONQUISTA_PERFIL = "marketfaesa-perfil-completo-conquista";
+
+/** Indica se esta conta já recebeu a animação de conclusão do perfil. */
+export function conquistaPerfilExibida(usuario) {
+  if (!usuario?.id) return false;
+  try {
+    return localStorage.getItem(chaveUsuario(CHAVE_CONQUISTA_PERFIL, usuario.id)) === "1";
+  } catch {
+    return false;
+  }
+}
+
+/** Registra a conquista por conta para evitar repetições a cada edição. */
+export function marcarConquistaPerfilExibida(usuario) {
+  if (!usuario?.id) return;
+  try {
+    localStorage.setItem(chaveUsuario(CHAVE_CONQUISTA_PERFIL, usuario.id), "1");
+  } catch {
+    // A animação ainda pode ser exibida nesta sessão se o armazenamento falhar.
+  }
+}
