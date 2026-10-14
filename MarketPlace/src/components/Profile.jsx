@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { calcularProgressoPerfil } from "../perfil.js";
+import { lerJsonUsuario } from "../storage.js";
 
 function obterPerfil(usuario) {
   return {
@@ -14,6 +15,13 @@ function obterPerfil(usuario) {
 }
 
 function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsuario }) {
+  const habilidadesUsuario = lerJsonUsuario("marketfaesa-habilidades", usuario?.id, []);
+  const conexoesUsuario = lerJsonUsuario("marketfaesa-conexoes", usuario?.id, []);
+  const oportunidadesUsuario = lerJsonUsuario("marketfaesa-participando", usuario?.id, []);
+  const habilidades = Array.isArray(habilidadesUsuario) ? habilidadesUsuario : [];
+  const conexoes = Array.isArray(conexoesUsuario) ? conexoesUsuario : [];
+  const oportunidades = Array.isArray(oportunidadesUsuario) ? oportunidadesUsuario : [];
+  const interesses = [...new Set(habilidades.map((habilidade) => habilidade.categoria).filter(Boolean))];
   const [editando, setEditando] = useState(false);
   const [dados, setDados] = useState(() => obterPerfil(usuario));
   const [salvo, setSalvo] = useState(false);
@@ -94,10 +102,10 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
           </div>
 
           <div className="perfil-statistics">
-            <div className="perfil-stat"><strong>7</strong><span>Conexões</span></div>
-            <div className="perfil-stat"><strong>3</strong><span>Projetos</span></div>
-            <div className="perfil-stat"><strong>2</strong><span>Publicações</span></div>
-            <div className="perfil-stat"><strong>6</strong><span>Habilidades</span></div>
+            <div className="perfil-stat"><strong>{conexoes.length}</strong><span>Conexões</span></div>
+            <div className="perfil-stat"><strong>{oportunidades.length}</strong><span>Oportunidades</span></div>
+            <div className="perfil-stat"><strong>{habilidades.length}</strong><span>Publicações</span></div>
+            <div className="perfil-stat"><strong>{new Set(habilidades.map((habilidade) => habilidade.nome)).size}</strong><span>Habilidades</span></div>
           </div>
         </section>
 
@@ -110,12 +118,16 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
 
             <section className="perfil-section-card animate__animated animate__fadeInUp">
               <div className="perfil-section-heading"><div><span>COMPETÊNCIAS</span><h3>Minhas habilidades</h3></div><button className="perfil-section-link" type="button" onClick={() => onNavigate("publicar-habilidade")}>+ Adicionar</button></div>
-              <div className="perfil-skills">{["JavaScript","React","HTML","CSS","Python","Git"].map((habilidade) => <span className="perfil-skill" key={habilidade}>{habilidade}</span>)}</div>
+              <div className="perfil-skills">
+                {habilidades.length ? habilidades.map((habilidade) => <span className="perfil-skill" key={habilidade.id ?? habilidade.nome}>{habilidade.nome}</span>) : <p className="perfil-bio">Você ainda não publicou habilidades.</p>}
+              </div>
             </section>
 
             <section className="perfil-section-card animate__animated animate__fadeInUp">
               <div className="perfil-section-heading"><div><span>INTERESSES</span><h3>Áreas de interesse</h3></div></div>
-              <div className="perfil-interests">{["Desenvolvimento Web","Tecnologia","Inteligência Artificial","Projetos acadêmicos"].map((interesse) => <div className="perfil-interest" key={interesse}><span className="perfil-interest-icon">✓</span><span>{interesse}</span></div>)}</div>
+              <div className="perfil-interests">
+                {interesses.length ? interesses.map((interesse) => <div className="perfil-interest" key={interesse}><span className="perfil-interest-icon">✓</span><span>{interesse}</span></div>) : <p className="perfil-bio">Suas áreas de interesse aparecerão conforme você publicar habilidades.</p>}
+              </div>
             </section>
           </div>
 
