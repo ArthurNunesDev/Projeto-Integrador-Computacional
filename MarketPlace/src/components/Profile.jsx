@@ -143,11 +143,37 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
               {erroFoto && <p className="perfil-photo-error" role="alert">{erroFoto}</p>}
             </div>
             <div className="perfil-main-info">
-              {editando ? <input className="perfil-name-input" value={dados.nome} onChange={(e) => alterarCampo("nome", e.target.value)} /> : (
+              {editando ? (
+                <label className="perfil-edit-field">
+                  <span>Nome completo</span>
+                  <input className="perfil-name-input" autoComplete="name" value={dados.nome} onChange={(e) => alterarCampo("nome", e.target.value)} placeholder="Digite seu nome completo" />
+                </label>
+              ) : (
                 <h2>{dados.nome} <span className={"perfil-visibility-badge " + (perfilPublico ? "" : "is-privado")}>{perfilPublico ? "🌐 Público" : "🔒 Privado"}</span></h2>
               )}
-              {editando ? <input className="perfil-inline-input" value={dados.curso} onChange={(e) => alterarCampo("curso", e.target.value)} /> : <span>{dados.curso}</span>}
-              <div className="perfil-meta">{editando ? <><input className="perfil-inline-input small" value={dados.periodo} onChange={(e) => alterarCampo("periodo", e.target.value)} /><input className="perfil-inline-input small" value={dados.cidade} onChange={(e) => alterarCampo("cidade", e.target.value)} /></> : <><span>🎓 {dados.periodo}</span><span>📍 {dados.cidade}</span></>}</div>
+              {editando ? (
+                <label className="perfil-edit-field">
+                  <span>Curso</span>
+                  <input className="perfil-inline-input" value={dados.curso} onChange={(e) => alterarCampo("curso", e.target.value)} placeholder="Ex.: Análise e Desenvolvimento de Sistemas" />
+                </label>
+              ) : <span>{dados.curso || "Curso não informado"}</span>}
+              <div className={"perfil-meta" + (editando ? " perfil-meta-editando" : "")}>
+                {editando ? (
+                  <>
+                    <label className="perfil-edit-field">
+                      <span>Período / semestre</span>
+                      <input className="perfil-inline-input small" value={dados.periodo} onChange={(e) => alterarCampo("periodo", e.target.value)} placeholder="Ex.: 3º período" />
+                    </label>
+                    <label className="perfil-edit-field">
+                      <span>Cidade</span>
+                      <input className="perfil-inline-input small" value={dados.cidade} onChange={(e) => alterarCampo("cidade", e.target.value)} placeholder="Ex.: Vitória - ES" />
+                    </label>
+                  </>
+                ) : <>
+                  <span>🎓 {dados.periodo || "Período não informado"}</span>
+                  <span>📍 {dados.cidade || "Cidade não informada"}</span>
+                </>}
+              </div>
             </div>
             <div className="perfil-actions">
               {editando ? <>
@@ -169,7 +195,13 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
           <div className="perfil-column-main">
             <section className="perfil-section-card animate__animated animate__fadeInUp">
               <div className="perfil-section-heading"><div><span>PERFIL</span><h3>Sobre mim</h3></div></div>
-              {editando ? <textarea className="perfil-bio-input" value={dados.bio} onChange={(e) => alterarCampo("bio", e.target.value)} rows={5} /> : <p className="perfil-bio">{dados.bio}</p>}
+              {editando ? (
+                <label className="perfil-edit-field perfil-bio-edit-field">
+                  <span>Sobre você</span>
+                  <textarea className="perfil-bio-input" value={dados.bio} onChange={(e) => alterarCampo("bio", e.target.value)} rows={5} placeholder="Conte um pouco sobre você, seus interesses e objetivos." />
+                  <small>Apresente-se para outros estudantes. Este campo ajuda a personalizar seu perfil.</small>
+                </label>
+              ) : <p className="perfil-bio">{dados.bio || "Você ainda não adicionou uma descrição."}</p>}
             </section>
 
             <section className="perfil-section-card animate__animated animate__fadeInUp">
