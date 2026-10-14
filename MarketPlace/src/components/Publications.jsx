@@ -19,7 +19,7 @@ function MinhasPublicacoes({ onNavigate, usuarioId }) {
   const [editando, setEditando] = useState(null);
 
   useEffect(() => {
-    localStorage.setItem(CHAVE, JSON.stringify(publicacoes));
+    localStorage.setItem(chave, JSON.stringify(publicacoes));
   }, [chave, publicacoes]);
 
   const filtradas = useMemo(() => {
