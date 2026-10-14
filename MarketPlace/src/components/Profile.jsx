@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { calcularProgressoPerfil, conquistaPerfilExibida, marcarConquistaPerfilExibida } from "../perfil.js";
-import { lerJsonUsuario } from "../storage.js";
+import { lerJsonUsuario, salvarJsonUsuario } from "../storage.js";
 
 function obterPerfil(usuario) {
   return {
@@ -26,6 +26,47 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
   const [dados, setDados] = useState(() => obterPerfil(usuario));
   const [salvo, setSalvo] = useState(false);
   const [mostrarConquista, setMostrarConquista] = useState(false);
+  const [fotoPerfil, setFotoPerfil] = useState(() => lerJsonUsuario("marketfaesa-foto-perfil", usuario?.id, ""));
+  const [erroFoto, setErroFoto] = useState("");
+
+  function alterarFoto(event) {
+    const arquivo = event.target.files?.[0];
+    event.target.value = "";
+    if (!arquivo) return;
+
+    if (!arquivo.type.startsWith("image/")) {
+      setErroFoto("Escolha um arquivo de imagem.");
+      return;
+    }
+    if (arquivo.size > 1024 * 1024) {
+      setErroFoto("A imagem deve ter no máximo 1 MB.");
+      return;
+    }
+
+    const leitor = new FileReader();
+    leitor.onload = () => {
+      const imagem = typeof leitor.result === "string" ? leitor.result : "";
+      if (!imagem || !salvarJsonUsuario("marketfaesa-foto-perfil", usuario?.id, imagem)) {
+        setErroFoto("Não foi possível salvar a foto. Tente uma imagem menor.");
+        return;
+      }
+      setFotoPerfil(imagem);
+      setErroFoto("");
+      setSalvo(true);
+      window.setTimeout(() => setSalvo(false), 2500);
+    };
+    leitor.onerror = () => setErroFoto("Não foi possível ler essa imagem. Tente outro arquivo.");
+    leitor.readAsDataURL(arquivo);
+  }
+
+  function removerFoto() {
+    if (!salvarJsonUsuario("marketfaesa-foto-perfil", usuario?.id, "")) {
+      setErroFoto("Não foi possível remover a foto agora.");
+      return;
+    }
+    setFotoPerfil("");
+    setErroFoto("");
+  }
 
   function alterarCampo(campo, valor) {
     setDados((estado) => ({ ...estado, [campo]: valor }));
@@ -87,7 +128,20 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
 
         <section className="perfil-main-card animate__animated animate__fadeInUp">
           <div className="perfil-main-top">
-            <div className="perfil-avatar-large">{iniciais(dados.nome)}</div>
+            <div className="perfil-avatar-area">
+              <div className="perfil-avatar-large">
+                {fotoPerfil ? <img src={fotoPerfil} alt={`Foto de perfil de ${dados.nome || "usuário"}`} /> : iniciais(dados.nome)}
+              </div>
+              <div className="perfil-photo-actions">
+                <label className="perfil-photo-upload">
+                  {fotoPerfil ? "Alterar foto" : "Adicionar foto"}
+                  <input type="file" accept="image/*" onChange={alterarFoto} aria-label="Escolher foto de perfil" />
+                </label>
+                {fotoPerfil && <button className="perfil-photo-remove" type="button" onClick={removerFoto}>Remover</button>}
+                <span className="perfil-photo-optional">Opcional</span>
+              </div>
+              {erroFoto && <p className="perfil-photo-error" role="alert">{erroFoto}</p>}
+            </div>
             <div className="perfil-main-info">
               {editando ? <input className="perfil-name-input" value={dados.nome} onChange={(e) => alterarCampo("nome", e.target.value)} /> : (
                 <h2>{dados.nome} <span className={"perfil-visibility-badge " + (perfilPublico ? "" : "is-privado")}>{perfilPublico ? "🌐 Público" : "🔒 Privado"}</span></h2>
