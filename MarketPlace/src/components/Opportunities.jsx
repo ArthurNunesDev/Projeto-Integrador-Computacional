@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import "./Opportunities.scss";
+import { chaveUsuario } from "../storage.js";
 
 const dados = [
   { id:1, icon:"💻", tipo:"PROJETO", titulo:"Desenvolvimento de App para Clínica", area:"Tecnologia", modalidade:"Remoto", pessoa:"Maria Lima", curso:"Medicina", inicial:"ML", descricao:"Apoio na criação de um aplicativo para organização de atendimentos." },
@@ -11,12 +12,15 @@ const dados = [
 ];
 const filtros=["Todos","Tecnologia","Saúde","Direito","Engenharia","Administração","Design"];
 
-function Oportunidades(){
+function Oportunidades({ usuarioId }){
+  const chaveSalvos = chaveUsuario("marketfaesa-salvos", usuarioId);
+  const chaveParticipando = chaveUsuario("marketfaesa-participando", usuarioId);
   const [filtro,setFiltro]=useState("Todos");
   const [busca,setBusca]=useState("");
-  const [participando,setParticipando]=useState([]);
-  const [salvos,setSalvos]=useState(()=>{try{return JSON.parse(localStorage.getItem("marketfaesa-salvos"))||[]}catch{return[]}});
-  useEffect(()=>{localStorage.setItem("marketfaesa-salvos",JSON.stringify(salvos))},[salvos]);
+  const [participando,setParticipando]=useState(()=>{try{return JSON.parse(localStorage.getItem(chaveParticipando))||[]}catch{return[]}});
+  const [salvos,setSalvos]=useState(()=>{try{return JSON.parse(localStorage.getItem(chaveSalvos))||[]}catch{return[]}});
+  useEffect(()=>{localStorage.setItem(chaveSalvos,JSON.stringify(salvos))},[chaveSalvos,salvos]);
+  useEffect(()=>{localStorage.setItem(chaveParticipando,JSON.stringify(participando))},[chaveParticipando,participando]);
   const lista=useMemo(()=>{
     const termo=busca.trim().toLowerCase();
     return dados.filter(item=>(filtro==="Todos"||item.area===filtro)&&(!termo||[item.titulo,item.area,item.tipo,item.modalidade,item.pessoa].join(" ").toLowerCase().includes(termo)));
