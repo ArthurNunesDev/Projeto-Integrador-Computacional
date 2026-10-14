@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import Header from "./components/Header.jsx";
 import Body from "./components/Body.jsx";
@@ -17,7 +17,7 @@ import Login from "./auth/Login.jsx";
 
 import { cadastrar, login, obterSessaoLocal, sair } from "./api/auth.js";
 import { ApiError } from "./api/client.js";
-import { obterConfiguracoes, salvarConfiguracoes } from "./api/usuarios.js";
+import { chaveUsuario, lerJsonUsuario, salvarJsonUsuario } from "./storage.js";
 import { montarUsuario, salvarPerfilLocal } from "./perfil.js";
 
 import "./index.scss";
@@ -36,17 +36,22 @@ import "./components/Footer.scss";
 const CHAVE_TEMA = "marketfaesa-theme";
 const CHAVE_PAGINA = "marketfaesa-pagina";
 const CHAVE_PREFERENCIAS = "marketfaesa-preferencias";
+const CHAVE_CONFIGURACOES = "marketfaesa-configuracoes";
+const PREFERENCIAS_PADRAO = { area: "tecnologia", modalidade: "todas", frequencia: "imediato" };
 
-// O tema fica também no navegador só para não piscar na carga; a fonte é a API.
-function obterTemaInicial() {
+function obterTemaInicial(usuarioId) {
+  const configuracoesSalvas = lerJsonUsuario(CHAVE_CONFIGURACOES, usuarioId, null);
+  if (configuracoesSalvas?.tema === "dark" || configuracoesSalvas?.tema === "light") {
+    return configuracoesSalvas.tema;
+  }
   try {
-    return localStorage.getItem(CHAVE_TEMA) === "dark" ? "dark" : "light";
+    return localStorage.getItem(chaveUsuario(CHAVE_TEMA, usuarioId)) === "dark" ? "dark" : "light";
   } catch {
     return "light";
   }
 }
 
-// Mesmos campos de ConfiguracaoDto (menos o tema): o PUT exige todos.
+// Configurações demonstrativas guardadas separadamente para cada conta.
 const CONFIG_PADRAO = {
   perfilPublico: true,
   mostrarEmail: false,
@@ -75,98 +80,79 @@ function App() {
   const [restaurando, setRestaurando] = useState(false);
   const [erroSessao, setErroSessao] = useState("");
   const [avisoLogin, setAvisoLogin] = useState("");
-  const [pagina, setPagina] = useState(() => localStorage.getItem(CHAVE_PAGINA) || "inicio");
-  const [tema, setTema] = useState(obterTemaInicial);
-  const [configuracoes, setConfiguracoes] = useState(CONFIG_PADRAO);
-  // Enquanto o GET não termina, as opções ficam travadas para não salvar os padrões por cima.
-  const [configuracoesCarregadas, setConfiguracoesCarregadas] = useState(false);
-  const [erroCarregarConfiguracoes, setErroCarregarConfiguracoes] = useState("");
-  const [erroConfiguracoes, setErroConfiguracoes] = useState("");
-  // Muda a cada login/logout: respostas de uma sessão anterior são ignoradas.
-  const geracaoRef = useRef(0);
-  // PUTs de configuração rodam em fila, um por vez, na ordem dos cliques.
-  const filaSalvarRef = useRef(Promise.resolve());
-  const salvamentosPendentesRef = useRef(0);
-  const falhaAoSalvarRef = useRef(false);
-  const [preferencias, setPreferencias] = useState(() => {
+  const [pagina, setPagina] = useState(() => {
+    const sessao = obterSessaoLocal();
     try {
-      const salvo = localStorage.getItem(CHAVE_PREFERENCIAS);
-      return salvo ? JSON.parse(salvo) : { area: "tecnologia", modalidade: "todas", frequencia: "imediato" };
+      return localStorage.getItem(chaveUsuario(CHAVE_PAGINA, sessao?.id)) || "inicio";
     } catch {
-      return { area: "tecnologia", modalidade: "todas", frequencia: "imediato" };
+      return "inicio";
     }
   });
+  const [tema, setTema] = useState(() => obterTemaInicial(obterSessaoLocal()?.id));
+  const [configuracoes, setConfiguracoes] = useState(() => {
+    const sessao = obterSessaoLocal();
+    const salvo = lerJsonUsuario(CHAVE_CONFIGURACOES, sessao?.id, {});
+    const { tema: _tema, ...resto } = salvo || {};
+    return { ...CONFIG_PADRAO, ...resto };
+  });
+  const [configuracoesCarregadas, setConfiguracoesCarregadas] = useState(true);
+  const [erroCarregarConfiguracoes, setErroCarregarConfiguracoes] = useState("");
+  const [erroConfiguracoes, setErroConfiguracoes] = useState("");
+  const [preferencias, setPreferencias] = useState(() =>
+    lerJsonUsuario(CHAVE_PREFERENCIAS, obterSessaoLocal()?.id, PREFERENCIAS_PADRAO),
+  );
 
   useEffect(() => {
-    localStorage.setItem(CHAVE_PREFERENCIAS, JSON.stringify(preferencias));
-  }, [preferencias]);
+    salvarJsonUsuario(CHAVE_PREFERENCIAS, usuario?.id, preferencias);
+  }, [preferencias, usuario?.id]);
 
   useEffect(() => {
-    localStorage.setItem(CHAVE_TEMA, tema);
+    localStorage.setItem(chaveUsuario(CHAVE_TEMA, usuario?.id), tema);
     document.documentElement.dataset.theme = tema;
-  }, [tema]);
+  }, [tema, usuario?.id]);
 
-  const novaGeracao = useCallback(() => {
-    geracaoRef.current += 1;
-    salvamentosPendentesRef.current = 0;
-    falhaAoSalvarRef.current = false;
-    setConfiguracoes(CONFIG_PADRAO);
-    setConfiguracoesCarregadas(false);
+  const carregarConfiguracoes = useCallback((usuarioId) => {
+    const salvo = lerJsonUsuario(CHAVE_CONFIGURACOES, usuarioId, {});
+    const { tema: temaSalvo, ...resto } = salvo || {};
+    setTema(temaSalvo === "dark" || temaSalvo === "light" ? temaSalvo : obterTemaInicial(usuarioId));
+    setConfiguracoes({ ...CONFIG_PADRAO, ...resto });
+    setConfiguracoesCarregadas(true);
     setErroCarregarConfiguracoes("");
     setErroConfiguracoes("");
-    return geracaoRef.current;
   }, []);
 
+  const entrarComo = useCallback(
+    (usuarioApi) => {
+      setUsuario(montarUsuario(usuarioApi));
+      setErroSessao("");
+      setAvisoLogin("");
+      setPagina("inicio");
+      localStorage.setItem(chaveUsuario(CHAVE_PAGINA, usuarioApi.id), "inicio");
+      setPreferencias(lerJsonUsuario(CHAVE_PREFERENCIAS, usuarioApi.id, PREFERENCIAS_PADRAO));
+      carregarConfiguracoes(usuarioApi.id);
+    },
+    [carregarConfiguracoes],
+  );
+
   const encerrarSessao = useCallback((aviso = "") => {
-    novaGeracao();
     setUsuario(null);
     setErroSessao("");
     setAvisoLogin(aviso);
     setPagina("inicio");
-    localStorage.setItem(CHAVE_PAGINA, "inicio");
-  }, [novaGeracao]);
+    setConfiguracoes(CONFIG_PADRAO);
+    setConfiguracoesCarregadas(true);
+    setErroCarregarConfiguracoes("");
+    setErroConfiguracoes("");
+    setPreferencias(PREFERENCIAS_PADRAO);
+  }, []);
 
-  // Erros de configuração não encerram a autenticação local.
-  const tratarErroDaSessao = useCallback(
-    (geracao) => geracao === geracaoRef.current,
-    [],
-  );
-
-  const carregarConfiguracoes = useCallback(
-    async (geracao) => {
-      setErroCarregarConfiguracoes("");
-      try {
-        const { tema: temaSalvo, ...resto } = await obterConfiguracoes();
-        if (geracao !== geracaoRef.current) return;
-        setTema(temaSalvo === "dark" ? "dark" : "light");
-        setConfiguracoes({ ...CONFIG_PADRAO, ...resto });
-        setConfiguracoesCarregadas(true);
-      } catch (erro) {
-        if (!tratarErroDaSessao(geracao, erro)) return;
-        setConfiguracoesCarregadas(false);
-        setErroCarregarConfiguracoes(`Não foi possível carregar suas configurações. ${mensagemDoErro(erro)}`);
-      }
-    },
-    [tratarErroDaSessao],
-  );
-
-  const entrarComo = useCallback(
-    (usuarioApi) => {
-      const geracao = novaGeracao();
-      setUsuario(montarUsuario(usuarioApi));
-      setErroSessao("");
-      setAvisoLogin("");
-      carregarConfiguracoes(geracao);
-    },
-    [novaGeracao, carregarConfiguracoes],
-  );
 
   async function fazerLogin({ email, senha }) {
     try {
       const resposta = await login({ email, senha });
       entrarComo(resposta.usuario);
       setPagina("inicio");
-      localStorage.setItem(CHAVE_PAGINA, "inicio");
+      localStorage.setItem(chaveUsuario(CHAVE_PAGINA, resposta.usuario.id), "inicio");
       return { sucesso: true };
     } catch (erro) {
       return { sucesso: false, mensagem: mensagemDoErro(erro, { 401: "E-mail ou senha inválidos." }) };
@@ -195,6 +181,7 @@ function App() {
   }
 
   function fazerLogout() {
+    if (usuario) localStorage.setItem(chaveUsuario(CHAVE_PAGINA, usuario.id), "inicio");
     sair();
     encerrarSessao();
   }
@@ -221,55 +208,22 @@ function App() {
     setPreferencias((estado) => ({ ...estado, [campo]: valor }));
   }
 
-  // Atualiza na hora e envia a configuração completa. Os PUTs vão em fila, então o
-  // último clique é o último gravado. Se algum falhar, ao fim da fila a tela é
-  // recarregada com o que está salvo na API.
   function persistirConfiguracoes(novoTema, novasConfiguracoes) {
-    if (!configuracoesCarregadas) return;
-    const geracao = geracaoRef.current;
-    const corpo = { tema: novoTema, ...novasConfiguracoes };
-    setTema(novoTema);
+    if (!usuario) return;
+    const temaNormalizado = novoTema === "dark" ? "dark" : "light";
+    setTema(temaNormalizado);
     setConfiguracoes(novasConfiguracoes);
+    setConfiguracoesCarregadas(true);
     setErroConfiguracoes("");
-    salvamentosPendentesRef.current += 1;
-
-    filaSalvarRef.current = filaSalvarRef.current
-      .then(() => (geracao === geracaoRef.current ? salvarConfiguracoes(corpo) : null))
-      .then(
-        () => terminarSalvamento(geracao),
-        (erro) => {
-          if (!tratarErroDaSessao(geracao, erro)) return;
-          falhaAoSalvarRef.current = true;
-          setErroConfiguracoes(`Não foi possível salvar. ${mensagemDoErro(erro)}`);
-          terminarSalvamento(geracao);
-        },
-      );
-  }
-
-  function terminarSalvamento(geracao) {
-    if (geracao !== geracaoRef.current) return;
-    salvamentosPendentesRef.current -= 1;
-    if (salvamentosPendentesRef.current > 0 || !falhaAoSalvarRef.current) return;
-    falhaAoSalvarRef.current = false;
-    recarregarDepoisDeFalha(geracao);
-  }
-
-  async function recarregarDepoisDeFalha(geracao) {
-    try {
-      const { tema: temaSalvo, ...resto } = await obterConfiguracoes();
-      if (geracao !== geracaoRef.current || salvamentosPendentesRef.current > 0) return;
-      setTema(temaSalvo === "dark" ? "dark" : "light");
-      setConfiguracoes({ ...CONFIG_PADRAO, ...resto });
-    } catch (erro) {
-      if (!tratarErroDaSessao(geracao, erro)) return;
-      // Sem saber o que ficou salvo, trava as opções até recarregar.
-      setConfiguracoesCarregadas(false);
-      setErroCarregarConfiguracoes(`Não foi possível carregar suas configurações. ${mensagemDoErro(erro)}`);
-    }
+    setErroCarregarConfiguracoes("");
+    salvarJsonUsuario(CHAVE_CONFIGURACOES, usuario.id, {
+      tema: temaNormalizado,
+      ...novasConfiguracoes,
+    });
   }
 
   function recarregarConfiguracoes() {
-    carregarConfiguracoes(geracaoRef.current);
+    if (usuario) carregarConfiguracoes(usuario.id);
   }
 
   function alterarTema(novoTema) {
@@ -282,7 +236,7 @@ function App() {
 
   function navegarPara(novaPagina) {
     setPagina(novaPagina);
-    localStorage.setItem(CHAVE_PAGINA, novaPagina);
+    localStorage.setItem(chaveUsuario(CHAVE_PAGINA, usuario?.id), novaPagina);
 
     window.scrollTo({
       top: 0,
@@ -293,22 +247,22 @@ function App() {
   function renderizarPagina() {
     switch (pagina) {
       case "oportunidades":
-        return <Oportunidades />;
+        return <Oportunidades usuarioId={usuario?.id} />;
 
       case "habilidades":
         return <PeopleSkills onNavigate={navegarPara} />;
 
       case "conexoes":
-        return <Connections onNavigate={navegarPara} />;
+        return <Connections onNavigate={navegarPara} usuarioId={usuario?.id} />;
 
       case "mensagens":
-        return <Messages />;
+        return <Messages usuarioId={usuario?.id} />;
 
       case "salvos":
-        return <Salvos onNavigate={navegarPara} />;
+        return <Salvos onNavigate={navegarPara} usuarioId={usuario?.id} />;
 
       case "publicacoes":
-        return <MinhasPublicacoes onNavigate={navegarPara} />;
+        return <MinhasPublicacoes onNavigate={navegarPara} usuarioId={usuario?.id} />;
 
       case "perfil":
         return (
@@ -342,7 +296,7 @@ function App() {
         );
 
       case "publicar-habilidade":
-        return <Habilidades onNavigate={navegarPara} />;
+        return <Habilidades onNavigate={navegarPara} usuarioId={usuario?.id} />;
 
       case "inicio":
       default:
