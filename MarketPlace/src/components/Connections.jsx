@@ -10,11 +10,6 @@ const pessoas = [
   { id: 4, nome: "Marina Oliveira", curso: "Administração · 4º período", cidade: "Serra, ES", inicial: "MO", bio: "Estudante de Administração apaixonada por dados, marketing e organização de projetos.", habilidades: ["Excel", "Marketing Digital", "Análise de Dados"] },
 ];
 
-const solicitacoesRecebidas = [
-  { id: 5, nome: "Beatriz Almeida", curso: "Publicidade · 6º período", cidade: "Vitória, ES", inicial: "BA", habilidades: ["Social Media", "Copywriting", "Canva"] },
-  { id: 6, nome: "Pedro Henrique", curso: "Engenharia de Software · 5º período", cidade: "Vila Velha, ES", inicial: "PH", habilidades: ["Java", "Spring", "Git"] },
-];
-
 function obterConexoes(chave) {
   try {
     const salvo = localStorage.getItem(chave);
@@ -34,10 +29,10 @@ function Connections({ usuarioId }) {
   const [recebidas, setRecebidas] = useState(() => {
     try {
       const salvo = localStorage.getItem(chaveRecebidas);
-      const dados = salvo ? JSON.parse(salvo) : solicitacoesRecebidas;
-      return Array.isArray(dados) ? dados : solicitacoesRecebidas;
+      const dados = salvo ? JSON.parse(salvo) : [];
+      return Array.isArray(dados) ? dados : [];
     } catch {
-      return solicitacoesRecebidas;
+      return [];
     }
   });
   const [perfilAberto, setPerfilAberto] = useState(null);
