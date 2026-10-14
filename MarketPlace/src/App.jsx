@@ -60,7 +60,6 @@ const CONFIG_PADRAO = {
 };
 
 const MENSAGEM_ERRO_PADRAO = "Não foi possível concluir a operação. Tente novamente.";
-const MENSAGEM_SESSAO_EXPIRADA = "Sua sessão expirou. Entre novamente.";
 
 function mensagemDoErro(erro, porStatus = {}) {
   if (!(erro instanceof ApiError)) return MENSAGEM_ERRO_PADRAO;
