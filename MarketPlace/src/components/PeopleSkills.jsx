@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { chaveUsuario } from "../storage.js";
 
 const perfis = [
   {
@@ -57,11 +58,12 @@ const perfis = [
 
 const categorias = ["Todas", "Tecnologia", "Design", "Direito", "Administração", "Comunicação"];
 
-function Habilidades() {
+function Habilidades({ usuarioId }) {
+  const chaveConexoes = chaveUsuario("marketfaesa-conexoes", usuarioId);
   const [busca, setBusca] = useState("");
   const [categoria, setCategoria] = useState("Todas");
   const [perfilSelecionado, setPerfilSelecionado] = useState(null);
-  const [conectados, setConectados] = useState([]);
+  const [conectados, setConectados] = useState(() => { try { return JSON.parse(localStorage.getItem(chaveConexoes)) || []; } catch { return []; } });
 
   const perfisFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
@@ -84,11 +86,13 @@ function Habilidades() {
   }, [busca, categoria]);
 
   function alternarConexao(id) {
-    setConectados((estado) =>
-      estado.includes(id)
+    setConectados((estado) => {
+      const atualizados = estado.includes(id)
         ? estado.filter((item) => item !== id)
-        : [...estado, id],
-    );
+        : [...estado, id];
+      localStorage.setItem(chaveConexoes, JSON.stringify(atualizados));
+      return atualizados;
+    });
   }
 
   if (perfilSelecionado) {
