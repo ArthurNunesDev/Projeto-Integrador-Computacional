@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { calcularProgressoPerfil } from "../perfil.js";
+import { calcularProgressoPerfil, conquistaPerfilExibida, marcarConquistaPerfilExibida } from "../perfil.js";
 import { lerJsonUsuario } from "../storage.js";
 
 function obterPerfil(usuario) {
@@ -44,8 +44,10 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
     setSalvo(true);
     window.setTimeout(() => setSalvo(false), 2500);
 
-    const progressoFinal = calcularProgressoPerfil({ ...usuario, ...atualizados });
-    if (progressoFinal === 100) {
+    const usuarioAtualizado = { ...usuario, ...atualizados };
+    const progressoFinal = calcularProgressoPerfil(usuarioAtualizado);
+    if (progressoFinal === 100 && !conquistaPerfilExibida(usuarioAtualizado)) {
+      marcarConquistaPerfilExibida(usuarioAtualizado);
       setMostrarConquista(true);
       window.setTimeout(() => setMostrarConquista(false), 4200);
     }
