@@ -296,7 +296,7 @@ function App() {
         );
 
       case "publicar-habilidade":
-        return <Habilidades onNavigate={navegarPara} usuarioId={usuario?.id} />;
+        return <Habilidades onNavigate={navegarPara} usuarioId={usuario?.id} usuario={usuario} />;
 
       case "inicio":
       default:
