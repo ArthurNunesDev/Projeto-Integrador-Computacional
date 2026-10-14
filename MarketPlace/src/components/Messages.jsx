@@ -26,7 +26,7 @@ function obterConversas(chave) {
   } catch {
     // localStorage indisponível ou com JSON inválido: mantém o valor padrão
   }
-  return CONVERSAS_INICIAIS;
+  return [];
 }
 
 function Mensagens({ usuarioId }) {
