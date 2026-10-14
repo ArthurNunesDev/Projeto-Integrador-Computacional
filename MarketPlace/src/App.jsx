@@ -250,7 +250,7 @@ function App() {
         return <Oportunidades usuarioId={usuario?.id} />;
 
       case "habilidades":
-        return <PeopleSkills onNavigate={navegarPara} />;
+        return <PeopleSkills onNavigate={navegarPara} usuarioId={usuario?.id} />;
 
       case "conexoes":
         return <Connections onNavigate={navegarPara} usuarioId={usuario?.id} />;
