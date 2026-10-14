@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import "./Opportunities.css";
+import "./Opportunities.scss";
 
 const dados = [
   { id:1, icon:"💻", tipo:"PROJETO", titulo:"Desenvolvimento de App para Clínica", area:"Tecnologia", modalidade:"Remoto", pessoa:"Maria Lima", curso:"Medicina", inicial:"ML", descricao:"Apoio na criação de um aplicativo para organização de atendimentos." },
