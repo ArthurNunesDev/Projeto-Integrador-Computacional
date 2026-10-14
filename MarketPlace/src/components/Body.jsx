@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { calcularProgressoPerfil } from "../perfil.js";
+import { chaveUsuario } from "../storage.js";
 
 function chaveConclusaoPerfil(usuario) {
   return usuario?.email
@@ -19,18 +20,24 @@ function Body({ onNavigate, usuario }) {
   const periodoUsuario = usuario?.periodo || "4º período";
   const iniciaisUsuario = nomeUsuario.split(" ").filter(Boolean).slice(0, 2).map((parte) => parte[0]).join("").toUpperCase() || "JS";
   const [areaSelecionada, setAreaSelecionada] = useState("Todos");
-  const [participando, setParticipando] = useState([]);
+  const chaveParticipando = chaveUsuario("marketfaesa-participando", usuario?.id);
+  const chaveSalvos = chaveUsuario("marketfaesa-salvos", usuario?.id);
+  const [participando, setParticipando] = useState(() => { try { return JSON.parse(localStorage.getItem(chaveParticipando)) || []; } catch { return []; } });
   const [detalheAberto, setDetalheAberto] = useState(null);
   const [perfilProgresso, setPerfilProgresso] = useState(() => (conclusaoPerfilPendente(usuario) ? 100 : calcularProgressoPerfil(usuario)));
   const [perfilConcluido, setPerfilConcluido] = useState(() => conclusaoPerfilPendente(usuario) || calcularProgressoPerfil(usuario) === 100);
   const [mostrarPerfilCompleto, setMostrarPerfilCompleto] = useState(() => conclusaoPerfilPendente(usuario));
   const [salvos, setSalvos] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("marketfaesa-salvos")) || []; } catch { return []; }
+    try { return JSON.parse(localStorage.getItem(chaveSalvos)) || []; } catch { return []; }
   });
 
   useEffect(() => {
-    localStorage.setItem("marketfaesa-salvos", JSON.stringify(salvos));
-  }, [salvos]);
+    localStorage.setItem(chaveSalvos, JSON.stringify(salvos));
+  }, [chaveSalvos, salvos]);
+
+  useEffect(() => {
+    localStorage.setItem(chaveParticipando, JSON.stringify(participando));
+  }, [chaveParticipando, participando]);
 
   useEffect(() => {
     // O estado inicial já reflete a conclusão pendente; aqui só limpa a marca e agenda o fim do aviso.
