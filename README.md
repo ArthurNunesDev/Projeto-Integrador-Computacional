@@ -44,6 +44,7 @@
   - [CI](#ci)
 - [📍 API](#api)
 - [🗂️ Estrutura](#estrutura)
+- [🧩 Por que SCSS?](#estilos)
 - [🎨 Identidade visual](#identidade)
 - [🌐 Deploy](#deploy)
 - [🤝 Colaboradores](#colaboradores)
@@ -250,6 +251,10 @@ Projeto-Integrador-Computacional/
 ├── PROXIMOS_PASSOS.md
 └── README.md
 ```
+
+<h2 id="estilos">🧩 Por que SCSS?</h2>
+
+A migração de CSS para **SCSS** foi feita para facilitar a manutenção e a evolução dos estilos do frontend. O SCSS mantém a compatibilidade com o CSS já existente, mas oferece recursos como variáveis, mixins e aninhamento de seletores, ajudando a reutilizar regras, reduzir repetição e organizar melhor os estilos responsivos. Nesta migração, a prioridade foi preservar a lógica e a aparência atuais do Marketplace, preparando a base para futuras melhorias visuais com mais consistência.
 
 <h2 id="identidade">🎨 Identidade visual</h2>
 
