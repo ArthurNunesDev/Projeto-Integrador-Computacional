@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { chaveUsuario } from "../storage.js";
+import { calcularProgressoPerfil, conquistaPerfilExibida, marcarConquistaPerfilExibida } from "../perfil.js";
 
 const CHAVE_HABILIDADES = "marketfaesa-habilidades";
 
@@ -16,11 +17,12 @@ function obterHabilidades(chave) {
   return [];
 }
 
-function Habilidades({ onNavigate, usuarioId }) {
+function Habilidades({ onNavigate, usuarioId, usuario }) {
   const chave = chaveUsuario(CHAVE_HABILIDADES, usuarioId);
   const [habilidades, setHabilidades] = useState(() => obterHabilidades(chave));
   const [criando, setCriando] = useState(false);
   const [salva, setSalva] = useState(false);
+  const [mostrarConquista, setMostrarConquista] = useState(false);
   const [formulario, setFormulario] = useState({
     nome: "",
     categoria: "Tecnologia",
@@ -51,7 +53,14 @@ function Habilidades({ onNavigate, usuarioId }) {
       disponibilidade: formulario.disponibilidade,
     };
 
-    setHabilidades((estado) => [novaHabilidade, ...estado]);
+    const novasHabilidades = [novaHabilidade, ...habilidades];
+    // Persistir antes de calcular o progresso garante que a última habilidade conte imediatamente.
+    try {
+      localStorage.setItem(chave, JSON.stringify(novasHabilidades));
+    } catch {
+      // O efeito abaixo tentará persistir novamente.
+    }
+    setHabilidades(novasHabilidades);
     setFormulario({
       nome: "",
       categoria: "Tecnologia",
@@ -62,6 +71,14 @@ function Habilidades({ onNavigate, usuarioId }) {
     setCriando(false);
     setSalva(true);
     window.setTimeout(() => setSalva(false), 2800);
+
+    window.dispatchEvent(new Event("marketfaesa-perfil-atualizado"));
+    const progressoFinal = calcularProgressoPerfil(usuario);
+    if (progressoFinal === 100 && !conquistaPerfilExibida(usuario)) {
+      marcarConquistaPerfilExibida(usuario);
+      setMostrarConquista(true);
+      window.setTimeout(() => setMostrarConquista(false), 4200);
+    }
   }
 
   return (
@@ -81,6 +98,18 @@ function Habilidades({ onNavigate, usuarioId }) {
         {salva && (
           <div className="skills-success animate__animated animate__fadeIn" role="status">
             ✓ Habilidade publicada com sucesso.
+          </div>
+        )}
+
+        {mostrarConquista && (
+          <div className="perfil-completo-overlay" role="dialog" aria-modal="true" aria-labelledby="perfil-completo-titulo">
+            <div className="perfil-completo-card">
+              <div className="perfil-completo-icon">🎉</div>
+              <span>PERFIL COMPLETO!</span>
+              <h2 id="perfil-completo-titulo">Obrigado por completar seu perfil! ✨</h2>
+              <p>Agora sua presença na MarketFAESA está pronta para conectar você a novas oportunidades.</p>
+              <div className="perfil-completo-sparkles">✦{"\\u3000"}✧{"\\u3000"}✦</div>
+            </div>
           </div>
         )}
 
