@@ -3,19 +3,6 @@ import { chaveUsuario } from "../storage.js";
 
 const CHAVE_MENSAGENS = "marketfaesa-mensagens";
 
-const CONVERSAS_INICIAIS = [
-  { id:"ana-souza", nome:"Ana Souza", curso:"Ciência da Computação", iniciais:"AS", online:true, naoLidas:2, mensagens:[
-    {id:1,autor:"outro",texto:"Oi! Vi seu perfil e gostei das suas habilidades em React.",hora:"09:42"},
-    {id:2,autor:"outro",texto:"Você teria disponibilidade para conversar sobre um projeto?",hora:"09:43"}]},
-  { id:"lucas-martins", nome:"Lucas Martins", curso:"Design", iniciais:"LM", online:false, naoLidas:0, mensagens:[
-    {id:1,autor:"eu",texto:"Ficou muito bom o material!",hora:"Ontem"},
-    {id:2,autor:"outro",texto:"Obrigado! Se precisar de algo, pode me chamar.",hora:"Ontem"}]},
-  { id:"marina-oliveira", nome:"Marina Oliveira", curso:"Administração", iniciais:"MO", online:true, naoLidas:1, mensagens:[
-    {id:1,autor:"outro",texto:"Você ainda está procurando alguém para análise de dados?",hora:"Seg"}]},
-  { id:"rafael-costa", nome:"Rafael Costa", curso:"Direito", iniciais:"RC", online:false, naoLidas:0, mensagens:[
-    {id:1,autor:"eu",texto:"Podemos combinar de conversar amanhã.",hora:"Sex"}]}
-];
-
 function obterConversas(chave) {
   try {
     const salvo = localStorage.getItem(chave);
@@ -24,7 +11,7 @@ function obterConversas(chave) {
       if (Array.isArray(conversas) && conversas.length) return conversas;
     }
   } catch {
-    // localStorage indisponível ou com JSON inválido: mantém o valor padrão
+    // localStorage indisponível ou com JSON inválido: começa sem conversas
   }
   return [];
 }
