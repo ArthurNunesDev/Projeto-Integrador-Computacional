@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { chaveUsuario } from "../storage.js";
 
 const CHAVE_HABILIDADES = "marketfaesa-habilidades";
 
@@ -21,9 +22,9 @@ const habilidadesIniciais = [
   },
 ];
 
-function obterHabilidades() {
+function obterHabilidades(chave) {
   try {
-    const salvo = localStorage.getItem(CHAVE_HABILIDADES);
+    const salvo = localStorage.getItem(chave);
     if (salvo) {
       const dados = JSON.parse(salvo);
       if (Array.isArray(dados)) return dados;
@@ -34,8 +35,9 @@ function obterHabilidades() {
   return habilidadesIniciais;
 }
 
-function Habilidades({ onNavigate }) {
-  const [habilidades, setHabilidades] = useState(obterHabilidades);
+function Habilidades({ onNavigate, usuarioId }) {
+  const chave = chaveUsuario(CHAVE_HABILIDADES, usuarioId);
+  const [habilidades, setHabilidades] = useState(() => obterHabilidades(chave));
   const [criando, setCriando] = useState(false);
   const [salva, setSalva] = useState(false);
   const [formulario, setFormulario] = useState({
@@ -47,8 +49,8 @@ function Habilidades({ onNavigate }) {
   });
 
   useEffect(() => {
-    localStorage.setItem(CHAVE_HABILIDADES, JSON.stringify(habilidades));
-  }, [habilidades]);
+    localStorage.setItem(chave, JSON.stringify(habilidades));
+  }, [chave, habilidades]);
 
   function alterarCampo(campo, valor) {
     setFormulario((estado) => ({ ...estado, [campo]: valor }));
