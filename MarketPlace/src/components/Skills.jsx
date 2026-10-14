@@ -11,7 +11,7 @@ function obterHabilidades(chave) {
       if (Array.isArray(dados)) return dados;
     }
   } catch {
-    // localStorage indisponível ou com JSON inválido: mantém o valor padrão
+    // localStorage indisponível ou com JSON inválido: começa sem habilidades
   }
   return [];
 }
