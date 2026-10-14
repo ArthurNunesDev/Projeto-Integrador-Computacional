@@ -442,3 +442,34 @@
   .perfil-actions { display: flex; flex-wrap: wrap; gap: 8px; }
   .perfil-actions .perfil-button { min-height: 40px; font-size: 11px; }
 }
+
+
+/* Centraliza o status de visibilidade e os dados de período e cidade no perfil. */
+.perfil-main-info > h2 {
+  text-align: center;
+}
+.perfil-main-info > h2 .perfil-visibility-badge {
+  display: table;
+  width: max-content;
+  margin: 8px auto 0;
+}
+.perfil-main-info > .perfil-meta:not(.perfil-meta-editando) {
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  text-align: center;
+}
+.perfil-main-info > .perfil-meta:not(.perfil-meta-editando) > span {
+  text-align: center;
+}
+@media (max-width: 600px) {
+  .perfil-main-info > .perfil-meta:not(.perfil-meta-editando) {
+    justify-content: center;
+    width: 100%;
+    gap: 8px 14px;
+  }
+  .perfil-main-info > h2 .perfil-visibility-badge {
+    margin: 8px auto 0;
+  }
+}
