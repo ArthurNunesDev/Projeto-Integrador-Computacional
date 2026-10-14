@@ -5,6 +5,7 @@
 
 const CHAVE_PERFIL = "marketfaesa-perfil";
 const CHAVE_HABILIDADES = "marketfaesa-habilidades";
+import { chaveUsuario } from "./storage.js";
 
 // Campos do perfil que a tela permite editar (o e-mail é o login e não muda aqui).
 const CAMPOS_EDITAVEIS = ["nome", "curso", "periodo", "cidade", "bio"];
@@ -84,7 +85,7 @@ export function calcularProgressoPerfil(usuario) {
 
   let habilidades = [];
   try {
-    habilidades = JSON.parse(localStorage.getItem(CHAVE_HABILIDADES) || "[]");
+    habilidades = JSON.parse(localStorage.getItem(chaveUsuario(CHAVE_HABILIDADES, usuario?.id)) || "[]");
   } catch {
     // localStorage indisponível ou com JSON inválido: considera sem habilidades
   }
