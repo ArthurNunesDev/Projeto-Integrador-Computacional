@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { chaveUsuario } from "../storage.js";
 
 const CHAVE_MENSAGENS = "marketfaesa-mensagens";
 
@@ -15,9 +16,9 @@ const CONVERSAS_INICIAIS = [
     {id:1,autor:"eu",texto:"Podemos combinar de conversar amanhã.",hora:"Sex"}]}
 ];
 
-function obterConversas() {
+function obterConversas(chave) {
   try {
-    const salvo = localStorage.getItem(CHAVE_MENSAGENS);
+    const salvo = localStorage.getItem(chave);
     if (salvo) {
       const conversas = JSON.parse(salvo);
       if (Array.isArray(conversas) && conversas.length) return conversas;
@@ -28,14 +29,15 @@ function obterConversas() {
   return CONVERSAS_INICIAIS;
 }
 
-function Mensagens() {
-  const [conversas,setConversas] = useState(obterConversas);
+function Mensagens({ usuarioId }) {
+  const chaveMensagens = chaveUsuario(CHAVE_MENSAGENS, usuarioId);
+  const [conversas,setConversas] = useState(() => obterConversas(chaveMensagens));
   const [selecionada,setSelecionada] = useState("ana-souza");
   const [busca,setBusca] = useState("");
   const [texto,setTexto] = useState("");
   const [mostrarLista,setMostrarLista] = useState(true);
 
-  useEffect(() => localStorage.setItem(CHAVE_MENSAGENS,JSON.stringify(conversas)),[conversas]);
+  useEffect(() => localStorage.setItem(chaveMensagens,JSON.stringify(conversas)),[chaveMensagens,conversas]);
 
   const filtradas = useMemo(() => {
     const termo=busca.trim().toLowerCase();
