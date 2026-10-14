@@ -15,9 +15,9 @@ import Footer from "./components/Footer.jsx";
 
 import Login from "./auth/Login.jsx";
 
-import { cadastrar, login, sair } from "./api/auth.js";
-import { ApiError, definirOnNaoAutenticado, obterToken } from "./api/client.js";
-import { obterConfiguracoes, obterMe, salvarConfiguracoes } from "./api/usuarios.js";
+import { cadastrar, login, obterSessaoLocal, sair } from "./api/auth.js";
+import { ApiError } from "./api/client.js";
+import { obterConfiguracoes, salvarConfiguracoes } from "./api/usuarios.js";
 import { montarUsuario, salvarPerfilLocal } from "./perfil.js";
 
 import "./index.scss";
@@ -36,20 +36,6 @@ import "./components/Footer.scss";
 const CHAVE_TEMA = "marketfaesa-theme";
 const CHAVE_PAGINA = "marketfaesa-pagina";
 const CHAVE_PREFERENCIAS = "marketfaesa-preferencias";
-
-// Chaves de antes da integração com a API: contas com senha em texto puro,
-// sessão e configurações locais. São apagadas na primeira carga.
-const CHAVES_ANTIGAS = ["marketfaesa-users", "marketfaesa-auth", "marketfaesa-config"];
-
-function limparDadosAntigos() {
-  for (const chave of CHAVES_ANTIGAS) {
-    try {
-      localStorage.removeItem(chave);
-    } catch {
-      // sem storage não há o que limpar
-    }
-  }
-}
 
 // O tema fica também no navegador só para não piscar na carga; a fonte é a API.
 function obterTemaInicial() {
@@ -82,9 +68,12 @@ function mensagemDoErro(erro, porStatus = {}) {
 }
 
 function App() {
-  const [usuario, setUsuario] = useState(null);
-  // Com token salvo, a sessão é restaurada via GET /api/usuarios/me antes de mostrar o app.
-  const [restaurando, setRestaurando] = useState(() => Boolean(obterToken()));
+  const [usuario, setUsuario] = useState(() => {
+    const sessao = obterSessaoLocal();
+    return sessao ? montarUsuario(sessao) : null;
+  });
+  // A sessão demonstrativa é restaurada diretamente do localStorage, sem backend.
+  const [restaurando, setRestaurando] = useState(false);
   const [erroSessao, setErroSessao] = useState("");
   const [avisoLogin, setAvisoLogin] = useState("");
   const [pagina, setPagina] = useState(() => localStorage.getItem(CHAVE_PAGINA) || "inicio");
@@ -108,10 +97,6 @@ function App() {
       return { area: "tecnologia", modalidade: "todas", frequencia: "imediato" };
     }
   });
-
-  useEffect(() => {
-    limparDadosAntigos();
-  }, []);
 
   useEffect(() => {
     localStorage.setItem(CHAVE_PREFERENCIAS, JSON.stringify(preferencias));
@@ -142,24 +127,10 @@ function App() {
     localStorage.setItem(CHAVE_PAGINA, "inicio");
   }, [novaGeracao]);
 
-  // 401 em qualquer rota autenticada: o client já limpou o token.
-  useEffect(
-    () => definirOnNaoAutenticado(() => encerrarSessao(MENSAGEM_SESSAO_EXPIRADA)),
-    [encerrarSessao],
-  );
-
-  // Erro de uma requisição da sessão atual. Devolve false se a resposta é de uma sessão já encerrada.
-  // O gancho do client já trata o 401; aqui ele é tratado de novo para nunca ficar sem voltar ao login.
+  // Erros de configuração não encerram a autenticação local.
   const tratarErroDaSessao = useCallback(
-    (geracao, erro) => {
-      if (geracao !== geracaoRef.current) return false;
-      if (erro?.status === 401) {
-        encerrarSessao(MENSAGEM_SESSAO_EXPIRADA);
-        return false;
-      }
-      return true;
-    },
-    [encerrarSessao],
+    (geracao) => geracao === geracaoRef.current,
+    [],
   );
 
   const carregarConfiguracoes = useCallback(
@@ -190,28 +161,6 @@ function App() {
     },
     [novaGeracao, carregarConfiguracoes],
   );
-
-  useEffect(() => {
-    if (!restaurando) return undefined;
-
-    let cancelado = false;
-    obterMe()
-      .then((usuarioApi) => {
-        if (!cancelado) entrarComo(usuarioApi);
-      })
-      .catch((erro) => {
-        if (cancelado) return;
-        if (erro?.status === 401) encerrarSessao(MENSAGEM_SESSAO_EXPIRADA);
-        else setErroSessao(mensagemDoErro(erro));
-      })
-      .finally(() => {
-        if (!cancelado) setRestaurando(false);
-      });
-
-    return () => {
-      cancelado = true;
-    };
-  }, [restaurando, entrarComo, encerrarSessao]);
 
   async function fazerLogin({ email, senha }) {
     try {
