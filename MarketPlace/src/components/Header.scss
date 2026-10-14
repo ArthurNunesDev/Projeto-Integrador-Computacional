@@ -1,3 +1,5 @@
+@use "../styles/abstracts/mixins" as *;
+
 :root {
   --header-height: 94px;
 }
@@ -135,7 +137,7 @@
 @keyframes menuOverlayIn { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .menu-lateral, .menu-lateral.aberto, .menu-lateral .menu-header, .menu-lateral .menu-section { transition: none; } .overlay { animation: none; opacity: 1; } }
 
-@media (max-width: 900px) {
+@include respond-max(900px) {
   .header-conteudo {
     width: calc(100% - 24px);
     padding: 0 16px;
@@ -146,7 +148,7 @@
   .campo-busca { font-size: 14px; }
 }
 
-@media (max-width: 620px) {
+@include respond-max(620px) {
   :root { --header-height: 78px; }
 
   .header-conteudo {
@@ -212,7 +214,7 @@
   }
 }
 
-@media (max-width: 380px) {
+@include respond-max(380px) {
   .header-conteudo {
     width: calc(100% - 12px);
     padding: 0 7px;
@@ -317,7 +319,7 @@
 
 
 /* Mobile compacto */
-@media (max-width: 600px) {
+@include respond-max(600px) {
   :root { --header-height: 72px; }
   .header-conteudo {
     min-height: 52px;

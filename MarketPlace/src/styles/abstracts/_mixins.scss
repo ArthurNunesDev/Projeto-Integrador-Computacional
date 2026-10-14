@@ -1,0 +1,7 @@
+// Media queries responsivas compartilhadas pelos estilos do Marketplace.
+// O conteúdo interno é mantido igual ao CSS original após a compilação.
+@mixin respond-max($width) {
+  @media (max-width: $width) {
+    @content;
+  }
+}

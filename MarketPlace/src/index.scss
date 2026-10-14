@@ -1,3 +1,5 @@
+@use "./styles/abstracts/mixins" as *;
+
 :root {
   --mf-navy: #1E2761;
   --mf-light: #CADCFC;
@@ -48,13 +50,13 @@ body,
   overflow-x: hidden;
 }
 
-@media (max-width: 900px) {
+@include respond-max(900px) {
   html {
     font-size: 15px;
   }
 }
 
-@media (max-width: 620px) {
+@include respond-max(620px) {
   html {
     font-size: 14px;
   }
@@ -67,7 +69,7 @@ body,
   }
 }
 
-@media (max-width: 380px) {
+@include respond-max(380px) {
   html {
     min-width: 0;
   }
@@ -128,7 +130,7 @@ body,
 .page-back-button.chat-voltar {
   display: none;
 }
-@media (max-width: 600px) {
+@include respond-max(600px) {
   .page-back-button {
     min-height: 36px;
     padding: 0 11px;
@@ -216,7 +218,7 @@ button.save-button:focus-visible {
   background: rgba(229,57,53,.28);
 }
 
-@media (max-width: 600px) {
+@include respond-max(600px) {
   button.save-button {
     width: 28px;
     height: 28px;
