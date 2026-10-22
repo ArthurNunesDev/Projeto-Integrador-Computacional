@@ -71,6 +71,7 @@ function Body({ onNavigate, usuario }) {
       tipo: "PROJETO",
       titulo: "Desenvolvimento de App para Clínica",
       area: "Saúde + TI",
+      categorias: ["Saúde", "Tecnologia"],
       modalidade: "Remoto",
       pessoa: "Maria Lima",
       curso: "Medicina",
@@ -83,6 +84,7 @@ function Body({ onNavigate, usuario }) {
       tipo: "CONSULTORIA",
       titulo: "Revisão Jurídica de Contratos Digitais",
       area: "Direito + TI",
+      categorias: ["Direito", "Tecnologia"],
       modalidade: "Híbrido",
       pessoa: "Rafael Costa",
       curso: "Direito",
@@ -118,7 +120,8 @@ function Body({ onNavigate, usuario }) {
 
   const oportunidadesFiltradas = oportunidades.filter((item) =>
     areaSelecionada === "Todos" ||
-    item.area.toLowerCase().includes(areaSelecionada.toLowerCase()),
+    item.area.toLowerCase().includes(areaSelecionada.toLowerCase()) ||
+    item.categorias?.includes(areaSelecionada),
   );
 
   function alternarSalvo(item) {
