@@ -19,8 +19,12 @@ function Oportunidades({ usuarioId }){
   const [busca,setBusca]=useState("");
   const [participando,setParticipando]=useState(()=>{try{return JSON.parse(lerValorSeguro(chaveParticipando))||[]}catch{return[]}});
   const [salvos,setSalvos]=useState(()=>{try{return JSON.parse(lerValorSeguro(chaveSalvos))||[]}catch{return[]}});
-  useEffect(()=>{salvarValorSeguro(chaveSalvos,JSON.stringify(salvos))},[chaveSalvos,salvos]);
-  useEffect(()=>{salvarValorSeguro(chaveParticipando,JSON.stringify(participando))},[chaveParticipando,participando]);
+  useEffect(() => {
+    salvarValorSeguro(chaveSalvos, JSON.stringify(salvos));
+  }, [chaveSalvos, salvos]);
+  useEffect(() => {
+    salvarValorSeguro(chaveParticipando, JSON.stringify(participando));
+  }, [chaveParticipando, participando]);
   const lista=useMemo(()=>{
     const termo=busca.trim().toLowerCase();
     return dados.filter(item=>(filtro==="Todos"||item.area===filtro||item.categorias?.includes(filtro))&&(!termo||[item.titulo,item.area,item.tipo,item.modalidade,item.pessoa].join(" ").toLowerCase().includes(termo)));
