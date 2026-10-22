@@ -3,3 +3,12 @@
 @media(max-width:600px){.skills-page{padding:12px 9px 32px}.skills-header{padding:16px;border-radius:14px;gap:9px}.skills-header h1{font-size:20px}.skills-header p{font-size:8px}.skills-create-button{padding:7px 9px;font-size:7px}.skill-form-grid,.skills-grid{gap:8px}.skill-card{padding:13px;border-radius:13px}.skill-card h3{font-size:10px}.skill-card p{font-size:7px}.skill-card button{padding:6px 8px;font-size:7px}}
 
 .skills-back-button.page-back-button{min-height:40px;padding:0 15px;border:1px solid var(--mf-navy);border-radius:12px;background:var(--mf-surface);color:var(--mf-navy);font-size:10px;font-weight:850;box-shadow:0 4px 12px rgba(30,39,97,.10);transition:.18s ease}.skills-back-button.page-back-button:hover{transform:translateY(-2px);border-color:var(--mf-orange);background:var(--mf-navy);color:#fff;box-shadow:0 8px 18px rgba(30,39,97,.18)}[data-theme="dark"] .skills-back-button.page-back-button{border-color:#CADCFC;background:#252D5B;color:#fff}[data-theme="dark"] .skills-back-button.page-back-button:hover{border-color:var(--mf-orange);background:#303B83;color:#fff}@media(max-width:600px){.skills-back-button.page-back-button{min-height:36px;padding:0 11px;border-radius:10px;font-size:8px}}
+
+/* Estado vazio da lista de habilidades */
+.skills-empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;margin-top:13px;padding:44px 24px;border:1px dashed var(--mf-border);border-radius:18px;background:var(--mf-surface);text-align:center;box-shadow:var(--mf-shadow)}
+.skills-empty-icon{display:grid;place-items:center;width:54px;height:54px;border-radius:16px;background:var(--mf-light);color:var(--mf-navy);font-size:25px}
+.skills-empty-state h3{color:var(--mf-text);font-size:16px;line-height:1.4}
+.skills-empty-state p{max-width:520px;color:var(--mf-muted);font-size:11px;line-height:1.65}
+.skills-empty-state>span{color:var(--mf-muted);font-size:10px;font-weight:700}
+[data-theme="dark"] .skills-empty-icon{background:#252D5B;color:#fff}
+@media(max-width:600px){.skills-empty-state{gap:8px;padding:30px 16px;border-radius:14px}.skills-empty-icon{width:46px;height:46px;font-size:21px}.skills-empty-state h3{font-size:13px}.skills-empty-state p{font-size:10px}.skills-empty-state>span{font-size:9px}}
