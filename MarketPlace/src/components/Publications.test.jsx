@@ -57,3 +57,34 @@ describe("modal de edição de publicações", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });
+
+
+describe("confirmação de exclusão de publicações", () => {
+  it("mostra um diálogo formatado e mantém a publicação ao cancelar", async () => {
+    const user = userEvent.setup();
+    render(<MinhasPublicacoes usuarioId="conta-a" />);
+
+    await user.click(screen.getByRole("button", { name: "Excluir" }));
+
+    const dialogo = screen.getByRole("dialog", { name: "Excluir publicação?" });
+    expect(dialogo).toHaveAttribute("aria-modal", "true");
+    expect(screen.getByText(/Você está prestes a excluir/)).toBeInTheDocument();
+    expect(document.querySelector(".publication-delete-modal")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "React" })).toBeInTheDocument();
+  });
+
+  it("remove a publicação somente após confirmar a exclusão", async () => {
+    const user = userEvent.setup();
+    render(<MinhasPublicacoes usuarioId="conta-a" />);
+
+    await user.click(screen.getByRole("button", { name: "Excluir" }));
+    await user.click(screen.getByRole("button", { name: "Sim, excluir" }));
+
+    expect(screen.queryByRole("heading", { name: "React" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Você ainda não publicou nada" })).toBeInTheDocument();
+  });
+});
