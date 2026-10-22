@@ -93,7 +93,9 @@ function App() {
   const [tema, setTema] = useState(() => obterTemaInicial(obterSessaoLocal()?.id));
   const [configuracoes, setConfiguracoes] = useState(() => {
     const sessao = obterSessaoLocal();
-    const salvo = lerJsonUsuario(CHAVE_CONFIGURACOES, sessao?.id, {});
+    if (!sessao?.id) return { ...CONFIG_PADRAO };
+
+    const salvo = lerJsonUsuario(CHAVE_CONFIGURACOES, sessao.id, {});
     const resto = { ...(salvo || {}) };
     delete resto.tema;
     return { ...CONFIG_PADRAO, ...resto };
@@ -101,9 +103,12 @@ function App() {
   const [configuracoesCarregadas, setConfiguracoesCarregadas] = useState(true);
   const [erroCarregarConfiguracoes, setErroCarregarConfiguracoes] = useState("");
   const [erroConfiguracoes, setErroConfiguracoes] = useState("");
-  const [preferencias, setPreferencias] = useState(() =>
-    lerJsonUsuario(CHAVE_PREFERENCIAS, obterSessaoLocal()?.id, PREFERENCIAS_PADRAO),
-  );
+  const [preferencias, setPreferencias] = useState(() => {
+    const sessao = obterSessaoLocal();
+    return sessao?.id
+      ? lerJsonUsuario(CHAVE_PREFERENCIAS, sessao.id, PREFERENCIAS_PADRAO)
+      : { ...PREFERENCIAS_PADRAO };
+  });
 
   useEffect(() => {
     if (!usuario?.id) return;
