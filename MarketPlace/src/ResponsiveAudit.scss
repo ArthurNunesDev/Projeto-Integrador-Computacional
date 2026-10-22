@@ -1,0 +1,147 @@
+/*
+ * Ajustes de legibilidade para telas pequenas.
+ * Mantém o layout e a identidade visual existentes; altera somente tamanhos
+ * de texto que estavam abaixo de uma leitura confortável em dispositivos móveis.
+ */
+@media (max-width: 600px) {
+  .login-field label,
+  .login-link,
+  .login-switch,
+  .login-switch button,
+  .login-error,
+  .login-password-toggle {
+    font-size: 11px;
+  }
+
+  .login-brand h1 span,
+  .login-field input,
+  .login-submit {
+    font-size: 12px;
+  }
+
+  .welcome-card p,
+  .welcome-button,
+  .stat-card span,
+  .section-heading button,
+  .area-pill,
+  .opportunity-type,
+  .opportunity-info,
+  .opportunity-actions button,
+  .person strong,
+  .person span,
+  .complete-card > button,
+  .complete-success-label,
+  .complete-success-content p {
+    font-size: 11px;
+  }
+
+  .opportunity-card h4,
+  .complete-success-content h3 {
+    font-size: 13px;
+  }
+
+  .mensagens-heading p,
+  .chat-input,
+  .chat-compositor input,
+  .chat-voltar,
+  .conversa-item,
+  .mensagem-balao span,
+  .mensagens-vazio-geral p {
+    font-size: 12px;
+  }
+
+  .mensagem-balao small,
+  .chat-pessoa-info span,
+  .chat-data {
+    font-size: 10px;
+  }
+
+  .opportunities-header p,
+  .opportunity-card p,
+  .people-hero p,
+  .people-search,
+  .people-filter,
+  .person-card p,
+  .person-card-skills span,
+  .publications-header p,
+  .publications-search input,
+  .publication-card p,
+  .publication-category,
+  .publication-availability,
+  .publication-actions button,
+  .configs-page-header p,
+  .configs-sidebar-title,
+  .perfil-page-header p,
+  .perfil-eyebrow,
+  .connections-hero p {
+    font-size: 12px;
+  }
+
+  .opportunities-header h1,
+  .people-hero h1,
+  .publications-header h1,
+  .configs-page-header h1,
+  .perfil-page-header h1 {
+    font-size: 22px;
+  }
+
+  .publication-modal label {
+    font-size: 12px;
+  }
+
+  .publication-modal input,
+  .publication-modal select,
+  .publication-modal textarea {
+    min-height: 42px;
+    font-size: 14px;
+  }
+
+  .publication-modal textarea {
+    min-height: 110px;
+  }
+
+  .publication-modal-actions button,
+  .configs-save-button,
+  .perfil-actions .perfil-button {
+    min-height: 40px;
+    font-size: 12px;
+  }
+
+  .menu-brand small,
+  .menu-section-title,
+  .menu-badge,
+  .profile-dropdown__user-info span,
+  .profile-dropdown__avatar {
+    font-size: 10px;
+  }
+
+  .menu-item,
+  .profile-dropdown__item {
+    font-size: 12px;
+  }
+
+  .page-back-button:not(.chat-voltar) {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 380px) {
+  .publications-header h1,
+  .opportunities-header h1,
+  .people-hero h1 {
+    font-size: 20px;
+  }
+
+  .publication-modal-backdrop {
+    padding: 10px;
+  }
+
+  .publication-modal {
+    max-height: calc(100dvh - 20px);
+    padding: 16px;
+  }
+
+  .publication-form-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
