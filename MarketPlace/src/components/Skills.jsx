@@ -184,25 +184,33 @@ function Habilidades({ onNavigate, usuarioId, usuario }) {
             <span>PUBLICADAS</span>
             <h2>Minhas habilidades <b>{habilidades.length}</b></h2>
           </div>
-          <button type="button" onClick={() => setCriando(true)}>+ Adicionar</button>
         </section>
 
-        <section className="skills-grid">
-          {habilidades.map((habilidade, index) => (
-            <article className="skill-card animate__animated animate__fadeInUp" style={{ animationDelay: `${index * 70}ms` }} key={habilidade.id}>
-              <div className="skill-card-top">
-                <div className="skill-icon">✦</div>
-                <span>{habilidade.nivel}</span>
-              </div>
-              <h3>{habilidade.nome}</h3>
-              <div className="skill-category">{habilidade.categoria}</div>
-              <p>{habilidade.descricao}</p>
-              <footer>
-                <span>Disponível para <strong>{habilidade.disponibilidade.toLowerCase()}</strong></span>
-              </footer>
-            </article>
-          ))}
-        </section>
+        {habilidades.length > 0 ? (
+          <section className="skills-grid" aria-label="Habilidades publicadas">
+            {habilidades.map((habilidade, index) => (
+              <article className="skill-card animate__animated animate__fadeInUp" style={{ animationDelay: `${index * 70}ms` }} key={habilidade.id}>
+                <div className="skill-card-top">
+                  <div className="skill-icon">✦</div>
+                  <span>{habilidade.nivel}</span>
+                </div>
+                <h3>{habilidade.nome}</h3>
+                <div className="skill-category">{habilidade.categoria}</div>
+                <p>{habilidade.descricao}</p>
+                <footer>
+                  <span>Disponível para <strong>{habilidade.disponibilidade.toLowerCase()}</strong></span>
+                </footer>
+              </article>
+            ))}
+          </section>
+        ) : (
+          <section className="skills-empty-state" aria-labelledby="skills-empty-title">
+            <div className="skills-empty-icon" aria-hidden="true">✦</div>
+            <h3 id="skills-empty-title">Você ainda não publicou nenhuma habilidade</h3>
+            <p>Adicione suas competências para que outras pessoas conheçam o que você sabe fazer e encontrem você para projetos e colaborações.</p>
+            <span>Use o botão “Criar habilidade” acima para começar.</span>
+          </section>
+        )}
 
         <button className="page-back-button skills-back-button" type="button" onClick={() => onNavigate("inicio")}>← Voltar ao início</button>
       </div>
