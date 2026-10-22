@@ -132,7 +132,9 @@ describe("autenticação local demonstrativa", () => {
     await user.click(screen.getByRole("button", { name: "Abrir menu principal" }));
     const menuPrincipal = screen.getByRole("navigation");
     await user.click(within(menuPrincipal).getByRole("button", { name: /Mensagens/ }));
-    expect(await screen.findByRole("heading", { name: "Nenhuma conversa" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Mensagens" })).toBeInTheDocument();
+    expect(screen.getByText("Modo demonstração")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Ana Souza/ })).toBeInTheDocument();
 
     const menuToggle = screen.getByRole("button", { name: /menu principal/i });
     if (menuToggle.getAttribute("aria-expanded") !== "true") {
