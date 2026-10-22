@@ -3,7 +3,7 @@ import "./Opportunities.scss";
 import { chaveUsuario, lerValorSeguro, salvarValorSeguro } from "../storage.js";
 
 const dados = [
-  { id:1, icon:"💻", tipo:"PROJETO", titulo:"Desenvolvimento de App para Clínica", area:"Tecnologia", modalidade:"Remoto", pessoa:"Maria Lima", curso:"Medicina", inicial:"ML", descricao:"Apoio na criação de um aplicativo para organização de atendimentos." },
+  { id:1, icon:"💻", tipo:"PROJETO", titulo:"Desenvolvimento de App para Clínica", area:"Tecnologia", categorias:["Saúde"], modalidade:"Remoto", pessoa:"Maria Lima", curso:"Medicina", inicial:"ML", descricao:"Apoio na criação de um aplicativo para organização de atendimentos." },
   { id:2, icon:"⚖️", tipo:"CONSULTORIA", titulo:"Revisão Jurídica de Contratos Digitais", area:"Direito", modalidade:"Híbrido", pessoa:"Rafael Costa", curso:"Direito", inicial:"RC", descricao:"Revisão e organização de contratos para um projeto universitário." },
   { id:3, icon:"📊", tipo:"PESQUISA", titulo:"Análise de Dados Acadêmicos", area:"Tecnologia", modalidade:"Remoto", pessoa:"Ana Souza", curso:"Computação", inicial:"AS", descricao:"Análise exploratória de dados para uma pesquisa acadêmica." },
   { id:4, icon:"🎨", tipo:"DESIGN", titulo:"Criação de identidade visual", area:"Design", modalidade:"Híbrido", pessoa:"Lucas Martins", curso:"Design", inicial:"LM", descricao:"Criação de identidade visual para uma iniciativa estudantil." },
@@ -23,7 +23,7 @@ function Oportunidades({ usuarioId }){
   useEffect(()=>{salvarValorSeguro(chaveParticipando,JSON.stringify(participando))},[chaveParticipando,participando]);
   const lista=useMemo(()=>{
     const termo=busca.trim().toLowerCase();
-    return dados.filter(item=>(filtro==="Todos"||item.area===filtro)&&(!termo||[item.titulo,item.area,item.tipo,item.modalidade,item.pessoa].join(" ").toLowerCase().includes(termo)));
+    return dados.filter(item=>(filtro==="Todos"||item.area===filtro||item.categorias?.includes(filtro))&&(!termo||[item.titulo,item.area,item.tipo,item.modalidade,item.pessoa].join(" ").toLowerCase().includes(termo)));
   },[filtro,busca]);
   function participar(id){setParticipando(estado=>estado.includes(id)?estado.filter(item=>item!==id):[...estado,id]);}
   function alternarSalvo(item){setSalvos(estado=>estado.some(salvo=>salvo.id===item.id)?estado.filter(salvo=>salvo.id!==item.id):[...estado,item]);}
