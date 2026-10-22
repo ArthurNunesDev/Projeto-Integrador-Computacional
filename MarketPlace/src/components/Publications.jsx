@@ -17,8 +17,9 @@ function MinhasPublicacoes({ onNavigate, usuarioId }) {
   const [publicacoes, setPublicacoes] = useState(() => lerPublicacoes(chave));
   const [busca, setBusca] = useState("");
   const [editando, setEditando] = useState(null);
+  const [confirmandoExclusao, setConfirmandoExclusao] = useState(null);
   const modalRef = useRef(null);
-  const modalAberto = Boolean(editando);
+  const modalAberto = Boolean(editando || confirmandoExclusao);
 
   useEffect(() => {
     salvarValorSeguro(chave, JSON.stringify(publicacoes));
@@ -36,12 +37,13 @@ function MinhasPublicacoes({ onNavigate, usuarioId }) {
       ),
     );
 
-    primeiroCampo?.focus();
+    (primeiroCampo || controles[0])?.focus();
 
     function tratarTeclado(event) {
       if (event.key === "Escape") {
         event.preventDefault();
         setEditando(null);
+        setConfirmandoExclusao(null);
         return;
       }
 
@@ -78,9 +80,10 @@ function MinhasPublicacoes({ onNavigate, usuarioId }) {
     );
   }, [busca, publicacoes]);
 
-  function excluir(id) {
-    if (!window.confirm("Deseja excluir esta publicação?")) return;
-    setPublicacoes((estado) => estado.filter((item) => item.id !== id));
+  function excluir() {
+    if (!confirmandoExclusao) return;
+    setPublicacoes((estado) => estado.filter((item) => item.id !== confirmandoExclusao.id));
+    setConfirmandoExclusao(null);
   }
 
   function salvarEdicao(event) {
@@ -130,7 +133,7 @@ function MinhasPublicacoes({ onNavigate, usuarioId }) {
                 <div className="publication-availability">Disponível para <strong>{item.disponibilidade.toLowerCase()}</strong></div>
                 <div className="publication-actions">
                   <button type="button" onClick={() => setEditando({ ...item })}>Editar</button>
-                  <button type="button" className="danger" onClick={() => excluir(item.id)}>Excluir</button>
+                  <button type="button" className="danger" onClick={() => setConfirmandoExclusao({ ...item })}>Excluir</button>
                 </div>
               </article>
             ))}
@@ -143,7 +146,37 @@ function MinhasPublicacoes({ onNavigate, usuarioId }) {
           </section>
         )}
 
-        {editando && (
+
+        {confirmandoExclusao && (
+          <div
+            className="publication-modal-backdrop publication-delete-backdrop"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) setConfirmandoExclusao(null);
+            }}
+          >
+            <section
+              ref={modalRef}
+              className="publication-delete-modal animate__animated animate__zoomIn"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="publication-delete-title"
+              aria-describedby="publication-delete-description"
+            >
+              <div className="publication-delete-icon" aria-hidden="true">!</div>
+              <span className="publication-delete-eyebrow">CONFIRMAÇÃO DE EXCLUSÃO</span>
+              <h2 id="publication-delete-title">Excluir publicação?</h2>
+              <p id="publication-delete-description">
+                Você está prestes a excluir <strong>{confirmandoExclusao.nome}</strong>.
+                Essa ação não pode ser desfeita.
+              </p>
+              <div className="publication-delete-actions">
+                <button type="button" className="publication-delete-cancel" onClick={() => setConfirmandoExclusao(null)}>Cancelar</button>
+                <button type="button" className="publication-delete-confirm" onClick={excluir}>Sim, excluir</button>
+              </div>
+            </section>
+          </div>
+        )}
+\n        {editando && (
           <div
             className="publication-modal-backdrop"
             onMouseDown={(event) => {
