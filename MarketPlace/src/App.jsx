@@ -32,6 +32,7 @@ import "./components/Messages.scss";
 import "./components/Saved.scss";
 import "./components/Publications.scss";
 import "./components/Footer.scss";
+import "./ResponsiveAudit.scss";
 
 const CHAVE_TEMA = "marketfaesa-theme";
 const CHAVE_PAGINA = "marketfaesa-pagina";
