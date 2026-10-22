@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import App from "./App.jsx";
@@ -94,11 +94,12 @@ describe("autenticação local demonstrativa", () => {
     await screen.findByRole("button", { name: "Menu do perfil" });
 
     await user.click(screen.getByRole("button", { name: "Abrir menu principal" }));
-    await user.click(screen.getByRole("button", { name: "Mensagens" }));
+    const menuPrincipal = screen.getByRole("navigation");
+    await user.click(within(menuPrincipal).getByRole("button", { name: /Mensagens/ }));
     expect(await screen.findByRole("heading", { name: "Nenhuma conversa" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Abrir menu principal" }));
-    await user.click(screen.getByRole("button", { name: "Início" }));
+    await user.click(within(screen.getByRole("navigation")).getByRole("button", { name: /Início/ }));
 
     expect(await screen.findByRole("heading", { name: /Oportunidades em Destaque/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Menu do perfil" })).toBeInTheDocument();
