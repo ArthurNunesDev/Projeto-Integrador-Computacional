@@ -265,7 +265,8 @@ function PerfilConclusao({ usuario, onNavigate }) {
     };
   }, [usuario]);
 
-  if (progresso >= 100) return null;
+  // A conclusão é uma conquista permanente: não volte a pedir preenchimento se a pessoa editar ou remover dados depois.
+  if (conquistaPerfilExibida(usuario) || progresso >= 100) return null;
 
   return (
     <section className="perfil-completion-card animate__animated animate__fadeInRight">
