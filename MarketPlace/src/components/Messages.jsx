@@ -24,7 +24,9 @@ function Mensagens({ usuarioId }) {
   const [texto,setTexto] = useState("");
   const [mostrarLista,setMostrarLista] = useState(true);
 
-  useEffect(() => salvarValorSeguro(chaveMensagens,JSON.stringify(conversas)),[chaveMensagens,conversas]);
+  useEffect(() => {
+    salvarValorSeguro(chaveMensagens, JSON.stringify(conversas));
+  }, [chaveMensagens, conversas]);
 
   const filtradas = useMemo(() => {
     const termo=busca.trim().toLowerCase();
