@@ -38,6 +38,31 @@ describe("autenticação local demonstrativa", () => {
     expect(obterSessaoLocal()).toBeNull();
   });
 
+  it("não carrega nem grava preferências genéricas quando não há conta ativa", () => {
+    localStorage.setItem("marketfaesa-theme:sem-conta", "dark");
+    localStorage.setItem(
+      "marketfaesa-preferencias:sem-conta",
+      JSON.stringify({ area: "dados-de-outra-conta" }),
+    );
+    localStorage.setItem(
+      "marketfaesa-configuracoes:sem-conta",
+      JSON.stringify({ tema: "dark", perfilPublico: false }),
+    );
+
+    render(<App />);
+
+    expect(screen.getByRole("heading", { name: "Entrar" })).toBeInTheDocument();
+    expect(document.documentElement.dataset.theme).toBe("light");
+    expect(localStorage.getItem("marketfaesa-theme:sem-conta")).toBe("dark");
+    expect(JSON.parse(localStorage.getItem("marketfaesa-preferencias:sem-conta"))).toEqual({
+      area: "dados-de-outra-conta",
+    });
+    expect(JSON.parse(localStorage.getItem("marketfaesa-configuracoes:sem-conta"))).toEqual({
+      tema: "dark",
+      perfilPublico: false,
+    });
+  });
+
   it("valida a senha antes de cadastrar", async () => {
     render(<App />);
 
