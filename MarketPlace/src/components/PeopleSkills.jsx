@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { chaveUsuario } from "../storage.js";
+import { chaveUsuario, lerValorSeguro, salvarValorSeguro } from "../storage.js";
 
 const perfis = [
   {
@@ -63,7 +63,7 @@ function Habilidades({ usuarioId }) {
   const [busca, setBusca] = useState("");
   const [categoria, setCategoria] = useState("Todas");
   const [perfilSelecionado, setPerfilSelecionado] = useState(null);
-  const [conectados, setConectados] = useState(() => { try { return JSON.parse(localStorage.getItem(chaveConexoes)) || []; } catch { return []; } });
+  const [conectados, setConectados] = useState(() => { try { return JSON.parse(lerValorSeguro(chaveConexoes)) || []; } catch { return []; } });
 
   const perfisFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
@@ -90,7 +90,7 @@ function Habilidades({ usuarioId }) {
       const atualizados = estado.includes(id)
         ? estado.filter((item) => item !== id)
         : [...estado, id];
-      localStorage.setItem(chaveConexoes, JSON.stringify(atualizados));
+      salvarValorSeguro(chaveConexoes, JSON.stringify(atualizados));
       return atualizados;
     });
   }
