@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { calcularProgressoPerfil, conquistaPerfilExibida, marcarConquistaPerfilExibida, montarUsuario } from "./perfil.js";
+import { conquistaPerfilExibida, marcarConquistaPerfilExibida, montarUsuario } from "./perfil.js";
 
 const API = { id: 7, nome: "Ana", email: "Ana@Faesa.br", curso: null, periodo: null };
 
