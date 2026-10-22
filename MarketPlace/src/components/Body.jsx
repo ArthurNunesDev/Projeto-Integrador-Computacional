@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { calcularProgressoPerfil } from "../perfil.js";
-import { chaveUsuario } from "../storage.js";
+import { chaveUsuario, lerValorSeguro, salvarValorSeguro, removerValorSeguro } from "../storage.js";
 
 function chaveConclusaoPerfil(usuario) {
   return usuario?.email
@@ -11,7 +11,7 @@ function chaveConclusaoPerfil(usuario) {
 
 function conclusaoPerfilPendente(usuario) {
   const chave = chaveConclusaoPerfil(usuario);
-  return Boolean(chave) && localStorage.getItem(chave) === "1";
+  return Boolean(chave) && lerValorSeguro(chave) === "1";
 }
 
 function Body({ onNavigate, usuario }) {
@@ -22,27 +22,27 @@ function Body({ onNavigate, usuario }) {
   const [areaSelecionada, setAreaSelecionada] = useState("Todos");
   const chaveParticipando = chaveUsuario("marketfaesa-participando", usuario?.id);
   const chaveSalvos = chaveUsuario("marketfaesa-salvos", usuario?.id);
-  const [participando, setParticipando] = useState(() => { try { return JSON.parse(localStorage.getItem(chaveParticipando)) || []; } catch { return []; } });
+  const [participando, setParticipando] = useState(() => { try { return JSON.parse(lerValorSeguro(chaveParticipando)) || []; } catch { return []; } });
   const [detalheAberto, setDetalheAberto] = useState(null);
   const [perfilProgresso, setPerfilProgresso] = useState(() => (conclusaoPerfilPendente(usuario) ? 100 : calcularProgressoPerfil(usuario)));
   const [perfilConcluido, setPerfilConcluido] = useState(() => conclusaoPerfilPendente(usuario) || calcularProgressoPerfil(usuario) === 100);
   const [mostrarPerfilCompleto, setMostrarPerfilCompleto] = useState(() => conclusaoPerfilPendente(usuario));
   const [salvos, setSalvos] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(chaveSalvos)) || []; } catch { return []; }
+    try { return JSON.parse(lerValorSeguro(chaveSalvos)) || []; } catch { return []; }
   });
 
   useEffect(() => {
-    localStorage.setItem(chaveSalvos, JSON.stringify(salvos));
+    salvarValorSeguro(chaveSalvos, JSON.stringify(salvos));
   }, [chaveSalvos, salvos]);
 
   useEffect(() => {
-    localStorage.setItem(chaveParticipando, JSON.stringify(participando));
+    salvarValorSeguro(chaveParticipando, JSON.stringify(participando));
   }, [chaveParticipando, participando]);
 
   useEffect(() => {
     // O estado inicial já reflete a conclusão pendente; aqui só limpa a marca e agenda o fim do aviso.
     if (conclusaoPerfilPendente(usuario)) {
-      localStorage.removeItem(chaveConclusaoPerfil(usuario));
+      removerValorSeguro(chaveConclusaoPerfil(usuario));
       const timer = window.setTimeout(() => setMostrarPerfilCompleto(false), 4200);
       return () => window.clearTimeout(timer);
     }
