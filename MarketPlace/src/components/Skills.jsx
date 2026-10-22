@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { chaveUsuario } from "../storage.js";
+import { chaveUsuario, lerValorSeguro, salvarValorSeguro } from "../storage.js";
 import { calcularProgressoPerfil, conquistaPerfilExibida, marcarConquistaPerfilExibida } from "../perfil.js";
 
 const CHAVE_HABILIDADES = "marketfaesa-habilidades";
 
 function obterHabilidades(chave) {
   try {
-    const salvo = localStorage.getItem(chave);
+    const salvo = lerValorSeguro(chave);
     if (salvo) {
       const dados = JSON.parse(salvo);
       if (Array.isArray(dados)) return dados;
@@ -32,7 +32,7 @@ function Habilidades({ onNavigate, usuarioId, usuario }) {
   });
 
   useEffect(() => {
-    localStorage.setItem(chave, JSON.stringify(habilidades));
+    salvarValorSeguro(chave, JSON.stringify(habilidades));
   }, [chave, habilidades]);
 
   function alterarCampo(campo, valor) {
@@ -56,7 +56,7 @@ function Habilidades({ onNavigate, usuarioId, usuario }) {
     const novasHabilidades = [novaHabilidade, ...habilidades];
     // Persistir antes de calcular o progresso garante que a última habilidade conte imediatamente.
     try {
-      localStorage.setItem(chave, JSON.stringify(novasHabilidades));
+      salvarValorSeguro(chave, JSON.stringify(novasHabilidades));
     } catch {
       // O efeito abaixo tentará persistir novamente.
     }

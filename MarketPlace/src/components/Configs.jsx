@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { chaveUsuario } from "../storage.js";
+import { chaveUsuario, lerValorSeguro, salvarValorSeguro } from "../storage.js";
 
 const CONFIG_SECTIONS = [
   { id:"conta", label:"Conta", description:"Informações pessoais", icon:"👤" },
@@ -25,7 +25,7 @@ function Configs({
     curso: usuario?.curso || "",
     periodo: usuario?.periodo || "",
   });
-  const [doisFatores, setDoisFatores] = useState(() => localStorage.getItem(chaveUsuario("marketfaesa-2fa", usuario?.id)) === "true");
+  const [doisFatores, setDoisFatores] = useState(() => lerValorSeguro(chaveUsuario("marketfaesa-2fa", usuario?.id)) === "true");
 
   function mostrarSalvo() {
     setSalvo(true);
@@ -64,7 +64,7 @@ function Configs({
   function alternarDoisFatores() {
     const novoValor = !doisFatores;
     setDoisFatores(novoValor);
-    localStorage.setItem(chaveUsuario("marketfaesa-2fa", usuario?.id), String(novoValor));
+    salvarValorSeguro(chaveUsuario("marketfaesa-2fa", usuario?.id), String(novoValor));
     mostrarSalvo();
   }
 

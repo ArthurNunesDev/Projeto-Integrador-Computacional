@@ -24,3 +24,32 @@ export function salvarJsonUsuario(chave, usuarioId, valor) {
     return false;
   }
 }
+
+/** Lê um valor sem interromper a interface se o armazenamento estiver indisponível. */
+export function lerValorSeguro(chave, fallback = null) {
+  try {
+    return localStorage.getItem(chave) ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+/** Persiste um valor e informa se a operação foi concluída. */
+export function salvarValorSeguro(chave, valor) {
+  try {
+    localStorage.setItem(chave, valor);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Remove um valor sem interromper a navegação em caso de falha. */
+export function removerValorSeguro(chave) {
+  try {
+    localStorage.removeItem(chave);
+    return true;
+  } catch {
+    return false;
+  }
+}
