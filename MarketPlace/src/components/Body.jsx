@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { calcularProgressoPerfil } from "../perfil.js";
+import { calcularProgressoPerfil, conquistaPerfilExibida, marcarConquistaPerfilExibida } from "../perfil.js";
 import { chaveUsuario, lerValorSeguro, salvarValorSeguro, removerValorSeguro } from "../storage.js";
 
 function chaveConclusaoPerfil(usuario) {
@@ -24,8 +24,8 @@ function Body({ onNavigate, usuario }) {
   const chaveSalvos = chaveUsuario("marketfaesa-salvos", usuario?.id);
   const [participando, setParticipando] = useState(() => { try { return JSON.parse(lerValorSeguro(chaveParticipando)) || []; } catch { return []; } });
   const [detalheAberto, setDetalheAberto] = useState(null);
-  const [perfilProgresso, setPerfilProgresso] = useState(() => (conclusaoPerfilPendente(usuario) ? 100 : calcularProgressoPerfil(usuario)));
-  const [perfilConcluido, setPerfilConcluido] = useState(() => conclusaoPerfilPendente(usuario) || calcularProgressoPerfil(usuario) === 100);
+  const [perfilProgresso, setPerfilProgresso] = useState(() => (conclusaoPerfilPendente(usuario) || conquistaPerfilExibida(usuario) ? 100 : calcularProgressoPerfil(usuario)));
+  const [perfilConcluido, setPerfilConcluido] = useState(() => conquistaPerfilExibida(usuario) || conclusaoPerfilPendente(usuario) || calcularProgressoPerfil(usuario) === 100);
   const [mostrarPerfilCompleto, setMostrarPerfilCompleto] = useState(() => conclusaoPerfilPendente(usuario));
   const [salvos, setSalvos] = useState(() => {
     try { return JSON.parse(lerValorSeguro(chaveSalvos)) || []; } catch { return []; }
@@ -40,17 +40,43 @@ function Body({ onNavigate, usuario }) {
   }, [chaveParticipando, participando]);
 
   useEffect(() => {
-    // O estado inicial já reflete a conclusão pendente; aqui só limpa a marca e agenda o fim do aviso.
-    if (conclusaoPerfilPendente(usuario)) {
+    // A conquista é permanente por conta. Nunca reexiba o card depois de registrada.
+    const jaConcluido = conquistaPerfilExibida(usuario);
+    const pendente = conclusaoPerfilPendente(usuario);
+    const progressoInicial = calcularProgressoPerfil(usuario);
+
+    if (pendente || progressoInicial === 100) {
+      marcarConquistaPerfilExibida(usuario);
+      setPerfilConcluido(true);
+      setPerfilProgresso(100);
+    } else if (jaConcluido) {
+      setPerfilConcluido(true);
+      setPerfilProgresso(100);
+    }
+
+    if (pendente) {
       removerValorSeguro(chaveConclusaoPerfil(usuario));
       const timer = window.setTimeout(() => setMostrarPerfilCompleto(false), 4200);
       return () => window.clearTimeout(timer);
     }
 
     const atualizarProgresso = () => {
+      // A verificação persistente tem prioridade sobre o progresso atual: apagar dados
+      // depois da conquista não faz o card voltar.
+      if (conquistaPerfilExibida(usuario)) {
+        setPerfilConcluido(true);
+        setPerfilProgresso(100);
+        return;
+      }
+
       const progresso = calcularProgressoPerfil(usuario);
       setPerfilProgresso(progresso);
-      setPerfilConcluido(progresso === 100);
+      if (progresso === 100) {
+        marcarConquistaPerfilExibida(usuario);
+        setPerfilConcluido(true);
+      } else {
+        setPerfilConcluido(false);
+      }
     };
 
     atualizarProgresso();
