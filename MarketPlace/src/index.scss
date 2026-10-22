@@ -225,3 +225,19 @@ button.save-button:focus-visible {
     font-size: 16px;
   }
 }
+
+/* Acessibilidade: foco de teclado consistente nos controles interativos. */
+:where(a, button, input, textarea, select, summary, [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 3px solid var(--mf-orange);
+  outline-offset: 3px;
+}
+
+:where(input, textarea, select):focus-visible {
+  border-color: var(--mf-orange);
+}
+
+@media (forced-colors: active) {
+  :where(a, button, input, textarea, select, summary, [tabindex]:not([tabindex="-1"])):focus-visible {
+    outline: 2px solid Highlight;
+  }
+}
