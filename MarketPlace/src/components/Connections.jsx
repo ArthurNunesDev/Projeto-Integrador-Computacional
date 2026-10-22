@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { chaveUsuario } from "../storage.js";
+import { chaveUsuario, lerValorSeguro, salvarValorSeguro } from "../storage.js";
 
 const CHAVE_CONEXOES = "marketfaesa-conexoes";
 
@@ -12,7 +12,7 @@ const pessoas = [
 
 function obterConexoes(chave) {
   try {
-    const salvo = localStorage.getItem(chave);
+    const salvo = lerValorSeguro(chave);
     const ids = salvo ? JSON.parse(salvo) : [];
     return Array.isArray(ids) ? ids : [];
   } catch {
@@ -28,7 +28,7 @@ function Connections({ usuarioId }) {
   const [conexoes, setConexoes] = useState(() => obterConexoes(chaveConexoes));
   const [recebidas, setRecebidas] = useState(() => {
     try {
-      const salvo = localStorage.getItem(chaveRecebidas);
+      const salvo = lerValorSeguro(chaveRecebidas);
       const dados = salvo ? JSON.parse(salvo) : [];
       return Array.isArray(dados) ? dados : [];
     } catch {
@@ -39,11 +39,11 @@ function Connections({ usuarioId }) {
 
   function salvarConexoes(ids) {
     setConexoes(ids);
-    localStorage.setItem(chaveConexoes, JSON.stringify(ids));
+    salvarValorSeguro(chaveConexoes, JSON.stringify(ids));
   }
 
   useEffect(() => {
-    localStorage.setItem(chaveRecebidas, JSON.stringify(recebidas));
+    salvarValorSeguro(chaveRecebidas, JSON.stringify(recebidas));
   }, [chaveRecebidas, recebidas]);
 
   function conectar(id) {
