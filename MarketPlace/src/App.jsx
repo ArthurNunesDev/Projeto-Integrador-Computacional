@@ -17,7 +17,7 @@ import Login from "./auth/Login.jsx";
 
 import { cadastrar, login, obterSessaoLocal, sair } from "./api/auth.js";
 import { ApiError } from "./api/client.js";
-import { chaveUsuario, lerJsonUsuario, salvarJsonUsuario } from "./storage.js";
+import { chaveUsuario, lerJsonUsuario, salvarJsonUsuario, lerValorSeguro, salvarValorSeguro } from "./storage.js";
 import { montarUsuario, salvarPerfilLocal } from "./perfil.js";
 
 import "./index.scss";
@@ -47,7 +47,7 @@ function obterTemaInicial(usuarioId) {
     return configuracoesSalvas.tema;
   }
   try {
-    return localStorage.getItem(chaveUsuario(CHAVE_TEMA, usuarioId)) === "dark" ? "dark" : "light";
+    return lerValorSeguro(chaveUsuario(CHAVE_TEMA, usuarioId)) === "dark" ? "dark" : "light";
   } catch {
     return "light";
   }
@@ -85,7 +85,7 @@ function App() {
   const [pagina, setPagina] = useState(() => {
     const sessao = obterSessaoLocal();
     try {
-      return localStorage.getItem(chaveUsuario(CHAVE_PAGINA, sessao?.id)) || "inicio";
+      return lerValorSeguro(chaveUsuario(CHAVE_PAGINA, sessao?.id)) || "inicio";
     } catch {
       return "inicio";
     }
@@ -122,7 +122,7 @@ function App() {
     }
 
     try {
-      localStorage.setItem(chaveUsuario(CHAVE_TEMA, usuario.id), tema);
+      salvarValorSeguro(chaveUsuario(CHAVE_TEMA, usuario.id), tema);
     } catch {
       // A interface continua funcionando se o navegador bloquear o armazenamento.
     }
@@ -146,7 +146,7 @@ function App() {
       setAvisoLogin("");
       setPagina("inicio");
       try {
-        localStorage.setItem(chaveUsuario(CHAVE_PAGINA, usuarioApi.id), "inicio");
+        salvarValorSeguro(chaveUsuario(CHAVE_PAGINA, usuarioApi.id), "inicio");
       } catch {
         // A navegação inicial funciona mesmo sem persistência local.
       }
@@ -176,7 +176,7 @@ function App() {
       entrarComo(resposta.usuario);
       setPagina("inicio");
       try {
-        localStorage.setItem(chaveUsuario(CHAVE_PAGINA, resposta.usuario.id), "inicio");
+        salvarValorSeguro(chaveUsuario(CHAVE_PAGINA, resposta.usuario.id), "inicio");
       } catch {
         // O login não deve falhar apenas porque a página não pôde ser persistida.
       }
@@ -210,7 +210,7 @@ function App() {
   function fazerLogout() {
     if (usuario) {
       try {
-        localStorage.setItem(chaveUsuario(CHAVE_PAGINA, usuario.id), "inicio");
+        salvarValorSeguro(chaveUsuario(CHAVE_PAGINA, usuario.id), "inicio");
       } catch {
         // O logout deve continuar mesmo se o navegador bloquear o armazenamento.
       }
@@ -272,7 +272,7 @@ function App() {
     setPagina(novaPagina);
     if (usuario?.id) {
       try {
-        localStorage.setItem(chaveUsuario(CHAVE_PAGINA, usuario.id), novaPagina);
+        salvarValorSeguro(chaveUsuario(CHAVE_PAGINA, usuario.id), novaPagina);
       } catch {
         // A navegação deve funcionar mesmo sem persistência local.
       }
