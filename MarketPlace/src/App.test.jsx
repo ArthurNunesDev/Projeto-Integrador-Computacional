@@ -95,7 +95,7 @@ describe("autenticação local demonstrativa", () => {
 
     await user.click(screen.getByRole("button", { name: "Abrir menu principal" }));
     await user.click(screen.getByRole("button", { name: "Mensagens" }));
-    expect(await screen.findByRole("heading", { name: "Mensagens" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Nenhuma conversa" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Abrir menu principal" }));
     await user.click(screen.getByRole("button", { name: "Início" }));
