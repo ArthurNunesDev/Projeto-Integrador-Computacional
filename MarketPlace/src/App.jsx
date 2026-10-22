@@ -40,6 +40,8 @@ const CHAVE_CONFIGURACOES = "marketfaesa-configuracoes";
 const PREFERENCIAS_PADRAO = { area: "tecnologia", modalidade: "todas", frequencia: "imediato" };
 
 function obterTemaInicial(usuarioId) {
+  if (usuarioId == null || usuarioId === "") return "light";
+
   const configuracoesSalvas = lerJsonUsuario(CHAVE_CONFIGURACOES, usuarioId, null);
   if (configuracoesSalvas?.tema === "dark" || configuracoesSalvas?.tema === "light") {
     return configuracoesSalvas.tema;
@@ -91,7 +93,9 @@ function App() {
   const [tema, setTema] = useState(() => obterTemaInicial(obterSessaoLocal()?.id));
   const [configuracoes, setConfiguracoes] = useState(() => {
     const sessao = obterSessaoLocal();
-    const salvo = lerJsonUsuario(CHAVE_CONFIGURACOES, sessao?.id, {});
+    if (!sessao?.id) return { ...CONFIG_PADRAO };
+
+    const salvo = lerJsonUsuario(CHAVE_CONFIGURACOES, sessao.id, {});
     const resto = { ...(salvo || {}) };
     delete resto.tema;
     return { ...CONFIG_PADRAO, ...resto };
@@ -99,16 +103,29 @@ function App() {
   const [configuracoesCarregadas, setConfiguracoesCarregadas] = useState(true);
   const [erroCarregarConfiguracoes, setErroCarregarConfiguracoes] = useState("");
   const [erroConfiguracoes, setErroConfiguracoes] = useState("");
-  const [preferencias, setPreferencias] = useState(() =>
-    lerJsonUsuario(CHAVE_PREFERENCIAS, obterSessaoLocal()?.id, PREFERENCIAS_PADRAO),
-  );
+  const [preferencias, setPreferencias] = useState(() => {
+    const sessao = obterSessaoLocal();
+    return sessao?.id
+      ? lerJsonUsuario(CHAVE_PREFERENCIAS, sessao.id, PREFERENCIAS_PADRAO)
+      : { ...PREFERENCIAS_PADRAO };
+  });
 
   useEffect(() => {
-    salvarJsonUsuario(CHAVE_PREFERENCIAS, usuario?.id, preferencias);
+    if (!usuario?.id) return;
+    salvarJsonUsuario(CHAVE_PREFERENCIAS, usuario.id, preferencias);
   }, [preferencias, usuario?.id]);
 
   useEffect(() => {
-    localStorage.setItem(chaveUsuario(CHAVE_TEMA, usuario?.id), tema);
+    if (!usuario?.id) {
+      document.documentElement.dataset.theme = "light";
+      return;
+    }
+
+    try {
+      localStorage.setItem(chaveUsuario(CHAVE_TEMA, usuario.id), tema);
+    } catch {
+      // A interface continua funcionando se o navegador bloquear o armazenamento.
+    }
     document.documentElement.dataset.theme = tema;
   }, [tema, usuario?.id]);
 
@@ -128,7 +145,11 @@ function App() {
       setErroSessao("");
       setAvisoLogin("");
       setPagina("inicio");
-      localStorage.setItem(chaveUsuario(CHAVE_PAGINA, usuarioApi.id), "inicio");
+      try {
+        localStorage.setItem(chaveUsuario(CHAVE_PAGINA, usuarioApi.id), "inicio");
+      } catch {
+        // A navegação inicial funciona mesmo sem persistência local.
+      }
       setPreferencias(lerJsonUsuario(CHAVE_PREFERENCIAS, usuarioApi.id, PREFERENCIAS_PADRAO));
       carregarConfiguracoes(usuarioApi.id);
     },
@@ -140,6 +161,7 @@ function App() {
     setErroSessao("");
     setAvisoLogin(aviso);
     setPagina("inicio");
+    setTema("light");
     setConfiguracoes(CONFIG_PADRAO);
     setConfiguracoesCarregadas(true);
     setErroCarregarConfiguracoes("");
@@ -153,7 +175,11 @@ function App() {
       const resposta = await login({ email, senha });
       entrarComo(resposta.usuario);
       setPagina("inicio");
-      localStorage.setItem(chaveUsuario(CHAVE_PAGINA, resposta.usuario.id), "inicio");
+      try {
+        localStorage.setItem(chaveUsuario(CHAVE_PAGINA, resposta.usuario.id), "inicio");
+      } catch {
+        // O login não deve falhar apenas porque a página não pôde ser persistida.
+      }
       return { sucesso: true };
     } catch (erro) {
       return { sucesso: false, mensagem: mensagemDoErro(erro, { 401: "E-mail ou senha inválidos." }) };
@@ -182,7 +208,13 @@ function App() {
   }
 
   function fazerLogout() {
-    if (usuario) localStorage.setItem(chaveUsuario(CHAVE_PAGINA, usuario.id), "inicio");
+    if (usuario) {
+      try {
+        localStorage.setItem(chaveUsuario(CHAVE_PAGINA, usuario.id), "inicio");
+      } catch {
+        // O logout deve continuar mesmo se o navegador bloquear o armazenamento.
+      }
+    }
     sair();
     encerrarSessao();
   }
@@ -190,6 +222,7 @@ function App() {
   function sairDaSessaoComErro() {
     sair();
     setErroSessao("");
+    setTema("light");
   }
 
   function tentarRestaurarDeNovo() {
@@ -237,7 +270,13 @@ function App() {
 
   function navegarPara(novaPagina) {
     setPagina(novaPagina);
-    localStorage.setItem(chaveUsuario(CHAVE_PAGINA, usuario?.id), novaPagina);
+    if (usuario?.id) {
+      try {
+        localStorage.setItem(chaveUsuario(CHAVE_PAGINA, usuario.id), novaPagina);
+      } catch {
+        // A navegação deve funcionar mesmo sem persistência local.
+      }
+    }
 
     window.scrollTo({
       top: 0,
