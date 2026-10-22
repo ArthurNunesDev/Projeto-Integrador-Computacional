@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { chaveUsuario } from "../storage.js";
+import { chaveUsuario, lerValorSeguro, salvarValorSeguro } from "../storage.js";
 
 const CHAVE_MENSAGENS = "marketfaesa-mensagens";
 
 function obterConversas(chave) {
   try {
-    const salvo = localStorage.getItem(chave);
+    const salvo = lerValorSeguro(chave);
     if (salvo) {
       const conversas = JSON.parse(salvo);
       if (Array.isArray(conversas) && conversas.length) return conversas;
@@ -24,7 +24,7 @@ function Mensagens({ usuarioId }) {
   const [texto,setTexto] = useState("");
   const [mostrarLista,setMostrarLista] = useState(true);
 
-  useEffect(() => localStorage.setItem(chaveMensagens,JSON.stringify(conversas)),[chaveMensagens,conversas]);
+  useEffect(() => salvarValorSeguro(chaveMensagens,JSON.stringify(conversas)),[chaveMensagens,conversas]);
 
   const filtradas = useMemo(() => {
     const termo=busca.trim().toLowerCase();
