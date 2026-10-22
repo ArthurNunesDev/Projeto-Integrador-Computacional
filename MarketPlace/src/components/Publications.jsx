@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { chaveUsuario, lerValorSeguro, salvarValorSeguro } from "../storage.js";
 
 const CHAVE = "marketfaesa-habilidades";
@@ -17,10 +17,57 @@ function MinhasPublicacoes({ onNavigate, usuarioId }) {
   const [publicacoes, setPublicacoes] = useState(() => lerPublicacoes(chave));
   const [busca, setBusca] = useState("");
   const [editando, setEditando] = useState(null);
+  const modalRef = useRef(null);
+  const modalAberto = Boolean(editando);
 
   useEffect(() => {
     salvarValorSeguro(chave, JSON.stringify(publicacoes));
   }, [chave, publicacoes]);
+
+  useEffect(() => {
+    if (!modalAberto || !modalRef.current) return undefined;
+
+    const modal = modalRef.current;
+    const elementoAnterior = document.activeElement;
+    const primeiroCampo = modal.querySelector("form input, form select, form textarea");
+    const controles = Array.from(
+      modal.querySelectorAll(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    );
+
+    primeiroCampo?.focus();
+
+    function tratarTeclado(event) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setEditando(null);
+        return;
+      }
+
+      if (event.key !== "Tab" || controles.length === 0) return;
+
+      const primeiro = controles[0];
+      const ultimo = controles[controles.length - 1];
+
+      if (event.shiftKey && (document.activeElement === primeiro || !modal.contains(document.activeElement))) {
+        event.preventDefault();
+        ultimo.focus();
+      } else if (!event.shiftKey && (document.activeElement === ultimo || !modal.contains(document.activeElement))) {
+        event.preventDefault();
+        primeiro.focus();
+      }
+    }
+
+    document.addEventListener("keydown", tratarTeclado);
+
+    return () => {
+      document.removeEventListener("keydown", tratarTeclado);
+      if (elementoAnterior instanceof HTMLElement && elementoAnterior.isConnected) {
+        elementoAnterior.focus();
+      }
+    };
+  }, [modalAberto]);
 
   const filtradas = useMemo(() => {
     const termo = busca.trim().toLowerCase();
@@ -97,11 +144,22 @@ function MinhasPublicacoes({ onNavigate, usuarioId }) {
         )}
 
         {editando && (
-          <div className="publication-modal-backdrop" onMouseDown={() => setEditando(null)}>
-            <section className="publication-modal animate__animated animate__zoomIn" onMouseDown={(e) => e.stopPropagation()}>
+          <div
+            className="publication-modal-backdrop"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) setEditando(null);
+            }}
+          >
+            <section
+              ref={modalRef}
+              className="publication-modal animate__animated animate__zoomIn"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="publication-modal-title"
+            >
               <div className="publication-modal-heading">
-                <div><span>EDITAR PUBLICAÇÃO</span><h2>{editando.nome}</h2></div>
-                <button type="button" onClick={() => setEditando(null)}>×</button>
+                <div><span>EDITAR PUBLICAÇÃO</span><h2 id="publication-modal-title">{editando.nome}</h2></div>
+                <button type="button" aria-label="Fechar edição" onClick={() => setEditando(null)}>×</button>
               </div>
               <form onSubmit={salvarEdicao}>
                 <label>Nome<input value={editando.nome} onChange={(e) => setEditando({...editando,nome:e.target.value})} required /></label>
