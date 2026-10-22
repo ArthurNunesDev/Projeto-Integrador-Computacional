@@ -111,6 +111,7 @@ describe("autenticação local demonstrativa", () => {
     const menuPrincipal = screen.getByRole("navigation");
     await user.click(within(menuPrincipal).getByRole("button", { name: /Oportunidades/ }));
     expect(await screen.findByRole("heading", { name: "Oportunidades" })).toBeInTheDocument();
+    expect(screen.queryByRole("contentinfo")).not.toBeInTheDocument();
 
     const menuToggle = screen.getByRole("button", { name: /menu principal/i });
     if (menuToggle.getAttribute("aria-expanded") !== "true") {
@@ -119,6 +120,7 @@ describe("autenticação local demonstrativa", () => {
     await user.click(within(screen.getByRole("navigation")).getByRole("button", { name: /Início/ }));
 
     expect(await screen.findByRole("heading", { name: /Oportunidades em Destaque/i })).toBeInTheDocument();
+    expect(screen.getByRole("contentinfo")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Menu do perfil" })).toBeInTheDocument();
   });
 
