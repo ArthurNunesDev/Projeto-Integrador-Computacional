@@ -87,8 +87,8 @@ describe("autenticação local demonstrativa", () => {
   });
 
   it("continua renderizando após sair de Mensagens pelo menu principal", async () => {
-    await cadastrar({ nome: "Ana Souza", email: "ana@faesa.br", senha: "segredo123" });
     render(<App />);
+    await cadastrarPelaTela();
 
     const user = userEvent.setup();
     await screen.findByRole("button", { name: "Menu do perfil" });
