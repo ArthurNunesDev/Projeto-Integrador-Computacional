@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { chaveUsuario } from "../storage.js";
+import { chaveUsuario, lerValorSeguro, salvarValorSeguro } from "../storage.js";
 
 const CHAVE = "marketfaesa-habilidades";
 
 function lerPublicacoes(chave) {
   try {
-    const dados = JSON.parse(localStorage.getItem(chave));
+    const dados = JSON.parse(lerValorSeguro(chave));
     return Array.isArray(dados) ? dados : [];
   } catch {
     return [];
@@ -19,7 +19,7 @@ function MinhasPublicacoes({ onNavigate, usuarioId }) {
   const [editando, setEditando] = useState(null);
 
   useEffect(() => {
-    localStorage.setItem(chave, JSON.stringify(publicacoes));
+    salvarValorSeguro(chave, JSON.stringify(publicacoes));
   }, [chave, publicacoes]);
 
   const filtradas = useMemo(() => {
