@@ -93,7 +93,6 @@ describe("autenticação local demonstrativa", () => {
     const user = userEvent.setup();
     await screen.findByRole("button", { name: "Menu do perfil" });
 
-    await user.click(screen.getByRole("button", { name: "Abrir menu principal" }));
     const menuPrincipal = screen.getByRole("navigation");
     await user.click(within(menuPrincipal).getByRole("button", { name: /Mensagens/ }));
     expect(await screen.findByRole("heading", { name: "Nenhuma conversa" })).toBeInTheDocument();
