@@ -398,7 +398,7 @@ function App() {
       />
 
       {renderizarPagina()}
-      <Footer onNavigate={navegarPara} />
+      {pagina === "inicio" && <Footer onNavigate={navegarPara} />}
     </div>
   );
 }
