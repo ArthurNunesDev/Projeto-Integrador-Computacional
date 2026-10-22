@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { login } from './auth'
 import {
   API_URL,
   ApiError,
@@ -58,14 +57,6 @@ describe('requisicao', () => {
     expect(JSON.parse(opcoes.body)).toEqual(config)
   })
 
-  it('login salva o token', async () => {
-    fetchMock.mockResolvedValue(respostaJson(200, { token: 'jwt', usuario: { id: 1 } }))
-
-    await login({ email: 'ana@faesa.br', senha: '12345678' })
-
-    expect(obterToken()).toBe('jwt')
-  })
-
   it('lança ApiError com status, mensagem e campos da API', async () => {
     fetchMock.mockResolvedValue(
       respostaJson(400, { status: 400, erro: 'Dados inválidos', campos: { senha: 'tamanho deve ser entre 8 e 72' } }),
@@ -112,7 +103,7 @@ describe('requisicao', () => {
     const remover = definirOnNaoAutenticado(gancho)
     fetchMock.mockResolvedValue(respostaJson(401, { status: 401, erro: 'E-mail ou senha inválidos' }))
 
-    const erro = await login({ email: 'ana@faesa.br', senha: 'errada123' }).catch((e) => e)
+    const erro = await requisicao('/api/auth/login', { method: 'POST', body: { email: 'ana@faesa.br', senha: 'errada123' } }).catch((e) => e)
     remover()
 
     expect(erro).toMatchObject({ status: 401, mensagem: 'E-mail ou senha inválidos' })
@@ -124,7 +115,7 @@ describe('requisicao', () => {
     salvarToken('abc')
     fetchMock.mockResolvedValue(respostaJson(200, { token: 'novo', usuario: { id: 1 } }))
 
-    await login({ email: 'ana@faesa.br', senha: '12345678' })
+    await requisicao('/api/auth/login', { method: 'POST', body: { email: 'ana@faesa.br', senha: '12345678' } })
 
     expect(fetchMock.mock.calls[0][1].headers.Authorization).toBeUndefined()
   })
