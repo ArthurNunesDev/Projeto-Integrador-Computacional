@@ -31,6 +31,10 @@ jobs:
         working-directory: MarketPlace
         run: npm test -- --run
 
+      - name: Verificar qualidade do código
+        working-directory: MarketPlace
+        run: npm run lint
+
       - name: Validar build de produção
         working-directory: MarketPlace
         run: npm run build
