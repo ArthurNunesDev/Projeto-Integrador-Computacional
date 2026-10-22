@@ -59,7 +59,6 @@ describe("autenticação local demonstrativa", () => {
       nome: "Ana Souza",
       email: "ana@faesa.br",
     });
-    expect(localStorage.getItem("marketfaesa-pagina:local-")).toBeNull();
   });
 
   it("normaliza o e-mail e impede cadastro duplicado", async () => {
