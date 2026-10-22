@@ -86,6 +86,20 @@ describe("autenticação local demonstrativa", () => {
     });
   });
 
+  it("mostra oportunidades de tecnologia multidisciplinar ao filtrar Tecnologia na página inicial", async () => {
+    render(<App />);
+    const user = await cadastrarPelaTela();
+
+    await user.click(screen.getByRole("button", { name: "Tecnologia" }));
+
+    expect(
+      screen.getByRole("heading", { name: "Desenvolvimento de App para Clínica" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Revisão Jurídica de Contratos Digitais" }),
+    ).toBeInTheDocument();
+  });
+
   it("continua renderizando após sair de Oportunidades pelo menu principal", async () => {
     render(<App />);
     await cadastrarPelaTela();
