@@ -86,6 +86,24 @@ describe("autenticação local demonstrativa", () => {
     });
   });
 
+  it("continua renderizando após sair de Mensagens pelo menu principal", async () => {
+    await cadastrar({ nome: "Ana Souza", email: "ana@faesa.br", senha: "segredo123" });
+    render(<App />);
+
+    const user = userEvent.setup();
+    await screen.findByRole("button", { name: "Menu do perfil" });
+
+    await user.click(screen.getByRole("button", { name: "Abrir menu principal" }));
+    await user.click(screen.getByRole("button", { name: "Mensagens" }));
+    expect(await screen.findByRole("heading", { name: "Mensagens" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Abrir menu principal" }));
+    await user.click(screen.getByRole("button", { name: "Início" }));
+
+    expect(await screen.findByRole("heading", { name: /Oportunidades em Destaque/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Menu do perfil" })).toBeInTheDocument();
+  });
+
   it("normaliza o e-mail e impede cadastro duplicado", async () => {
     await cadastrar({ nome: "Ana Souza", email: "ANA@FAESA.BR", senha: "segredo123" });
 
