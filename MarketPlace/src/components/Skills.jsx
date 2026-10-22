@@ -108,7 +108,7 @@ function Habilidades({ onNavigate, usuarioId, usuario }) {
               <span>PERFIL COMPLETO!</span>
               <h2 id="perfil-completo-titulo">Obrigado por completar seu perfil! ✨</h2>
               <p>Agora sua presença na MarketFAESA está pronta para conectar você a novas oportunidades.</p>
-              <div className="perfil-completo-sparkles">✦　✧　✦</div>
+              <div className="perfil-completo-sparkles">✦ ✧ ✦</div>
             </div>
           </div>
         )}

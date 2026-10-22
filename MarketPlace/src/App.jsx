@@ -92,7 +92,8 @@ function App() {
   const [configuracoes, setConfiguracoes] = useState(() => {
     const sessao = obterSessaoLocal();
     const salvo = lerJsonUsuario(CHAVE_CONFIGURACOES, sessao?.id, {});
-    const { tema: _tema, ...resto } = salvo || {};
+    const resto = { ...(salvo || {}) };
+    delete resto.tema;
     return { ...CONFIG_PADRAO, ...resto };
   });
   const [configuracoesCarregadas, setConfiguracoesCarregadas] = useState(true);
