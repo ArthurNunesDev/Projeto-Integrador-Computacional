@@ -17,3 +17,12 @@
 }
 
 .chat-voltar.page-back-button{display:none;min-height:36px;width:36px;padding:0;border:1px solid var(--mf-navy);border-radius:10px;background:var(--mf-surface);color:var(--mf-navy);font-size:18px;font-weight:900;box-shadow:0 4px 12px rgba(30,39,97,.10)}[data-theme="dark"] .chat-voltar.page-back-button{background:#252D5B;border-color:#CADCFC;color:#fff}@media(max-width:800px){.chat-voltar.page-back-button{display:grid;place-items:center}}
+
+/* Aviso explícito para manter o protótipo separado de mensagens reais. */
+.mensagens-demo-aviso{display:flex;align-items:flex-start;gap:12px;margin:0 0 14px;padding:13px 16px;border:1px solid rgba(232,126,55,.28);border-radius:14px;background:rgba(232,126,55,.08)}
+.mensagens-demo-aviso>span{display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;border-radius:10px;background:rgba(232,126,55,.14);color:var(--mf-orange);font-size:16px}
+.mensagens-demo-aviso strong{display:block;color:var(--mf-navy);font-size:11px}
+.mensagens-demo-aviso p{margin:4px 0 0;color:var(--mf-muted);font-size:10px;line-height:1.5}
+.chat-data{max-width:100%;text-align:center}
+[data-theme="dark"] .mensagens-demo-aviso strong{color:#fff}
+@media(max-width:600px){.mensagens-demo-aviso{gap:9px;margin-bottom:9px;padding:10px;border-radius:11px}.mensagens-demo-aviso>span{flex-basis:26px;width:26px;height:26px}.mensagens-demo-aviso strong{font-size:10px}.mensagens-demo-aviso p{font-size:9px}}
