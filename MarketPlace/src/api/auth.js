@@ -71,7 +71,8 @@ export async function login({ email, senha }) {
     throw new ApiError({ status: 401, mensagem: 'E-mail ou senha inválidos.' })
   }
 
-  const { senha: _senha, ...usuarioSemSenha } = usuario
+  const usuarioSemSenha = { ...usuario };
+  delete usuarioSemSenha.senha
   try {
     localStorage.setItem(CHAVE_SESSAO, JSON.stringify(usuarioSemSenha))
   } catch {
