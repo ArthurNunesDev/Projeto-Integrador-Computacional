@@ -34,6 +34,10 @@ jobs:
         working-directory: MarketPlace
         run: npm ci
 
+      - name: Executar testes do front-end
+        working-directory: MarketPlace
+        run: npm test -- --run
+
       - name: Criar versão de produção
         working-directory: MarketPlace
         env:
