@@ -176,7 +176,9 @@ function MinhasPublicacoes({ onNavigate, usuarioId }) {
             </section>
           </div>
         )}
-\n        {editando && (
+
+
+        {editando && (
           <div
             className="publication-modal-backdrop"
             onMouseDown={(event) => {
