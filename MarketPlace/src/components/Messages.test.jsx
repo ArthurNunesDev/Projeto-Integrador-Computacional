@@ -24,7 +24,7 @@ describe("Mensagens", () => {
     await user.type(campo, "Mensagem de teste");
     await user.click(screen.getByRole("button", { name: "Enviar mensagem" }));
 
-    expect(screen.getByText("Mensagem de teste")).toBeInTheDocument();
+    expect(screen.getAllByText("Mensagem de teste")).toHaveLength(2);
     expect(JSON.parse(localStorage.getItem(chave))).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
