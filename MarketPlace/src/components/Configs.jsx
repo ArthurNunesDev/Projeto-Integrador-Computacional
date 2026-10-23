@@ -19,6 +19,7 @@ function Configs({
   const bloqueado = !configuracoesCarregadas;
   const [secaoAtiva, setSecaoAtiva] = useState("conta");
   const [salvo, setSalvo] = useState(false);
+  const [erroAcao, setErroAcao] = useState("");
   const [conta, setConta] = useState({
     nome: usuario?.nome || "",
     email: usuario?.email || "",
@@ -28,16 +29,31 @@ function Configs({
   const [doisFatores, setDoisFatores] = useState(() => lerValorSeguro(chaveUsuario("marketfaesa-2fa", usuario?.id)) === "true");
 
   function mostrarSalvo() {
+    setErroAcao("");
     setSalvo(true);
     window.setTimeout(() => setSalvo(false), 2500);
   }
 
+  function registrarResultado(resultado, mensagem = "Não foi possível salvar as alterações. Verifique o armazenamento do navegador e tente novamente.") {
+    if (resultado === false) {
+      setSalvo(false);
+      setErroAcao(mensagem);
+      return false;
+    }
+    mostrarSalvo();
+    return true;
+  }
+
   function salvarConta() {
     const nome = conta.nome.trim();
-    if (!nome) return;
+    if (!nome) {
+      setSalvo(false);
+      setErroAcao("Informe seu nome completo antes de salvar.");
+      return;
+    }
     // Salvo localmente até existir PUT /api/usuarios/me (ver src/perfil.js).
-    onUpdateUsuario?.({ nome, curso: conta.curso, periodo: conta.periodo });
-    mostrarSalvo();
+    const resultado = onUpdateUsuario?.({ nome, curso: conta.curso, periodo: conta.periodo });
+    registrarResultado(resultado);
   }
 
   function alterarCampoConta(campo, valor) {
@@ -46,26 +62,27 @@ function Configs({
 
   function alterarTema(novoTema) {
     if (bloqueado) return;
-    onChangeTema(novoTema);
-    mostrarSalvo();
+    registrarResultado(onChangeTema(novoTema));
   }
 
   function alterarConfiguracao(campo) {
     if (bloqueado) return;
-    onAlterarConfiguracao(campo);
-    mostrarSalvo();
+    registrarResultado(onAlterarConfiguracao(campo));
   }
 
   function alterarPreferencia(campo, valor) {
-    onAlterarPreferencia(campo, valor);
-    mostrarSalvo();
+    registrarResultado(onAlterarPreferencia(campo, valor));
   }
 
   function alternarDoisFatores() {
     const novoValor = !doisFatores;
+    const sucesso = salvarValorSeguro(chaveUsuario("marketfaesa-2fa", usuario?.id), String(novoValor));
+    if (!sucesso) {
+      registrarResultado(false);
+      return;
+    }
     setDoisFatores(novoValor);
-    salvarValorSeguro(chaveUsuario("marketfaesa-2fa", usuario?.id), String(novoValor));
-    mostrarSalvo();
+    registrarResultado(true);
   }
 
   const avisoCarregamento = erroCarregarConfiguracoes ? (
@@ -112,7 +129,7 @@ function Configs({
           </div>
           <ConfigDivider />
           <div className="configs-security-list">
-            <ConfigToggle title="Verificação em duas etapas" description="Exige uma segunda confirmação ao acessar a conta. A preferência fica salva neste dispositivo." checked={doisFatores} onChange={alternarDoisFatores} />
+            <ConfigToggle title="Verificação em duas etapas (demonstrativa)" description="Ainda não protege o login: a API não oferece autenticação em duas etapas. Esta opção apenas registra uma preferência neste dispositivo." checked={doisFatores} onChange={alternarDoisFatores} />
             <div className="configs-action-row"><div className="configs-action-icon">📱</div><div className="configs-action-info"><strong>Sessão atual</strong><p>Esta é a sessão ativa neste navegador.</p></div><button type="button" onClick={onLogout}>Sair</button></div>
           </div>
         </section>;
@@ -179,7 +196,7 @@ function Configs({
         </aside>
         <div className="configs-main">
           {renderizarConteudo()}
-          <div className="configs-save-bar"><div>{erroConfiguracoes?<span className="configs-action-message" role="alert">{erroConfiguracoes}</span>:salvo?<span className="configs-saved">✓ Alterações salvas</span>:<span>As alterações são salvas automaticamente.</span>}</div><button type="button" className="configs-save-button" onClick={mostrarSalvo}>Salvar alterações</button></div>
+          <div className="configs-save-bar"><div>{erroAcao || erroConfiguracoes ? <span className="configs-action-message" role="alert">{erroAcao || erroConfiguracoes}</span> : salvo ? <span className="configs-saved" role="status">✓ Alterações salvas</span> : <span>As alterações são salvas automaticamente.</span>}</div><span className="configs-auto-save-note">Salvamento automático</span></div>
         </div>
       </div>
     </div>
