@@ -111,7 +111,7 @@ describe("Mensagens", () => {
 
     render(<Mensagens usuarioId="conta-a" />);
 
-    expect(screen.getByText("Mensagem preservada")).toBeInTheDocument();
+    expect(screen.getAllByText("Mensagem preservada")).toHaveLength(2);
     expect(screen.queryByText("Oi! Vi seu perfil na MarketFAESA e gostei da sua experiência com desenvolvimento web.")).not.toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
