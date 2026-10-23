@@ -101,7 +101,7 @@ describe("Conexões", () => {
     localStorage.setItem("marketfaesa-conexoes:conta-a", JSON.stringify([null, {}, 999, 2, "1"]));
     localStorage.setItem(
       "marketfaesa-solicitacoes-recebidas:conta-a",
-      JSON.stringify([null, 42, { id: 999 }, ana, { id: 2, habilidades: "inválido" }]),
+      JSON.stringify([null, 42, { id: 999 }, ana, { id: "2", habilidades: "inválido" }]),
     );
     const user = userEvent.setup();
     render(<Connections usuarioId="conta-a" />);
