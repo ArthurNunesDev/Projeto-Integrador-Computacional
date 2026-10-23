@@ -110,6 +110,7 @@ function App() {
   const [erroSessao, setErroSessao] = useState("");
   const [avisoLogin, setAvisoLogin] = useState("");
   const [buscaInicialOportunidades, setBuscaInicialOportunidades] = useState("");
+  const [versaoBuscaOportunidades, setVersaoBuscaOportunidades] = useState(0);
   const [pagina, setPagina] = useState(() => {
     const sessao = obterSessaoLocal();
     try {
@@ -317,6 +318,7 @@ function App() {
 
   function buscarOportunidades(termo) {
     setBuscaInicialOportunidades(termo);
+    setVersaoBuscaOportunidades((versao) => versao + 1);
     navegarPara("oportunidades");
   }
 
@@ -325,7 +327,7 @@ function App() {
       case "oportunidades":
         return (
           <Oportunidades
-            key={buscaInicialOportunidades}
+            key={`${buscaInicialOportunidades}:${versaoBuscaOportunidades}`}
             usuarioId={usuario?.id}
             initialSearch={buscaInicialOportunidades}
           />
