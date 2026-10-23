@@ -100,7 +100,9 @@ export function calcularProgressoPerfil(usuario) {
     ...["nome", "email", "curso", "periodo", "cidade", "bio"].map((campo) =>
       Boolean(String(usuario[campo] || "").trim()),
     ),
-    Array.isArray(habilidades) && habilidades.some((item) => item?.nome?.trim()),
+    Array.isArray(habilidades) && habilidades.some((item) =>
+      item && typeof item === "object" && typeof item.nome === "string" && item.nome.trim(),
+    ),
   ];
   return Math.round((campos.filter(Boolean).length / campos.length) * 100);
 }
