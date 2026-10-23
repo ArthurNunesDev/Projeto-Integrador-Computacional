@@ -18,9 +18,21 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
   const habilidadesUsuario = lerJsonUsuario("marketfaesa-habilidades", usuario?.id, []);
   const conexoesUsuario = lerJsonUsuario("marketfaesa-conexoes", usuario?.id, []);
   const oportunidadesUsuario = lerJsonUsuario("marketfaesa-participando", usuario?.id, []);
-  const habilidades = Array.isArray(habilidadesUsuario) ? habilidadesUsuario : [];
-  const conexoes = Array.isArray(conexoesUsuario) ? conexoesUsuario : [];
-  const oportunidades = Array.isArray(oportunidadesUsuario) ? oportunidadesUsuario : [];
+  const habilidades = Array.isArray(habilidadesUsuario)
+    ? habilidadesUsuario.filter((habilidade) =>
+        habilidade &&
+        typeof habilidade === "object" &&
+        !Array.isArray(habilidade) &&
+        typeof habilidade.nome === "string" &&
+        typeof habilidade.categoria === "string",
+      )
+    : [];
+  const conexoes = Array.isArray(conexoesUsuario)
+    ? [...new Set(conexoesUsuario.filter((id) => typeof id === "string" || typeof id === "number"))]
+    : [];
+  const oportunidades = Array.isArray(oportunidadesUsuario)
+    ? [...new Set(oportunidadesUsuario.filter((id) => Number.isInteger(id) && id > 0))]
+    : [];
   const interesses = [...new Set(habilidades.map((habilidade) => habilidade.categoria).filter(Boolean))];
   const [editando, setEditando] = useState(false);
   const [dados, setDados] = useState(() => obterPerfil(usuario));
@@ -84,7 +96,9 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
 
     // O e-mail é o login e não muda por aqui; o resto fica salvo localmente (ver src/perfil.js).
     const atualizados = { ...dados, nome };
-    const persistido = onUpdateUsuario?.({ nome, curso: dados.curso, periodo: dados.periodo, cidade: dados.cidade, bio: dados.bio });
+    const persistido = typeof onUpdateUsuario === "function"
+      ? onUpdateUsuario({ nome, curso: dados.curso, periodo: dados.periodo, cidade: dados.cidade, bio: dados.bio })
+      : false;
     if (persistido === false) {
       setErroPerfil("Não foi possível salvar as alterações neste navegador. Verifique o espaço disponível e tente novamente.");
       setSalvo(false);
