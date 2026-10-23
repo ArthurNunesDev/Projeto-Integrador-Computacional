@@ -18,7 +18,7 @@ import Login from "./auth/Login.jsx";
 import { cadastrar, login, obterSessaoLocal, sair } from "./api/auth.js";
 import { ApiError } from "./api/client.js";
 import { chaveUsuario, lerJsonUsuario, salvarJsonUsuario, lerValorSeguro, salvarValorSeguro } from "./storage.js";
-import { montarUsuario, salvarPerfilLocal } from "./perfil.js";
+import { montarUsuario, persistirPerfilLocal } from "./perfil.js";
 
 import "./index.scss";
 import "./components/Header.scss";
@@ -233,10 +233,12 @@ function App() {
 
   // Campos do perfil sem rota na API: ficam no navegador (ver src/perfil.js).
   function atualizarUsuario(dadosAtualizados) {
-    if (!usuario) return;
-    const aplicados = salvarPerfilLocal(usuario.id, dadosAtualizados);
-    setUsuario((atual) => ({ ...atual, ...aplicados }));
+    if (!usuario?.id) return false;
+    const resultado = persistirPerfilLocal(usuario.id, dadosAtualizados);
+    if (!resultado.sucesso) return false;
+    setUsuario((atual) => ({ ...atual, ...resultado.aplicados }));
     window.dispatchEvent(new Event("marketfaesa-perfil-atualizado"));
+    return true;
   }
 
   function alterarPreferencia(campo, valor) {
