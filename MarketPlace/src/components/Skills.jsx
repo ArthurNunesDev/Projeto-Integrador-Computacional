@@ -23,6 +23,7 @@ function Habilidades({ onNavigate, usuarioId, usuario }) {
   const [criando, setCriando] = useState(false);
   const [salva, setSalva] = useState(false);
   const [mostrarConquista, setMostrarConquista] = useState(false);
+  const [erroFormulario, setErroFormulario] = useState("");
   const [formulario, setFormulario] = useState({
     nome: "",
     categoria: "Tecnologia",
@@ -42,23 +43,28 @@ function Habilidades({ onNavigate, usuarioId, usuario }) {
   function publicar(event) {
     event.preventDefault();
 
-    if (!formulario.nome.trim() || !formulario.descricao.trim()) return;
+    const nome = formulario.nome.trim();
+    const descricao = formulario.descricao.trim();
+    if (!nome || !descricao) {
+      setErroFormulario("Preencha o nome e a descrição da habilidade.");
+      return;
+    }
 
+    setErroFormulario("");
     const novaHabilidade = {
       id: Date.now(),
-      nome: formulario.nome.trim(),
+      nome,
       categoria: formulario.categoria,
       nivel: formulario.nivel,
-      descricao: formulario.descricao.trim(),
+      descricao,
       disponibilidade: formulario.disponibilidade,
     };
 
     const novasHabilidades = [novaHabilidade, ...habilidades];
-    // Persistir antes de calcular o progresso garante que a última habilidade conte imediatamente.
-    try {
-      salvarValorSeguro(chave, JSON.stringify(novasHabilidades));
-    } catch {
-      // O efeito abaixo tentará persistir novamente.
+    // Só confirma a publicação quando a gravação no navegador for concluída.
+    if (!salvarValorSeguro(chave, JSON.stringify(novasHabilidades))) {
+      setErroFormulario("Não foi possível salvar a habilidade neste navegador. Verifique o armazenamento e tente novamente.");
+      return;
     }
     setHabilidades(novasHabilidades);
     setFormulario({
@@ -125,6 +131,7 @@ function Habilidades({ onNavigate, usuarioId, usuario }) {
             </div>
 
             <form onSubmit={publicar}>
+              {erroFormulario && <p className="skills-form-error" role="alert">{erroFormulario}</p>}
               <div className="skill-form-grid">
                 <label>
                   <span>Nome da habilidade</span>
