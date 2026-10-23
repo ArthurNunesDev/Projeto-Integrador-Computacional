@@ -70,6 +70,33 @@ describe("Conexões", () => {
     expect(screen.getByText("Nenhuma solicitação pendente")).toBeInTheDocument();
   });
 
+
+  it("abre o perfil pelo teclado com Espaço", async () => {
+    const user = userEvent.setup();
+    render(<Connections usuarioId="conta-a" />);
+
+    await user.click(within(screen.getByRole("navigation", { name: "Seções de conexões" })).getByRole("button", { name: /Encontrar pessoas/ }));
+    const cartaoAna = screen.getByRole("button", { name: /Ana Souza/ });
+    cartaoAna.focus();
+    await user.keyboard(" ");
+
+    expect(screen.getByRole("heading", { level: 1, name: "Ana Souza" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "← Voltar para pessoas" })).toBeInTheDocument();
+  });
+
+  it("não abre o perfil ao usar Enter no botão Conectar do cartão", async () => {
+    const user = userEvent.setup();
+    render(<Connections usuarioId="conta-a" />);
+
+    await user.click(within(screen.getByRole("navigation", { name: "Seções de conexões" })).getByRole("button", { name: /Encontrar pessoas/ }));
+    const botaoConectar = screen.getAllByRole("button", { name: "+ Conectar" })[0];
+    botaoConectar.focus();
+    await user.keyboard("{Enter}");
+
+    expect(screen.queryByRole("heading", { level: 1, name: "Ana Souza" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "✓ Conectado" })).toBeInTheDocument();
+  });
+
   it("mantém as conexões isoladas por conta", async () => {
     localStorage.setItem("marketfaesa-conexoes:conta-a", JSON.stringify([2]));
     const user = userEvent.setup();
