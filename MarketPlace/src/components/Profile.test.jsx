@@ -38,8 +38,8 @@ describe("Meu Perfil", () => {
 
     expect(screen.getByText("React")).toBeInTheDocument();
     expect(screen.getByText("Tecnologia")).toBeInTheDocument();
-    expect(screen.getByText("2", { selector: ".perfil-stat strong" })).toBeInTheDocument();
-    expect(screen.getByText("1", { selector: ".perfil-stat strong" })).toBeInTheDocument();
+    expect(screen.getAllByText("2", { selector: ".perfil-stat strong" })).toHaveLength(1);
+    expect(screen.getAllByText("1", { selector: ".perfil-stat strong" })).toHaveLength(3);
   });
 
   it("exibe erro e mantém a edição aberta se a persistência falhar", async () => {
