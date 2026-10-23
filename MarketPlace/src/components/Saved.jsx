@@ -6,7 +6,24 @@ const CHAVE_SALVOS = "marketfaesa-salvos";
 function lerSalvos(chave) {
   try {
     const dados = JSON.parse(lerValorSeguro(chave));
-    return Array.isArray(dados) ? dados : [];
+    if (!Array.isArray(dados)) return [];
+
+    // Dados antigos ou editados manualmente não devem quebrar a renderização.
+    return dados.filter((item) =>
+      item &&
+      typeof item === "object" &&
+      !Array.isArray(item) &&
+      (typeof item.id === "string" || typeof item.id === "number") &&
+      typeof item.titulo === "string" &&
+      typeof item.descricao === "string" &&
+      typeof item.tipo === "string" &&
+      typeof item.area === "string" &&
+      typeof item.modalidade === "string" &&
+      typeof item.pessoa === "string" &&
+      typeof item.curso === "string" &&
+      typeof item.inicial === "string" &&
+      typeof item.icon === "string",
+    );
   } catch {
     return [];
   }
