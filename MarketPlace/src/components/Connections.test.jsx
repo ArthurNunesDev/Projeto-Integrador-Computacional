@@ -97,6 +97,24 @@ describe("Conexões", () => {
     expect(screen.getByRole("button", { name: "✓ Conectado" })).toBeInTheDocument();
   });
 
+  it("ignora IDs e solicitações inválidos no armazenamento", async () => {
+    localStorage.setItem("marketfaesa-conexoes:conta-a", JSON.stringify([null, {}, 999, 2, "1"]));
+    localStorage.setItem(
+      "marketfaesa-solicitacoes-recebidas:conta-a",
+      JSON.stringify([null, 42, { id: 999 }, ana, { id: 2, habilidades: "inválido" }]),
+    );
+    const user = userEvent.setup();
+    render(<Connections usuarioId="conta-a" />);
+
+    expect(screen.getByRole("heading", { name: "Lucas Martins" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Ana Souza" })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /Solicitações/ }));
+    expect(screen.getByRole("heading", { name: "Ana Souza" })).toBeInTheDocument();
+    expect(screen.getByText("1 pendente")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("mantém as conexões isoladas por conta", async () => {
     localStorage.setItem("marketfaesa-conexoes:conta-a", JSON.stringify([2]));
     const user = userEvent.setup();
