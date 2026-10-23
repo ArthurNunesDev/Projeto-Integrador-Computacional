@@ -64,6 +64,7 @@ function Habilidades({ usuarioId }) {
   const [categoria, setCategoria] = useState("Todas");
   const [perfilSelecionado, setPerfilSelecionado] = useState(null);
   const [conectados, setConectados] = useState(() => { try { return JSON.parse(lerValorSeguro(chaveConexoes)) || []; } catch { return []; } });
+  const [erroPersistencia, setErroPersistencia] = useState("");
 
   const perfisFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
@@ -86,13 +87,17 @@ function Habilidades({ usuarioId }) {
   }, [busca, categoria]);
 
   function alternarConexao(id) {
-    setConectados((estado) => {
-      const atualizados = estado.includes(id)
-        ? estado.filter((item) => item !== id)
-        : [...estado, id];
-      salvarValorSeguro(chaveConexoes, JSON.stringify(atualizados));
-      return atualizados;
-    });
+    const atualizados = conectados.includes(id)
+      ? conectados.filter((item) => item !== id)
+      : [...conectados, id];
+
+    if (!salvarValorSeguro(chaveConexoes, JSON.stringify(atualizados))) {
+      setErroPersistencia("Não foi possível salvar esta conexão neste navegador. Verifique o armazenamento e tente novamente.");
+      return;
+    }
+
+    setErroPersistencia("");
+    setConectados(atualizados);
   }
 
   if (perfilSelecionado) {
@@ -113,6 +118,7 @@ function Habilidades({ usuarioId }) {
               <p>{perfilSelecionado.curso}</p>
               <span className="person-location">⌖ {perfilSelecionado.cidade}</span>
             </div>
+            {erroPersistencia && <p className="people-persistence-error" role="alert">{erroPersistencia}</p>}
             <button
               className={conectado ? "connect-button conectado" : "connect-button"}
               type="button"
