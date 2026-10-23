@@ -40,17 +40,60 @@ const CONVERSAS_DEMONSTRACAO = [
 ];
 
 
+function mensagemValida(mensagem) {
+  return Boolean(
+    mensagem &&
+    typeof mensagem === "object" &&
+    !Array.isArray(mensagem) &&
+    typeof mensagem.id === "string" &&
+    (mensagem.autor === "eu" || mensagem.autor === "outra") &&
+    typeof mensagem.texto === "string" &&
+    typeof mensagem.hora === "string"
+  );
+}
+
+function conversaValida(conversa) {
+  return Boolean(
+    conversa &&
+    typeof conversa === "object" &&
+    !Array.isArray(conversa) &&
+    typeof conversa.id === "string" &&
+    typeof conversa.nome === "string" &&
+    typeof conversa.curso === "string" &&
+    typeof conversa.iniciais === "string" &&
+    typeof conversa.online === "boolean" &&
+    Number.isInteger(conversa.naoLidas) &&
+    conversa.naoLidas >= 0 &&
+    Array.isArray(conversa.mensagens)
+  );
+}
+
+function conversasDemonstracao() {
+  return CONVERSAS_DEMONSTRACAO.map((conversa) => ({
+    ...conversa,
+    mensagens: conversa.mensagens.map((mensagem) => ({ ...mensagem })),
+  }));
+}
+
 function obterConversas(chave) {
   try {
     const salvo = lerValorSeguro(chave);
     if (salvo) {
-      const conversas = JSON.parse(salvo);
-      if (Array.isArray(conversas) && conversas.length) return conversas;
+      const dados = JSON.parse(salvo);
+      if (Array.isArray(dados)) {
+        const conversas = dados
+          .filter(conversaValida)
+          .map((conversa) => ({
+            ...conversa,
+            mensagens: conversa.mensagens.filter(mensagemValida),
+          }));
+        if (conversas.length) return conversas;
+      }
     }
   } catch {
-    // localStorage indisponível ou com JSON inválido: começa sem conversas
+    // localStorage indisponível ou com JSON inválido: usa conversas de demonstração
   }
-  return CONVERSAS_DEMONSTRACAO.map((conversa) => ({ ...conversa, mensagens: conversa.mensagens.map((mensagem) => ({ ...mensagem })) }));
+  return conversasDemonstracao();
 }
 
 function MensagensConta({ usuarioId }) {
