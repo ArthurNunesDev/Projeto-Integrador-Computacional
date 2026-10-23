@@ -12,3 +12,7 @@
 .skills-empty-state>span{color:var(--mf-muted);font-size:10px;font-weight:700}
 [data-theme="dark"] .skills-empty-icon{background:#252D5B;color:#fff}
 @media(max-width:600px){.skills-empty-state{gap:8px;padding:30px 16px;border-radius:14px}.skills-empty-icon{width:46px;height:46px;font-size:21px}.skills-empty-state h3{font-size:13px}.skills-empty-state p{font-size:10px}.skills-empty-state>span{font-size:9px}}
+
+
+.skills-form-error{margin:0 0 14px;padding:11px 13px;border:1px solid rgba(190,52,52,.28);border-radius:10px;background:rgba(190,52,52,.08);color:#B42318;font-size:12px;line-height:1.5;font-weight:700}
+[data-theme="dark"] .skills-form-error{border-color:rgba(255,130,130,.35);background:rgba(190,52,52,.14);color:#FFB4B4}
