@@ -101,7 +101,7 @@ describe("Habilidades", () => {
     expect(screen.getByRole("heading", { name: "Você ainda não publicou nenhuma habilidade" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Privada da conta A" })).not.toBeInTheDocument();
     expect(JSON.parse(localStorage.getItem("marketfaesa-habilidades:conta-a"))[0].nome).toBe("Privada da conta A");
-    expect(JSON.parse(localStorage.getItem("marketfaesa-habilidades:conta-b"))).toEqual([]);
+    expect(localStorage.getItem("marketfaesa-habilidades:conta-b")).toBeNull();
   });
 
   it("não aceita nome ou descrição compostos apenas por espaços", async () => {
@@ -115,7 +115,7 @@ describe("Habilidades", () => {
 
     expect(screen.getByRole("alert")).toHaveTextContent("Preencha o nome e a descrição da habilidade.");
     expect(screen.queryByText("Habilidade publicada com sucesso.")).not.toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem("marketfaesa-habilidades:conta-a"))).toEqual([]);
+    expect(localStorage.getItem("marketfaesa-habilidades:conta-a")).toBeNull();
   });
 
   it("abre o formulário pelo botão principal de criação", async () => {
