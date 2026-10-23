@@ -37,7 +37,7 @@ describe("Meu Perfil", () => {
     expect(onUpdateUsuario).toHaveBeenCalledWith(expect.objectContaining({ nome: "Ana Souza Atualizada" }));
     expect(screen.getByRole("alert")).toHaveTextContent("Não foi possível salvar as alterações");
     expect(screen.getByPlaceholderText("Digite seu nome completo")).toHaveValue("Ana Souza Atualizada");
-    expect(screen.queryByRole("status")).not.toHaveTextContent("Perfil atualizado e salvo");
+    expect(screen.queryByText("✓ Perfil atualizado e salvo")).not.toBeInTheDocument();
   });
 
   it("exige nome antes de salvar", async () => {
