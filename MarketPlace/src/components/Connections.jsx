@@ -36,15 +36,27 @@ function Connections({ usuarioId }) {
     }
   });
   const [perfilAberto, setPerfilAberto] = useState(null);
+  const [erroPersistencia, setErroPersistencia] = useState("");
 
   function salvarConexoes(ids) {
+    if (!salvarValorSeguro(chaveConexoes, JSON.stringify(ids))) {
+      setErroPersistencia("Não foi possível salvar as conexões neste navegador. Tente novamente.");
+      return false;
+    }
     setConexoes(ids);
-    salvarValorSeguro(chaveConexoes, JSON.stringify(ids));
+    setErroPersistencia("");
+    return true;
   }
 
-  useEffect(() => {
-    salvarValorSeguro(chaveRecebidas, JSON.stringify(recebidas));
-  }, [chaveRecebidas, recebidas]);
+  function salvarSolicitacoes(lista) {
+    if (!salvarValorSeguro(chaveRecebidas, JSON.stringify(lista))) {
+      setErroPersistencia("Não foi possível salvar as solicitações neste navegador. Tente novamente.");
+      return false;
+    }
+    setRecebidas(lista);
+    setErroPersistencia("");
+    return true;
+  }
 
   function conectar(id) {
     salvarConexoes([...new Set([...conexoes, id])]);
@@ -55,12 +67,24 @@ function Connections({ usuarioId }) {
   }
 
   function aceitarSolicitacao(pessoa) {
-    conectar(pessoa.id);
-    setRecebidas((estado) => estado.filter((item) => item.id !== pessoa.id));
+    const novasConexoes = [...new Set([...conexoes, pessoa.id])];
+    const novasSolicitacoes = recebidas.filter((item) => item.id !== pessoa.id);
+    if (!salvarValorSeguro(chaveConexoes, JSON.stringify(novasConexoes))) {
+      setErroPersistencia("Não foi possível aceitar a solicitação porque as conexões não puderam ser salvas.");
+      return;
+    }
+    if (!salvarValorSeguro(chaveRecebidas, JSON.stringify(novasSolicitacoes))) {
+      setErroPersistencia("A conexão foi salva, mas não foi possível atualizar as solicitações. Tente novamente.");
+      setConexoes(novasConexoes);
+      return;
+    }
+    setConexoes(novasConexoes);
+    setRecebidas(novasSolicitacoes);
+    setErroPersistencia("");
   }
 
   function recusarSolicitacao(id) {
-    setRecebidas((estado) => estado.filter((item) => item.id !== id));
+    salvarSolicitacoes(recebidas.filter((item) => item.id !== id));
   }
 
   const filtradas = useMemo(() => {
@@ -84,6 +108,8 @@ function Connections({ usuarioId }) {
         <div className="connections-container">
           <section className="connections-profile animate__animated animate__fadeIn">
             <button type="button" className="page-back-button connections-back" onClick={() => setPerfilAberto(null)}>← Voltar para pessoas</button>
+
+            {erroPersistencia && <p className="connections-persistence-error" role="alert">{erroPersistencia}</p>}
 
             <div className="connections-profile-header">
               <div className="connections-profile-avatar">{perfilAberto.inicial}</div>
@@ -151,6 +177,8 @@ function Connections({ usuarioId }) {
             <span>⌕</span> Encontrar pessoas
           </button>
         </nav>
+
+        {erroPersistencia && <p className="connections-persistence-error" role="alert">{erroPersistencia}</p>}
 
         {aba === "conexoes" && (
           <section className="connections-section animate__animated animate__fadeInUp">
