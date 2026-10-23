@@ -58,12 +58,23 @@ const perfis = [
 
 const categorias = ["Todas", "Tecnologia", "Design", "Direito", "Administração", "Comunicação"];
 
+function obterConexoes(chave) {
+  try {
+    const dados = JSON.parse(lerValorSeguro(chave));
+    if (!Array.isArray(dados)) return [];
+    const idsConhecidos = new Set(perfis.map((perfil) => perfil.id));
+    return [...new Set(dados.filter((id) => idsConhecidos.has(id)))];
+  } catch {
+    return [];
+  }
+}
+
 function Habilidades({ usuarioId }) {
   const chaveConexoes = chaveUsuario("marketfaesa-conexoes", usuarioId);
   const [busca, setBusca] = useState("");
   const [categoria, setCategoria] = useState("Todas");
   const [perfilSelecionado, setPerfilSelecionado] = useState(null);
-  const [conectados, setConectados] = useState(() => { try { return JSON.parse(lerValorSeguro(chaveConexoes)) || []; } catch { return []; } });
+  const [conectados, setConectados] = useState(() => obterConexoes(chaveConexoes));
   const [erroPersistencia, setErroPersistencia] = useState("");
 
   const perfisFiltrados = useMemo(() => {
