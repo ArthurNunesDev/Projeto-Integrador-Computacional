@@ -124,6 +124,25 @@ describe("autenticação local demonstrativa", () => {
     ).toBeInTheDocument();
   });
 
+  it("encaminha a busca do cabeçalho para oportunidades com o termo aplicado", async () => {
+    render(<App />);
+    const user = await cadastrarPelaTela();
+
+    const buscaGlobal = screen.getByRole("searchbox", {
+      name: "Buscar oportunidades no MarketFAESA",
+    });
+    await user.type(buscaGlobal, "Contratos");
+    await user.keyboard("{Enter}");
+
+    expect(await screen.findByRole("heading", { name: "Oportunidades" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Revisão Jurídica de Contratos Digitais" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Desenvolvimento de App para Clínica" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("continua renderizando após sair de Oportunidades pelo menu principal", async () => {
     render(<App />);
     await cadastrarPelaTela();
