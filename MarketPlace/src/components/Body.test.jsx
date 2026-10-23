@@ -30,7 +30,7 @@ describe("Página inicial — persistência das oportunidades", () => {
     await user.click(screen.getAllByRole("button", { name: "Salvar oportunidade" })[0]);
 
     expect(screen.getByRole("alert")).toHaveTextContent("Não foi possível salvar esta alteração");
-    expect(screen.getByRole("button", { name: "Salvar oportunidade" })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Salvar oportunidade" })).toHaveLength(4);
   });
 
   it("não marca participação quando o armazenamento falha", async () => {
@@ -50,7 +50,7 @@ describe("Página inicial — persistência das oportunidades", () => {
     const user = userEvent.setup();
     render(<Body usuario={usuario} onNavigate={vi.fn()} />);
 
-    await user.click(screen.getByRole("button", { name: "Salvar oportunidade" }));
+    await user.click(screen.getAllByRole("button", { name: "Salvar oportunidade" })[0]);
 
     expect(screen.getByRole("button", { name: "Remover dos salvos" })).toBeInTheDocument();
     expect(JSON.parse(localStorage.getItem("marketfaesa-salvos:conta-a"))).toHaveLength(1);
