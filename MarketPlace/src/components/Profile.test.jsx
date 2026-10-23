@@ -24,6 +24,24 @@ afterEach(() => {
 });
 
 describe("Meu Perfil", () => {
+  it("ignora registros inválidos de habilidades, conexões e oportunidades", () => {
+    localStorage.setItem("marketfaesa-habilidades:conta-a", JSON.stringify([
+      null,
+      42,
+      { nome: 123, categoria: "Tecnologia" },
+      { id: 1, nome: "React", categoria: "Tecnologia" },
+    ]));
+    localStorage.setItem("marketfaesa-conexoes:conta-a", JSON.stringify([null, {}, "perfil-1", "perfil-1", 7]));
+    localStorage.setItem("marketfaesa-participando:conta-a", JSON.stringify([null, "1", 1, 1, -2]));
+
+    render(<Perfil usuario={usuario} onUpdateUsuario={vi.fn(() => true)} onNavigate={vi.fn()} />);
+
+    expect(screen.getByText("React")).toBeInTheDocument();
+    expect(screen.getByText("Tecnologia")).toBeInTheDocument();
+    expect(screen.getByText("2", { selector: ".perfil-stat strong" })).toBeInTheDocument();
+    expect(screen.getByText("1", { selector: ".perfil-stat strong" })).toBeInTheDocument();
+  });
+
   it("exibe erro e mantém a edição aberta se a persistência falhar", async () => {
     const user = userEvent.setup();
     const onUpdateUsuario = vi.fn(() => false);
