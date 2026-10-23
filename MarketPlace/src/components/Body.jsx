@@ -30,14 +30,7 @@ function Body({ onNavigate, usuario }) {
   const [salvos, setSalvos] = useState(() => {
     try { return JSON.parse(lerValorSeguro(chaveSalvos)) || []; } catch { return []; }
   });
-
-  useEffect(() => {
-    salvarValorSeguro(chaveSalvos, JSON.stringify(salvos));
-  }, [chaveSalvos, salvos]);
-
-  useEffect(() => {
-    salvarValorSeguro(chaveParticipando, JSON.stringify(participando));
-  }, [chaveParticipando, participando]);
+  const [erroArmazenamento, setErroArmazenamento] = useState("");
 
   useEffect(() => {
     // A conquista é permanente por conta. Nunca reexiba o card depois de registrada.
@@ -151,21 +144,36 @@ function Body({ onNavigate, usuario }) {
   );
 
   function alternarSalvo(item) {
-    setSalvos((estado) => estado.some((salvo) => salvo.id === item.id)
-      ? estado.filter((salvo) => salvo.id !== item.id)
-      : [...estado, item]);
+    const novosSalvos = salvos.some((salvo) => salvo.id === item.id)
+      ? salvos.filter((salvo) => salvo.id !== item.id)
+      : [...salvos, item];
+
+    if (!salvarValorSeguro(chaveSalvos, JSON.stringify(novosSalvos))) {
+      setErroArmazenamento("Não foi possível salvar esta alteração no navegador. Verifique o armazenamento disponível e tente novamente.");
+      return;
+    }
+
+    setSalvos(novosSalvos);
+    setErroArmazenamento("");
   }
 
   function alternarParticipacao(id) {
-    setParticipando((estado) =>
-      estado.includes(id)
-        ? estado.filter((item) => item !== id)
-        : [...estado, id],
-    );
+    const novaParticipacao = participando.includes(id)
+      ? participando.filter((item) => item !== id)
+      : [...participando, id];
+
+    if (!salvarValorSeguro(chaveParticipando, JSON.stringify(novaParticipacao))) {
+      setErroArmazenamento("Não foi possível salvar esta alteração no navegador. Verifique o armazenamento disponível e tente novamente.");
+      return;
+    }
+
+    setParticipando(novaParticipacao);
+    setErroArmazenamento("");
   }
 
   return (
     <main className="main-content">
+      {erroArmazenamento && <p className="home-storage-error" role="alert">{erroArmazenamento}</p>}
       <div className="dashboard-container">
         <section className="dashboard-main">
           {/* HERO */}
