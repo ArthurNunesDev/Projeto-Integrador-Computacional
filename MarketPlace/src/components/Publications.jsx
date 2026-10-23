@@ -18,12 +18,9 @@ function MinhasPublicacoes({ onNavigate, usuarioId }) {
   const [busca, setBusca] = useState("");
   const [editando, setEditando] = useState(null);
   const [confirmandoExclusao, setConfirmandoExclusao] = useState(null);
+  const [erroPersistencia, setErroPersistencia] = useState("");
   const modalRef = useRef(null);
   const modalAberto = Boolean(editando || confirmandoExclusao);
-
-  useEffect(() => {
-    salvarValorSeguro(chave, JSON.stringify(publicacoes));
-  }, [chave, publicacoes]);
 
   useEffect(() => {
     if (!modalAberto || !modalRef.current) return undefined;
@@ -82,15 +79,34 @@ function MinhasPublicacoes({ onNavigate, usuarioId }) {
 
   function excluir() {
     if (!confirmandoExclusao) return;
-    setPublicacoes((estado) => estado.filter((item) => item.id !== confirmandoExclusao.id));
+    const novasPublicacoes = publicacoes.filter((item) => item.id !== confirmandoExclusao.id);
+    if (!salvarValorSeguro(chave, JSON.stringify(novasPublicacoes))) {
+      setErroPersistencia("Não foi possível excluir a publicação neste navegador. Verifique o armazenamento e tente novamente.");
+      return;
+    }
+    setPublicacoes(novasPublicacoes);
+    setErroPersistencia("");
     setConfirmandoExclusao(null);
   }
 
   function salvarEdicao(event) {
     event.preventDefault();
-    setPublicacoes((estado) => estado.map((item) =>
-      item.id === editando.id ? { ...item, ...editando } : item
-    ));
+    const nome = editando.nome.trim();
+    const descricao = editando.descricao.trim();
+    if (!nome || !descricao) {
+      setErroPersistencia("Preencha o nome e a descrição da publicação.");
+      return;
+    }
+    const publicacaoAtualizada = { ...editando, nome, descricao };
+    const novasPublicacoes = publicacoes.map((item) =>
+      item.id === editando.id ? publicacaoAtualizada : item
+    );
+    if (!salvarValorSeguro(chave, JSON.stringify(novasPublicacoes))) {
+      setErroPersistencia("Não foi possível salvar as alterações neste navegador. Verifique o armazenamento e tente novamente.");
+      return;
+    }
+    setPublicacoes(novasPublicacoes);
+    setErroPersistencia("");
     setEditando(null);
   }
 
@@ -132,8 +148,8 @@ function MinhasPublicacoes({ onNavigate, usuarioId }) {
                 <p>{item.descricao}</p>
                 <div className="publication-availability">Disponível para <strong>{item.disponibilidade.toLowerCase()}</strong></div>
                 <div className="publication-actions">
-                  <button type="button" onClick={() => setEditando({ ...item })}>Editar</button>
-                  <button type="button" className="danger" onClick={() => setConfirmandoExclusao({ ...item })}>Excluir</button>
+                  <button type="button" onClick={() => { setErroPersistencia(""); setEditando({ ...item }); }}>Editar</button>
+                  <button type="button" className="danger" onClick={() => { setErroPersistencia(""); setConfirmandoExclusao({ ...item }); }}>Excluir</button>
                 </div>
               </article>
             ))}
@@ -165,12 +181,13 @@ function MinhasPublicacoes({ onNavigate, usuarioId }) {
               <div className="publication-delete-icon" aria-hidden="true">!</div>
               <span className="publication-delete-eyebrow">CONFIRMAÇÃO DE EXCLUSÃO</span>
               <h2 id="publication-delete-title">Excluir publicação?</h2>
+              {erroPersistencia && <p className="publication-persistence-error" role="alert">{erroPersistencia}</p>}
               <p id="publication-delete-description">
                 Você está prestes a excluir <strong>{confirmandoExclusao.nome}</strong>.
                 Essa ação não pode ser desfeita.
               </p>
               <div className="publication-delete-actions">
-                <button type="button" className="publication-delete-cancel" onClick={() => setConfirmandoExclusao(null)}>Cancelar</button>
+                <button type="button" className="publication-delete-cancel" onClick={() => { setConfirmandoExclusao(null); setErroPersistencia(""); }}>Cancelar</button>
                 <button type="button" className="publication-delete-confirm" onClick={excluir}>Sim, excluir</button>
               </div>
             </section>
@@ -194,9 +211,10 @@ function MinhasPublicacoes({ onNavigate, usuarioId }) {
             >
               <div className="publication-modal-heading">
                 <div><span>EDITAR PUBLICAÇÃO</span><h2 id="publication-modal-title">{editando.nome}</h2></div>
-                <button type="button" aria-label="Fechar edição" onClick={() => setEditando(null)}>×</button>
+                <button type="button" aria-label="Fechar edição" onClick={() => { setEditando(null); setErroPersistencia(""); }}>×</button>
               </div>
               <form onSubmit={salvarEdicao}>
+                {erroPersistencia && <p className="publication-persistence-error" role="alert">{erroPersistencia}</p>}
                 <label>Nome<input value={editando.nome} onChange={(e) => setEditando({...editando,nome:e.target.value})} required /></label>
                 <div className="publication-form-row">
                   <label>Categoria<select value={editando.categoria} onChange={(e) => setEditando({...editando,categoria:e.target.value})}><option>Tecnologia</option><option>Design</option><option>Negócios</option><option>Comunicação</option><option>Saúde</option><option>Direito</option><option>Engenharia</option><option>Outras</option></select></label>
