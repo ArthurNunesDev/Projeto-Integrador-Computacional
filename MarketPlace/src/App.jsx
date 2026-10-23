@@ -67,6 +67,32 @@ const CONFIG_PADRAO = {
   reduzirAnimacoes: false,
 };
 
+const VALORES_PREFERENCIAS = {
+  area: ["tecnologia", "design", "engenharia", "saude", "direito", "administracao"],
+  modalidade: ["todas", "remoto", "presencial", "hibrido"],
+  frequencia: ["imediato", "diario", "semanal"],
+};
+
+function normalizarConfiguracoes(dados) {
+  const origem = dados && typeof dados === "object" && !Array.isArray(dados) ? dados : {};
+  return Object.fromEntries(
+    Object.entries(CONFIG_PADRAO).map(([campo, padrao]) => [
+      campo,
+      typeof origem[campo] === "boolean" ? origem[campo] : padrao,
+    ]),
+  );
+}
+
+function normalizarPreferencias(dados) {
+  const origem = dados && typeof dados === "object" && !Array.isArray(dados) ? dados : {};
+  return Object.fromEntries(
+    Object.entries(PREFERENCIAS_PADRAO).map(([campo, padrao]) => [
+      campo,
+      VALORES_PREFERENCIAS[campo].includes(origem[campo]) ? origem[campo] : padrao,
+    ]),
+  );
+}
+
 const MENSAGEM_ERRO_PADRAO = "Não foi possível concluir a operação. Tente novamente.";
 
 function mensagemDoErro(erro, porStatus = {}) {
@@ -97,9 +123,8 @@ function App() {
     if (!sessao?.id) return { ...CONFIG_PADRAO };
 
     const salvo = lerJsonUsuario(CHAVE_CONFIGURACOES, sessao.id, {});
-    const resto = { ...(salvo || {}) };
-    delete resto.tema;
-    return { ...CONFIG_PADRAO, ...resto };
+    const { tema: temaSalvo, ...resto } = salvo && typeof salvo === "object" && !Array.isArray(salvo) ? salvo : {};
+    return normalizarConfiguracoes(resto);
   });
   const [configuracoesCarregadas, setConfiguracoesCarregadas] = useState(true);
   const [erroCarregarConfiguracoes, setErroCarregarConfiguracoes] = useState("");
@@ -107,7 +132,7 @@ function App() {
   const [preferencias, setPreferencias] = useState(() => {
     const sessao = obterSessaoLocal();
     return sessao?.id
-      ? lerJsonUsuario(CHAVE_PREFERENCIAS, sessao.id, PREFERENCIAS_PADRAO)
+      ? normalizarPreferencias(lerJsonUsuario(CHAVE_PREFERENCIAS, sessao.id, PREFERENCIAS_PADRAO))
       : { ...PREFERENCIAS_PADRAO };
   });
 
@@ -127,9 +152,9 @@ function App() {
 
   const carregarConfiguracoes = useCallback((usuarioId) => {
     const salvo = lerJsonUsuario(CHAVE_CONFIGURACOES, usuarioId, {});
-    const { tema: temaSalvo, ...resto } = salvo || {};
+    const { tema: temaSalvo, ...resto } = salvo && typeof salvo === "object" && !Array.isArray(salvo) ? salvo : {};
     setTema(temaSalvo === "dark" || temaSalvo === "light" ? temaSalvo : obterTemaInicial(usuarioId));
-    setConfiguracoes({ ...CONFIG_PADRAO, ...resto });
+    setConfiguracoes(normalizarConfiguracoes(resto));
     setConfiguracoesCarregadas(true);
     setErroCarregarConfiguracoes("");
     setErroConfiguracoes("");
@@ -146,7 +171,7 @@ function App() {
       } catch {
         // A navegação inicial funciona mesmo sem persistência local.
       }
-      setPreferencias(lerJsonUsuario(CHAVE_PREFERENCIAS, usuarioApi.id, PREFERENCIAS_PADRAO));
+      setPreferencias(normalizarPreferencias(lerJsonUsuario(CHAVE_PREFERENCIAS, usuarioApi.id, PREFERENCIAS_PADRAO)));
       carregarConfiguracoes(usuarioApi.id);
     },
     [carregarConfiguracoes],
