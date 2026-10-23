@@ -11,6 +11,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
 });
 
 describe("Oportunidades", () => {
@@ -45,7 +46,7 @@ describe("Oportunidades", () => {
     const cardContaB = screen.getByRole("heading", { name: "Desenvolvimento de App para Clínica" }).closest("article");
 
     expect(within(cardContaB).getByRole("button", { name: "Salvar oportunidade" })).toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem(chaveContaB))).toEqual([]);
+    expect(localStorage.getItem(chaveContaB)).toBeNull();
     expect(JSON.parse(localStorage.getItem(chaveContaA))).toEqual([
       expect.objectContaining({ id: 1, titulo: "Desenvolvimento de App para Clínica" }),
     ]);
@@ -129,7 +130,7 @@ describe("persistência das ações em oportunidades", () => {
 
     expect(within(cardB).getByRole("button", { name: "Participar" })).toBeInTheDocument();
     expect(JSON.parse(localStorage.getItem(chaveA))).toEqual([1]);
-    expect(JSON.parse(localStorage.getItem(chaveB))).toEqual([]);
+    expect(localStorage.getItem(chaveB)).toBeNull();
   });
 });
 
