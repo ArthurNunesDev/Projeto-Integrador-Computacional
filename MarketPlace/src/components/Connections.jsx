@@ -276,7 +276,20 @@ function Connections({ usuarioId }) {
               {filtradas.map((pessoa) => {
                 const conectado = conexoes.includes(pessoa.id);
                 return (
-                  <article className="connection-card discovery-clickable" key={pessoa.id} onClick={() => setPerfilAberto(pessoa)} role="button" tabIndex={0} onKeyDown={(event) => event.key === "Enter" && setPerfilAberto(pessoa)}>
+                  <article
+                    className="connection-card discovery-clickable"
+                    key={pessoa.id}
+                    onClick={() => setPerfilAberto(pessoa)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(event) => {
+                      if (event.target !== event.currentTarget) return;
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setPerfilAberto(pessoa);
+                      }
+                    }}
+                  >
                     <div className="connection-card-top">
                       <div className="connection-avatar">{pessoa.inicial}</div>
                       <div>
