@@ -112,11 +112,6 @@ function App() {
   });
 
   useEffect(() => {
-    if (!usuario?.id) return;
-    salvarJsonUsuario(CHAVE_PREFERENCIAS, usuario.id, preferencias);
-  }, [preferencias, usuario?.id]);
-
-  useEffect(() => {
     if (!usuario?.id) {
       document.documentElement.dataset.theme = "light";
       return;
@@ -242,21 +237,27 @@ function App() {
   }
 
   function alterarPreferencia(campo, valor) {
-    setPreferencias((estado) => ({ ...estado, [campo]: valor }));
+    if (!usuario?.id) return false;
+    const novasPreferencias = { ...preferencias, [campo]: valor };
+    if (!salvarJsonUsuario(CHAVE_PREFERENCIAS, usuario.id, novasPreferencias)) return false;
+    setPreferencias(novasPreferencias);
+    return true;
   }
 
   function persistirConfiguracoes(novoTema, novasConfiguracoes) {
-    if (!usuario) return;
+    if (!usuario?.id) return false;
     const temaNormalizado = novoTema === "dark" ? "dark" : "light";
+    const sucesso = salvarJsonUsuario(CHAVE_CONFIGURACOES, usuario.id, {
+      tema: temaNormalizado,
+      ...novasConfiguracoes,
+    });
+    if (!sucesso) return false;
     setTema(temaNormalizado);
     setConfiguracoes(novasConfiguracoes);
     setConfiguracoesCarregadas(true);
     setErroConfiguracoes("");
     setErroCarregarConfiguracoes("");
-    salvarJsonUsuario(CHAVE_CONFIGURACOES, usuario.id, {
-      tema: temaNormalizado,
-      ...novasConfiguracoes,
-    });
+    return true;
   }
 
   function recarregarConfiguracoes() {
@@ -264,11 +265,11 @@ function App() {
   }
 
   function alterarTema(novoTema) {
-    persistirConfiguracoes(novoTema === "dark" ? "dark" : "light", configuracoes);
+    return persistirConfiguracoes(novoTema === "dark" ? "dark" : "light", configuracoes);
   }
 
   function alterarConfiguracao(campo) {
-    persistirConfiguracoes(tema, { ...configuracoes, [campo]: !configuracoes[campo] });
+    return persistirConfiguracoes(tema, { ...configuracoes, [campo]: !configuracoes[campo] });
   }
 
   function navegarPara(novaPagina) {
