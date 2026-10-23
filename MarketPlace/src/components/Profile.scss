@@ -473,3 +473,7 @@
     margin: 8px auto 0;
   }
 }
+
+.perfil-form-error{margin:0 0 16px;padding:12px 14px;border:1px solid #c94b4b;border-radius:10px;background:rgba(201,75,75,.08);color:#a52828;font-size:12px;line-height:1.5}
+.perfil-save-feedback[role="status"]{margin-bottom:16px}
+[data-theme="dark"] .perfil-form-error{color:#ffb4b4;border-color:#a94b4b;background:rgba(201,75,75,.12)}
