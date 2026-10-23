@@ -89,6 +89,33 @@ describe("Mensagens", () => {
     );
   });
 
+  it("ignora conversas e mensagens inválidas do armazenamento", () => {
+    const chave = chaveUsuario("marketfaesa-mensagens", "conta-a");
+    localStorage.setItem(chave, JSON.stringify([
+      null,
+      { id: "incompleta" },
+      {
+        id: "ana-souza",
+        nome: "Ana Souza",
+        curso: "Ciência da Computação",
+        iniciais: "AS",
+        online: true,
+        naoLidas: 2,
+        mensagens: [
+          null,
+          { id: "mensagem-invalida", autor: "desconhecido", texto: 10, hora: "09:00" },
+          { id: "mensagem-valida", autor: "outra", texto: "Mensagem preservada", hora: "09:30" },
+        ],
+      },
+    ]));
+
+    render(<Mensagens usuarioId="conta-a" />);
+
+    expect(screen.getByText("Mensagem preservada")).toBeInTheDocument();
+    expect(screen.queryByText("Oi! Vi seu perfil na MarketFAESA e gostei da sua experiência com desenvolvimento web.")).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("persiste a remoção do contador de não lidas ao abrir conversa", async () => {
     const user = userEvent.setup();
     const chave = chaveUsuario("marketfaesa-mensagens", "conta-a");
