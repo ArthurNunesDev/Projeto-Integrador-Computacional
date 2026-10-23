@@ -177,6 +177,46 @@ describe("autenticação local demonstrativa", () => {
   });
 });
 
+describe("normalização de configurações persistidas", () => {
+  it("usa valores padrão quando configurações e preferências contêm tipos inválidos", async () => {
+    localStorage.setItem("marketfaesa-auth", JSON.stringify({
+      id: "conta-a",
+      nome: "Ana Souza",
+      email: "ana@example.com",
+      curso: { nome: "ADS" },
+      periodo: "3",
+      cidade: "Vitória",
+      bio: "",
+    }));
+    localStorage.setItem("marketfaesa-pagina:conta-a", "configuracoes");
+    localStorage.setItem("marketfaesa-configuracoes:conta-a", JSON.stringify({
+      perfilPublico: "false",
+      mostrarEmail: 1,
+      permitirMensagens: null,
+      mensagens: "sim",
+      tema: "desconhecido",
+    }));
+    localStorage.setItem("marketfaesa-preferencias:conta-a", JSON.stringify({
+      area: 7,
+      modalidade: "modo-inexistente",
+      frequencia: null,
+    }));
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: /Privacidade/ }));
+    expect(screen.getByRole("switch", { name: "Perfil público" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("switch", { name: "Exibir e-mail" })).toHaveAttribute("aria-checked", "false");
+    expect(screen.getByRole("switch", { name: "Permitir mensagens" })).toHaveAttribute("aria-checked", "true");
+
+    await user.click(screen.getByRole("button", { name: /Preferências/ }));
+    expect(screen.getByLabelText("Área principal de interesse")).toHaveValue("tecnologia");
+    expect(screen.getByLabelText("Modalidade preferida")).toHaveValue("todas");
+    expect(screen.getByLabelText("Frequência dos avisos")).toHaveValue("imediato");
+  });
+});
+
 describe("armazenamento isolado por conta", () => {
   it("gera chaves diferentes para contas diferentes", () => {
     expect(chaveUsuario("marketfaesa-salvos", "conta-a")).not.toBe(
