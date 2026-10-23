@@ -14,7 +14,28 @@ function obterConexoes(chave) {
   try {
     const salvo = lerValorSeguro(chave);
     const ids = salvo ? JSON.parse(salvo) : [];
-    return Array.isArray(ids) ? ids : [];
+    if (!Array.isArray(ids)) return [];
+
+    const idsConhecidos = new Set(pessoas.map((pessoa) => pessoa.id));
+    return [...new Set(ids.filter((id) => idsConhecidos.has(id)))];
+  } catch {
+    return [];
+  }
+}
+
+function obterSolicitacoes(chave) {
+  try {
+    const salvo = lerValorSeguro(chave);
+    const dados = salvo ? JSON.parse(salvo) : [];
+    if (!Array.isArray(dados)) return [];
+
+    // Usa os perfis conhecidos para evitar que registros incompletos quebrem a tela.
+    const idsConhecidos = new Set(pessoas.map((pessoa) => pessoa.id));
+    const idsValidos = dados
+      .filter((item) => item && typeof item === "object" && !Array.isArray(item))
+      .map((item) => item.id)
+      .filter((id) => idsConhecidos.has(id));
+    return [...new Set(idsValidos)].map((id) => pessoas.find((pessoa) => pessoa.id === id));
   } catch {
     return [];
   }
@@ -26,15 +47,7 @@ function Connections({ usuarioId }) {
   const [aba, setAba] = useState("conexoes");
   const [busca, setBusca] = useState("");
   const [conexoes, setConexoes] = useState(() => obterConexoes(chaveConexoes));
-  const [recebidas, setRecebidas] = useState(() => {
-    try {
-      const salvo = lerValorSeguro(chaveRecebidas);
-      const dados = salvo ? JSON.parse(salvo) : [];
-      return Array.isArray(dados) ? dados : [];
-    } catch {
-      return [];
-    }
-  });
+  const [recebidas, setRecebidas] = useState(() => obterSolicitacoes(chaveRecebidas));
   const [perfilAberto, setPerfilAberto] = useState(null);
   const [erroPersistencia, setErroPersistencia] = useState("");
 
