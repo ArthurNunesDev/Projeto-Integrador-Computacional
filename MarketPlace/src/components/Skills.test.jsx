@@ -43,6 +43,29 @@ describe("Habilidades", () => {
     expect(screen.queryByRole("heading", { name: "Você ainda não publicou nenhuma habilidade" })).not.toBeInTheDocument();
   });
 
+  it("ignora habilidades inválidas sem sobrescrever os dados durante a leitura", () => {
+    const dados = [
+      null,
+      42,
+      { id: 2, nome: "Incompleta" },
+      {
+        id: 1,
+        nome: "React",
+        categoria: "Tecnologia",
+        nivel: "Intermediário",
+        descricao: "Desenvolvimento de interfaces.",
+        disponibilidade: "Projetos e freelas",
+      },
+    ];
+    localStorage.setItem("marketfaesa-habilidades:conta-a", JSON.stringify(dados));
+
+    render(<Habilidades usuarioId="conta-a" usuario={{ id: "conta-a", email: "ana@faesa.br" }} onNavigate={() => {}} />);
+
+    expect(screen.getByRole("heading", { name: "React" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Incompleta" })).not.toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem("marketfaesa-habilidades:conta-a"))).toHaveLength(4);
+  });
+
   it("publica a habilidade e persiste os dados vinculados à conta", async () => {
     const user = userEvent.setup();
     render(<Habilidades usuarioId="conta-a" usuario={{ id: "conta-a", email: "ana@faesa.br" }} onNavigate={() => {}} />);
