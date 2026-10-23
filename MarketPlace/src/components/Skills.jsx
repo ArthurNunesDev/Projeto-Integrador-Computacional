@@ -1,15 +1,29 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { chaveUsuario, lerValorSeguro, salvarValorSeguro } from "../storage.js";
 import { calcularProgressoPerfil, conquistaPerfilExibida, marcarConquistaPerfilExibida } from "../perfil.js";
 
 const CHAVE_HABILIDADES = "marketfaesa-habilidades";
+
+function habilidadeValida(item) {
+  return Boolean(
+    item &&
+    typeof item === "object" &&
+    !Array.isArray(item) &&
+    (typeof item.id === "string" || typeof item.id === "number") &&
+    typeof item.nome === "string" &&
+    typeof item.categoria === "string" &&
+    typeof item.nivel === "string" &&
+    typeof item.descricao === "string" &&
+    typeof item.disponibilidade === "string"
+  );
+}
 
 function obterHabilidades(chave) {
   try {
     const salvo = lerValorSeguro(chave);
     if (salvo) {
       const dados = JSON.parse(salvo);
-      if (Array.isArray(dados)) return dados;
+      if (Array.isArray(dados)) return dados.filter(habilidadeValida);
     }
   } catch {
     // localStorage indisponível ou com JSON inválido: começa sem habilidades
@@ -31,10 +45,6 @@ function Habilidades({ onNavigate, usuarioId, usuario }) {
     descricao: "",
     disponibilidade: "Projetos e freelas",
   });
-
-  useEffect(() => {
-    salvarValorSeguro(chave, JSON.stringify(habilidades));
-  }, [chave, habilidades]);
 
   function alterarCampo(campo, valor) {
     setFormulario((estado) => ({ ...estado, [campo]: valor }));
