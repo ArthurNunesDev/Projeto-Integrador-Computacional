@@ -25,6 +25,7 @@ afterEach(() => {
   cleanup();
 });
 
+describe("modal de edição de publicações", () => {
   it("ignora registros incompletos ao carregar publicações", () => {
     localStorage.setItem("marketfaesa-habilidades:conta-a", JSON.stringify([
       null,
@@ -44,9 +45,7 @@ afterEach(() => {
     expect(screen.getByRole("heading", { name: "React" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Incompleta" })).not.toBeInTheDocument();
   });
-});
 
-describe("modal de edição de publicações", () => {
   it("expõe o diálogo, fecha com Escape e devolve o foco ao botão que abriu", async () => {
     const user = userEvent.setup();
     render(<MinhasPublicacoes usuarioId="conta-a" />);
