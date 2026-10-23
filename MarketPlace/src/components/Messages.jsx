@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { chaveUsuario, lerValorSeguro, salvarValorSeguro } from "../storage.js";
 
 const CHAVE_MENSAGENS = "marketfaesa-mensagens";
@@ -53,17 +53,24 @@ function obterConversas(chave) {
   return CONVERSAS_DEMONSTRACAO.map((conversa) => ({ ...conversa, mensagens: conversa.mensagens.map((mensagem) => ({ ...mensagem })) }));
 }
 
-function Mensagens({ usuarioId }) {
+function MensagensConta({ usuarioId }) {
   const chaveMensagens = chaveUsuario(CHAVE_MENSAGENS, usuarioId);
   const [conversas,setConversas] = useState(() => obterConversas(chaveMensagens));
   const [selecionada,setSelecionada] = useState("ana-souza");
   const [busca,setBusca] = useState("");
   const [texto,setTexto] = useState("");
   const [mostrarLista,setMostrarLista] = useState(true);
+  const [erroPersistencia,setErroPersistencia] = useState("");
 
-  useEffect(() => {
-    salvarValorSeguro(chaveMensagens, JSON.stringify(conversas));
-  }, [chaveMensagens, conversas]);
+  function persistirConversas(proximasConversas) {
+    if (!salvarValorSeguro(chaveMensagens, JSON.stringify(proximasConversas))) {
+      setErroPersistencia("Não foi possível salvar as mensagens neste navegador. Tente novamente.");
+      return false;
+    }
+    setConversas(proximasConversas);
+    setErroPersistencia("");
+    return true;
+  }
 
   const filtradas = useMemo(() => {
     const termo=busca.trim().toLowerCase();
@@ -74,8 +81,11 @@ function Mensagens({ usuarioId }) {
   const atual=conversas.find(c=>c.id===selecionada)||conversas[0];
 
   function abrirConversa(id) {
-    setSelecionada(id); setTexto(""); setMostrarLista(false);
-    setConversas(lista=>lista.map(c=>c.id===id?{...c,naoLidas:0}:c));
+    const proximasConversas = conversas.map(c=>c.id===id?{...c,naoLidas:0}:c);
+    if (!persistirConversas(proximasConversas)) return;
+    setSelecionada(id);
+    setTexto("");
+    setMostrarLista(false);
   }
 
   function enviar(event) {
@@ -83,8 +93,8 @@ function Mensagens({ usuarioId }) {
     const mensagem=texto.trim();
     if(!mensagem||!atual)return;
     const hora=new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
-    setConversas(lista=>lista.map(c=>c.id===atual.id?{...c,mensagens:[...c.mensagens,{id:Date.now(),autor:"eu",texto:mensagem,hora}]}:c));
-    setTexto("");
+    const proximasConversas = conversas.map(c=>c.id===atual.id?{...c,mensagens:[...c.mensagens,{id:`mensagem-${Date.now()}`,autor:"eu",texto:mensagem,hora}]}:c);
+    if (persistirConversas(proximasConversas)) setTexto("");
   }
 
   if(!atual) return <main className="mensagens-page"><div className="mensagens-vazio-geral"><span className="mensagens-vazio-icon">□</span><h1>Nenhuma conversa</h1><p>Quando você iniciar uma conversa, ela aparecerá aqui.</p></div></main>;
@@ -96,6 +106,7 @@ function Mensagens({ usuarioId }) {
           <div><span className="mensagens-eyebrow">COMUNICAÇÃO</span><h1>Mensagens</h1><p>Converse com pessoas da comunidade FAESA e acompanhe seus projetos.</p></div>
           <div className="mensagens-total"><strong>{conversas.length}</strong><span>conversas</span></div>
         </div>
+        {erroPersistencia && <p className="mensagens-persistence-error" role="alert">{erroPersistencia}</p>}
         <div className="mensagens-demo-aviso"><span aria-hidden="true">✦</span><div><strong>Modo demonstração</strong><p>Estas conversas são fictícias. As mensagens enviadas ficam salvas apenas neste navegador e não são entregues a outras pessoas.</p></div></div>
         <section className="mensagens-shell">
           <aside className={`conversas-panel ${!mostrarLista?"mobile-escondido":""}`}>
@@ -133,6 +144,11 @@ function Mensagens({ usuarioId }) {
       </div>
     </main>
   );
+}
+
+function Mensagens({ usuarioId }) {
+  const chave = chaveUsuario(CHAVE_MENSAGENS, usuarioId);
+  return <MensagensConta key={chave} usuarioId={usuarioId} />;
 }
 
 export default Mensagens;
