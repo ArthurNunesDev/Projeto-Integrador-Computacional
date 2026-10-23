@@ -106,6 +106,16 @@ describe("Salvos", () => {
     expect(JSON.parse(localStorage.getItem(chaveUsuario("marketfaesa-salvos", "conta-a")))).toEqual([oportunidadeA, oportunidadeB]);
   });
 
+  it("ignora registros inválidos no armazenamento sem quebrar a tela", () => {
+    const chave = chaveUsuario("marketfaesa-salvos", "conta-a");
+    localStorage.setItem(chave, JSON.stringify([null, 42, { id: 3 }, oportunidadeB]));
+    render(<Salvos usuarioId="conta-a" />);
+
+    expect(screen.getByRole("heading", { name: oportunidadeB.titulo })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: oportunidadeA.titulo })).not.toBeInTheDocument();
+    expect(screen.getByText("1", { selector: "strong" })).toBeInTheDocument();
+  });
+
   it("oferece navegação quando a lista está vazia", async () => {
     const user = userEvent.setup();
     localStorage.setItem(chaveUsuario("marketfaesa-salvos", "conta-a"), "[]");
