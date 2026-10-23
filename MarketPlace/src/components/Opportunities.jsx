@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import "./Opportunities.scss";
 import { chaveUsuario, lerValorSeguro, salvarValorSeguro } from "../storage.js";
 
@@ -18,25 +18,37 @@ function Oportunidades({ usuarioId }){
   const [filtro,setFiltro]=useState("Todos");
   const [busca,setBusca]=useState("");
   const [participando,setParticipando]=useState(()=>{try{return JSON.parse(lerValorSeguro(chaveParticipando))||[]}catch{return[]}});
-  const [salvos,setSalvos]=useState(()=>{try{return JSON.parse(lerValorSeguro(chaveSalvos))||[]}catch{return[]}});
-  useEffect(() => {
-    salvarValorSeguro(chaveSalvos, JSON.stringify(salvos));
-  }, [chaveSalvos, salvos]);
-  useEffect(() => {
-    salvarValorSeguro(chaveParticipando, JSON.stringify(participando));
-  }, [chaveParticipando, participando]);
+  const [salvos,setSalvos]=useState(()=>{try{const valor=JSON.parse(lerValorSeguro(chaveSalvos));return Array.isArray(valor)?valor:[]}catch{return[]}});
+  const [erroPersistencia,setErroPersistencia]=useState("");
+  function participar(id){
+    const proximos = participando.includes(id) ? participando.filter(item=>item!==id) : [...participando,id];
+    if(!salvarValorSeguro(chaveParticipando, JSON.stringify(proximos))){
+      setErroPersistencia("Não foi possível atualizar sua participação neste navegador. Verifique o armazenamento e tente novamente.");
+      return;
+    }
+    setParticipando(proximos);
+    setErroPersistencia("");
+  }
+  function alternarSalvo(item){
+    const proximos = salvos.some(salvo=>salvo.id===item.id) ? salvos.filter(salvo=>salvo.id!==item.id) : [...salvos,item];
+    if(!salvarValorSeguro(chaveSalvos, JSON.stringify(proximos))){
+      setErroPersistencia("Não foi possível atualizar suas oportunidades salvas neste navegador. Verifique o armazenamento e tente novamente.");
+      return;
+    }
+    setSalvos(proximos);
+    setErroPersistencia("");
+  }
   const lista=useMemo(()=>{
     const termo=busca.trim().toLowerCase();
     return dados.filter(item=>(filtro==="Todos"||item.area===filtro||item.categorias?.includes(filtro))&&(!termo||[item.titulo,item.area,item.tipo,item.modalidade,item.pessoa].join(" ").toLowerCase().includes(termo)));
   },[filtro,busca]);
-  function participar(id){setParticipando(estado=>estado.includes(id)?estado.filter(item=>item!==id):[...estado,id]);}
-  function alternarSalvo(item){setSalvos(estado=>estado.some(salvo=>salvo.id===item.id)?estado.filter(salvo=>salvo.id!==item.id):[...estado,item]);}
 
   return <main className="opportunities-page"><div className="opportunities-container">
     <section className="opportunities-header animate__animated animate__fadeInDown">
       <div><span>MARKETFAESA</span><h1>Oportunidades</h1><p>Encontre projetos, trabalhos e experiências para colocar seus conhecimentos em prática.</p></div>
       <div className="opportunities-count"><strong>{lista.length}</strong><span>encontradas</span></div>
     </section>
+    {erroPersistencia && <p className="opportunities-persistence-error" role="alert">{erroPersistencia}</p>}
     <section className="opportunities-toolbar animate__animated animate__fadeInUp">
       <div className="opportunities-search"><span>⌕</span><input type="search" value={busca} onChange={e=>setBusca(e.target.value)} placeholder="Buscar oportunidades..." aria-label="Buscar oportunidades"/></div>
       <div className="opportunities-filters">{filtros.map(item=><button key={item} type="button" className={filtro===item?"selecionado":""} onClick={()=>setFiltro(item)}>{item}</button>)}</div>
