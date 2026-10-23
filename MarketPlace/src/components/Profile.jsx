@@ -25,6 +25,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
   const [editando, setEditando] = useState(false);
   const [dados, setDados] = useState(() => obterPerfil(usuario));
   const [salvo, setSalvo] = useState(false);
+  const [erroPerfil, setErroPerfil] = useState("");
   const [mostrarConquista, setMostrarConquista] = useState(false);
   const [fotoPerfil, setFotoPerfil] = useState(() => lerJsonUsuario("marketfaesa-foto-perfil", usuario?.id, ""));
   const [erroFoto, setErroFoto] = useState("");
@@ -71,17 +72,28 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
   function alterarCampo(campo, valor) {
     setDados((estado) => ({ ...estado, [campo]: valor }));
     setSalvo(false);
+    setErroPerfil("");
   }
 
   function salvarPerfil() {
     const nome = dados.nome.trim();
-    if (!nome) return;
+    if (!nome) {
+      setErroPerfil("Informe seu nome completo antes de salvar.");
+      return;
+    }
 
     // O e-mail é o login e não muda por aqui; o resto fica salvo localmente (ver src/perfil.js).
     const atualizados = { ...dados, nome };
+    const persistido = onUpdateUsuario?.({ nome, curso: dados.curso, periodo: dados.periodo, cidade: dados.cidade, bio: dados.bio });
+    if (persistido === false) {
+      setErroPerfil("Não foi possível salvar as alterações neste navegador. Verifique o espaço disponível e tente novamente.");
+      setSalvo(false);
+      return;
+    }
+
     setDados(atualizados);
-    onUpdateUsuario?.({ nome, curso: dados.curso, periodo: dados.periodo, cidade: dados.cidade, bio: dados.bio });
     setEditando(false);
+    setErroPerfil("");
     setSalvo(true);
     window.setTimeout(() => setSalvo(false), 2500);
 
@@ -98,6 +110,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
     setDados(obterPerfil(usuario));
     setEditando(false);
     setSalvo(false);
+    setErroPerfil("");
   }
 
   function iniciais(nome) {
@@ -112,7 +125,8 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
           <button className="page-back-button perfil-back-button" type="button" onClick={() => onNavigate("inicio")}>← Voltar ao início</button>
         </section>
 
-        {salvo && <div className="perfil-save-feedback">✓ Perfil atualizado e salvo</div>}
+        {salvo && <div className="perfil-save-feedback" role="status">✓ Perfil atualizado e salvo</div>}
+        {erroPerfil && <div className="perfil-form-error" role="alert">{erroPerfil}</div>}
 
         {mostrarConquista && (
           <div className="perfil-completo-overlay" role="dialog" aria-modal="true">
