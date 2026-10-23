@@ -26,3 +26,6 @@
 .chat-data{max-width:100%;text-align:center}
 [data-theme="dark"] .mensagens-demo-aviso strong{color:#fff}
 @media(max-width:600px){.mensagens-demo-aviso{gap:9px;margin-bottom:9px;padding:10px;border-radius:11px}.mensagens-demo-aviso>span{flex-basis:26px;width:26px;height:26px}.mensagens-demo-aviso strong{font-size:10px}.mensagens-demo-aviso p{font-size:9px}}
+
+.mensagens-persistence-error{margin:0 0 12px;padding:11px 14px;border:1px solid #c94b4b;border-radius:10px;background:rgba(201,75,75,.08);color:#a52828;font-size:12px;line-height:1.45}
+[data-theme="dark"] .mensagens-persistence-error{color:#ffb4b4;border-color:#a94b4b;background:rgba(201,75,75,.12)}
