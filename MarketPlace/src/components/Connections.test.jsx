@@ -48,7 +48,7 @@ describe("Conexões", () => {
     });
 
     render(<Connections usuarioId="conta-a" />);
-    await user.click(screen.getByRole("button", { name: /Encontrar pessoas/ }));
+    await user.click(within(screen.getByRole("navigation", { name: "Seções de conexões" })).getByRole("button", { name: /Encontrar pessoas/ }));
     await user.click(screen.getAllByRole("button", { name: "+ Conectar" })[0]);
 
     expect(screen.getByRole("alert")).toHaveTextContent(
@@ -75,7 +75,7 @@ describe("Conexões", () => {
     const user = userEvent.setup();
     render(<Connections usuarioId="conta-b" />);
 
-    await user.click(screen.getByRole("button", { name: /Encontrar pessoas/ }));
+    await user.click(within(screen.getByRole("navigation", { name: "Seções de conexões" })).getByRole("button", { name: /Encontrar pessoas/ }));
     await user.click(screen.getAllByRole("button", { name: "+ Conectar" })[0]);
 
     expect(JSON.parse(localStorage.getItem("marketfaesa-conexoes:conta-a"))).toEqual([2]);
