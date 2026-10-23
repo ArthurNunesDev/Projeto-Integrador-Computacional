@@ -22,6 +22,32 @@ afterEach(() => {
 });
 
 describe("Página inicial — persistência das oportunidades", () => {
+  it("ignora oportunidades salvas inválidas sem quebrar a página inicial", () => {
+    localStorage.setItem("marketfaesa-salvos:conta-a", JSON.stringify([
+      null,
+      42,
+      { id: 1 },
+      {
+        icon: "💻",
+        tipo: "PROJETO",
+        titulo: "Desenvolvimento de App para Clínica",
+        area: "Saúde + TI",
+        categorias: ["Saúde", "Tecnologia"],
+        modalidade: "Remoto",
+        pessoa: "Maria Lima",
+        curso: "Medicina",
+        id: 1,
+        inicial: "ML",
+        descricao: "Apoio na criação de um aplicativo para organização de atendimentos.",
+      },
+    ]));
+
+    render(<Body usuario={usuario} onNavigate={vi.fn()} />);
+
+    expect(screen.getByRole("button", { name: "Remover dos salvos" })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Salvar oportunidade" })).toHaveLength(3);
+  });
+
   it("não marca oportunidade como salva quando o armazenamento falha", async () => {
     vi.spyOn(storage, "salvarValorSeguro").mockReturnValue(false);
     const user = userEvent.setup();
