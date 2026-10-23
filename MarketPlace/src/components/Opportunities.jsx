@@ -12,11 +12,11 @@ const dados = [
 ];
 const filtros=["Todos","Tecnologia","Saúde","Direito","Engenharia","Administração","Design"];
 
-function Oportunidades({ usuarioId }){
+function Oportunidades({ usuarioId, initialSearch = "" }){
   const chaveSalvos = chaveUsuario("marketfaesa-salvos", usuarioId);
   const chaveParticipando = chaveUsuario("marketfaesa-participando", usuarioId);
   const [filtro,setFiltro]=useState("Todos");
-  const [busca,setBusca]=useState("");
+  const [busca,setBusca]=useState(initialSearch);
   const [participando,setParticipando]=useState(()=>{try{return JSON.parse(lerValorSeguro(chaveParticipando))||[]}catch{return[]}});
   const [salvos,setSalvos]=useState(()=>{try{const valor=JSON.parse(lerValorSeguro(chaveSalvos));return Array.isArray(valor)?valor:[]}catch{return[]}});
   const [erroPersistencia,setErroPersistencia]=useState("");
