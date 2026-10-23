@@ -109,6 +109,7 @@ function App() {
   const [restaurando, setRestaurando] = useState(false);
   const [erroSessao, setErroSessao] = useState("");
   const [avisoLogin, setAvisoLogin] = useState("");
+  const [buscaInicialOportunidades, setBuscaInicialOportunidades] = useState("");
   const [pagina, setPagina] = useState(() => {
     const sessao = obterSessaoLocal();
     try {
@@ -314,10 +315,21 @@ function App() {
     });
   }
 
+  function buscarOportunidades(termo) {
+    setBuscaInicialOportunidades(termo);
+    navegarPara("oportunidades");
+  }
+
   function renderizarPagina() {
     switch (pagina) {
       case "oportunidades":
-        return <Oportunidades usuarioId={usuario?.id} />;
+        return (
+          <Oportunidades
+            key={buscaInicialOportunidades}
+            usuarioId={usuario?.id}
+            initialSearch={buscaInicialOportunidades}
+          />
+        );
 
       case "habilidades":
         return <PeopleSkills onNavigate={navegarPara} usuarioId={usuario?.id} />;
@@ -421,6 +433,7 @@ function App() {
       <Header
         paginaAtual={pagina}
         onNavigate={navegarPara}
+        onSearch={buscarOportunidades}
         usuario={usuario}
         onLogout={fazerLogout}
       />
