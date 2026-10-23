@@ -68,7 +68,6 @@ function Body({ onNavigate, usuario }) {
       }
     };
 
-    atualizarProgresso();
     window.addEventListener("storage", atualizarProgresso);
     window.addEventListener("marketfaesa-perfil-atualizado", atualizarProgresso);
 
