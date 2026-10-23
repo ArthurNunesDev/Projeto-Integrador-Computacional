@@ -63,6 +63,30 @@ describe("autenticação local demonstrativa", () => {
     });
   });
 
+  it("ignora contas corrompidas ao cadastrar e autenticar", async () => {
+    localStorage.setItem("marketfaesa-users", JSON.stringify([
+      null,
+      42,
+      { email: "incompleto@example.com" },
+      { id: "conta-valida", email: "valida@example.com", senha: "segredo123", nome: "Conta Válida" },
+    ]));
+
+    await expect(cadastrar({ nome: "Ana Souza", email: "ana@example.com", senha: "segredo123" }))
+      .resolves.toMatchObject({ usuario: { email: "ana@example.com" } });
+    await expect(login({ email: "valida@example.com", senha: "errada" }))
+      .rejects.toMatchObject({ status: 401 });
+    await expect(login({ email: "valida@example.com", senha: "segredo123" }))
+      .resolves.toMatchObject({ usuario: { id: "conta-valida", email: "valida@example.com" } });
+  });
+
+  it("recusa restaurar uma sessão que não contém identidade válida", () => {
+    localStorage.setItem("marketfaesa-auth", JSON.stringify({ nome: "Sessão incompleta" }));
+    expect(obterSessaoLocal()).toBeNull();
+
+    localStorage.setItem("marketfaesa-auth", JSON.stringify([{ id: "conta-a", nome: "Ana", email: "ana@example.com" }]));
+    expect(obterSessaoLocal()).toBeNull();
+  });
+
   it("valida a senha antes de cadastrar", async () => {
     render(<App />);
 
