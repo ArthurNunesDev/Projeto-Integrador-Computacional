@@ -123,8 +123,8 @@ function App() {
     if (!sessao?.id) return { ...CONFIG_PADRAO };
 
     const salvo = lerJsonUsuario(CHAVE_CONFIGURACOES, sessao.id, {});
-    const { tema: temaSalvo, ...resto } = salvo && typeof salvo === "object" && !Array.isArray(salvo) ? salvo : {};
-    return normalizarConfiguracoes(resto);
+    const origem = salvo && typeof salvo === "object" && !Array.isArray(salvo) ? salvo : {};
+    return normalizarConfiguracoes(origem);
   });
   const [configuracoesCarregadas, setConfiguracoesCarregadas] = useState(true);
   const [erroCarregarConfiguracoes, setErroCarregarConfiguracoes] = useState("");
