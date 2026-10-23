@@ -141,6 +141,22 @@ describe("autenticação local demonstrativa", () => {
     expect(
       screen.queryByRole("heading", { name: "Desenvolvimento de App para Clínica" }),
     ).not.toBeInTheDocument();
+
+    const buscaDaPagina = screen.getByRole("searchbox", { name: "Buscar oportunidades" });
+    await user.clear(buscaDaPagina);
+    await user.type(buscaDaPagina, "Clínica");
+    expect(
+      screen.getByRole("heading", { name: "Desenvolvimento de App para Clínica" }),
+    ).toBeInTheDocument();
+
+    await user.click(buscaGlobal);
+    await user.keyboard("{Enter}");
+    expect(
+      screen.getByRole("heading", { name: "Revisão Jurídica de Contratos Digitais" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Desenvolvimento de App para Clínica" }),
+    ).not.toBeInTheDocument();
   });
 
   it("continua renderizando após sair de Oportunidades pelo menu principal", async () => {
