@@ -86,6 +86,7 @@ describe("confirmação de exclusão de publicações", () => {
 
     expect(screen.queryByRole("heading", { name: "React" })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Você ainda não publicou nada" })).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem("marketfaesa-habilidades:conta-a"))).toEqual([]);
   });
 });
 
