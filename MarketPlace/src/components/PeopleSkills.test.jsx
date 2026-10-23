@@ -14,6 +14,17 @@ afterEach(() => {
 });
 
 describe("conexões em Habilidades", () => {
+  it("ignora valores inválidos ao ler conexões persistidas", async () => {
+    localStorage.setItem("marketfaesa-conexoes:conta-a", JSON.stringify([null, {}, "1", 999, 2]));
+    const user = userEvent.setup();
+    render(<PeopleSkills usuarioId="conta-a" />);
+
+    await user.click(screen.getByRole("button", { name: /Lucas Martins/ }));
+
+    expect(screen.getByRole("button", { name: "✓ Conectado" })).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("salva a conexão por conta e atualiza o botão", async () => {
     const user = userEvent.setup();
     render(<PeopleSkills usuarioId="conta-a" />);
