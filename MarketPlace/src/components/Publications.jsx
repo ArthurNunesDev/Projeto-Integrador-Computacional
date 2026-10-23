@@ -3,10 +3,24 @@ import { chaveUsuario, lerValorSeguro, salvarValorSeguro } from "../storage.js";
 
 const CHAVE = "marketfaesa-habilidades";
 
+function publicacaoValida(item) {
+  return Boolean(
+    item &&
+    typeof item === "object" &&
+    !Array.isArray(item) &&
+    (typeof item.id === "string" || typeof item.id === "number") &&
+    typeof item.nome === "string" &&
+    typeof item.categoria === "string" &&
+    typeof item.nivel === "string" &&
+    typeof item.descricao === "string" &&
+    typeof item.disponibilidade === "string"
+  );
+}
+
 function lerPublicacoes(chave) {
   try {
     const dados = JSON.parse(lerValorSeguro(chave));
-    return Array.isArray(dados) ? dados : [];
+    return Array.isArray(dados) ? dados.filter(publicacaoValida) : [];
   } catch {
     return [];
   }
