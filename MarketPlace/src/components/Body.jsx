@@ -14,6 +14,33 @@ function conclusaoPerfilPendente(usuario) {
   return Boolean(chave) && lerValorSeguro(chave) === "1";
 }
 
+function lerArraySeguro(chave) {
+  try {
+    const dados = JSON.parse(lerValorSeguro(chave));
+    return Array.isArray(dados) ? dados : [];
+  } catch {
+    return [];
+  }
+}
+
+function oportunidadeSalvaValida(item) {
+  return Boolean(
+    item &&
+    typeof item === "object" &&
+    !Array.isArray(item) &&
+    Number.isInteger(item.id) &&
+    typeof item.titulo === "string" &&
+    typeof item.tipo === "string" &&
+    typeof item.area === "string" &&
+    typeof item.modalidade === "string" &&
+    typeof item.pessoa === "string" &&
+    typeof item.curso === "string" &&
+    typeof item.inicial === "string" &&
+    typeof item.icon === "string" &&
+    typeof item.descricao === "string"
+  );
+}
+
 function Body({ onNavigate, usuario }) {
   const nomeUsuario = usuario?.nome || "João Silva";
   const cursoUsuario = usuario?.curso || "Ciência da Computação";
@@ -22,14 +49,12 @@ function Body({ onNavigate, usuario }) {
   const [areaSelecionada, setAreaSelecionada] = useState("Todos");
   const chaveParticipando = chaveUsuario("marketfaesa-participando", usuario?.id);
   const chaveSalvos = chaveUsuario("marketfaesa-salvos", usuario?.id);
-  const [participando, setParticipando] = useState(() => { try { return JSON.parse(lerValorSeguro(chaveParticipando)) || []; } catch { return []; } });
+  const [participando, setParticipando] = useState(() => [...new Set(lerArraySeguro(chaveParticipando).filter((id) => Number.isInteger(id) && id > 0))]);
   const [detalheAberto, setDetalheAberto] = useState(null);
   const [perfilProgresso, setPerfilProgresso] = useState(() => (conclusaoPerfilPendente(usuario) || conquistaPerfilExibida(usuario) ? 100 : calcularProgressoPerfil(usuario)));
   const [perfilConcluido, setPerfilConcluido] = useState(() => conquistaPerfilExibida(usuario) || conclusaoPerfilPendente(usuario) || calcularProgressoPerfil(usuario) === 100);
   const [mostrarPerfilCompleto, setMostrarPerfilCompleto] = useState(() => conclusaoPerfilPendente(usuario));
-  const [salvos, setSalvos] = useState(() => {
-    try { return JSON.parse(lerValorSeguro(chaveSalvos)) || []; } catch { return []; }
-  });
+  const [salvos, setSalvos] = useState(() => lerArraySeguro(chaveSalvos).filter(oportunidadeSalvaValida));
   const [erroArmazenamento, setErroArmazenamento] = useState("");
 
   useEffect(() => {
