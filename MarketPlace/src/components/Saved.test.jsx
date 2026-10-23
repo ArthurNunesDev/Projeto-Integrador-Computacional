@@ -85,7 +85,8 @@ describe("Salvos", () => {
     const onNavigate = vi.fn();
     render(<Salvos usuarioId="conta-a" onNavigate={onNavigate} />);
 
-    await user.click(screen.getByRole("button", { name: "Ver oportunidade" }));
+    const card = screen.getByRole("heading", { name: oportunidadeA.titulo }).closest("article");
+    await user.click(within(card).getByRole("button", { name: "Ver oportunidade" }));
     expect(onNavigate).toHaveBeenLastCalledWith("oportunidades");
 
     await user.click(screen.getByRole("button", { name: /Explorar oportunidades/ }));
