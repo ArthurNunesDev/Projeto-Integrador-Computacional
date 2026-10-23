@@ -38,13 +38,9 @@ function Body({ onNavigate, usuario }) {
     const pendente = conclusaoPerfilPendente(usuario);
     const progressoInicial = calcularProgressoPerfil(usuario);
 
-    if (pendente || progressoInicial === 100) {
+    if (pendente || progressoInicial === 100 || jaConcluido) {
+      // O estado inicial já considera estes valores; aqui só persistimos a conquista.
       marcarConquistaPerfilExibida(usuario);
-      setPerfilConcluido(true);
-      setPerfilProgresso(100);
-    } else if (jaConcluido) {
-      setPerfilConcluido(true);
-      setPerfilProgresso(100);
     }
 
     if (pendente) {
