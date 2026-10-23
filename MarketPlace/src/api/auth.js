@@ -6,7 +6,15 @@ const CHAVE_SESSAO = 'marketfaesa-auth'
 function lerUsuarios() {
   try {
     const usuarios = JSON.parse(localStorage.getItem(CHAVE_USUARIOS) || '[]')
-    return Array.isArray(usuarios) ? usuarios : []
+    if (!Array.isArray(usuarios)) return []
+    return usuarios.filter((usuario) =>
+      usuario &&
+      typeof usuario === 'object' &&
+      !Array.isArray(usuario) &&
+      (typeof usuario.id === 'string' || typeof usuario.id === 'number') &&
+      typeof usuario.email === 'string' &&
+      typeof usuario.senha === 'string',
+    )
   } catch {
     return []
   }
@@ -24,7 +32,15 @@ function normalizarEmail(email) {
 export function obterSessaoLocal() {
   try {
     const usuario = JSON.parse(localStorage.getItem(CHAVE_SESSAO) || 'null')
-    return usuario && typeof usuario === 'object' ? usuario : null
+    if (
+      !usuario ||
+      typeof usuario !== 'object' ||
+      Array.isArray(usuario) ||
+      (typeof usuario.id !== 'string' && typeof usuario.id !== 'number') ||
+      typeof usuario.nome !== 'string' ||
+      typeof usuario.email !== 'string'
+    ) return null
+    return usuario
   } catch {
     return null
   }
