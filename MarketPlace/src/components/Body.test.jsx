@@ -27,7 +27,7 @@ describe("Página inicial — persistência das oportunidades", () => {
     const user = userEvent.setup();
     render(<Body usuario={usuario} onNavigate={vi.fn()} />);
 
-    await user.click(screen.getByRole("button", { name: "Salvar oportunidade" }));
+    await user.click(screen.getAllByRole("button", { name: "Salvar oportunidade" })[0]);
 
     expect(screen.getByRole("alert")).toHaveTextContent("Não foi possível salvar esta alteração");
     expect(screen.getByRole("button", { name: "Salvar oportunidade" })).toBeInTheDocument();
