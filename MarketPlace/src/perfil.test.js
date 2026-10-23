@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { conquistaPerfilExibida, marcarConquistaPerfilExibida, montarUsuario } from "./perfil.js";
+import { calcularProgressoPerfil, conquistaPerfilExibida, marcarConquistaPerfilExibida, montarUsuario } from "./perfil.js";
 
 const API = { id: 7, nome: "Ana", email: "Ana@Faesa.br", curso: null, periodo: null };
 
@@ -27,6 +27,15 @@ describe("montarUsuario", () => {
   });
 });
 
+
+describe("progresso do perfil", () => {
+  it("não falha quando habilidades salvas contêm registros inválidos", () => {
+    const usuario = { id: 7, nome: "Ana", email: "ana@faesa.br", curso: "ADS", periodo: "3º", cidade: "Vitória", bio: "Olá" };
+    localStorage.setItem("marketfaesa-habilidades:7", JSON.stringify([null, 42, { nome: 7 }, { nome: "React" }]));
+
+    expect(calcularProgressoPerfil(usuario)).toBe(100);
+  });
+});
 
 describe("conquista de perfil completo", () => {
   it("mantém a conquista registrada mesmo se os dados do perfil forem removidos depois", () => {
