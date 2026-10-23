@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-function Header({ paginaAtual, onNavigate, usuario, onLogout }) {
+function Header({ paginaAtual, onNavigate, onSearch, usuario, onLogout }) {
   const [menuAberto, setMenuAberto] = useState(false);
   const [perfilMenuAberto, setPerfilMenuAberto] = useState(false);
   const perfilMenuRef = useRef(null);
@@ -50,7 +50,14 @@ function Header({ paginaAtual, onNavigate, usuario, onLogout }) {
           </span>
         </button>
 
-        <div className="campo">
+        <form
+          className="campo"
+          role="search"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSearch?.(event.currentTarget.elements.busca.value.trim());
+          }}
+        >
           <div className="campo-busca-wrapper">
             <span className="campo-busca-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24">
@@ -58,9 +65,15 @@ function Header({ paginaAtual, onNavigate, usuario, onLogout }) {
                 <path d="M16 16L21 21" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </span>
-            <input type="text" placeholder="Buscar freelas, monitorias, aulas" className="campo-busca" />
+            <input
+              type="search"
+              name="busca"
+              placeholder="Buscar freelas, monitorias, aulas"
+              className="campo-busca"
+              aria-label="Buscar oportunidades no MarketFAESA"
+            />
           </div>
-        </div>
+        </form>
 
         <div className="div-icons">
           <button className="header-icon-button notification-button" type="button" aria-label="Notificações">
