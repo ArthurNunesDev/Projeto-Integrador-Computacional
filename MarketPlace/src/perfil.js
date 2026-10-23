@@ -38,8 +38,8 @@ function migrarPerfilPorEmail(id, email) {
   }
 }
 
-/** Guarda as edições locais do perfil e devolve só os campos editáveis aplicados. */
-export function salvarPerfilLocal(id, dados) {
+/** Persiste as edições locais e informa se a gravação realmente foi concluída. */
+export function persistirPerfilLocal(id, dados) {
   const aplicados = {};
   for (const campo of CAMPOS_EDITAVEIS) {
     if (typeof dados?.[campo] === "string") aplicados[campo] = dados[campo];
@@ -47,11 +47,16 @@ export function salvarPerfilLocal(id, dados) {
 
   try {
     localStorage.setItem(chavePerfil(id), JSON.stringify({ ...lerPerfilLocal(id), ...aplicados }));
+    return { sucesso: true, aplicados };
   } catch {
-    // sem storage as edições valem só nesta sessão
+    return { sucesso: false, aplicados: {} };
   }
+}
 
-  return aplicados;
+/** Mantém a API anterior para chamadas que só precisam dos campos aplicados. */
+export function salvarPerfilLocal(id, dados) {
+  const resultado = persistirPerfilLocal(id, dados);
+  return resultado.aplicados;
 }
 
 export function formatarPeriodo(periodo) {
