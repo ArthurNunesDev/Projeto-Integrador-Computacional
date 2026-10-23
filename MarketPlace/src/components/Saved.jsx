@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { chaveUsuario, lerValorSeguro, salvarValorSeguro } from "../storage.js";
 
 const CHAVE_SALVOS = "marketfaesa-salvos";
@@ -16,10 +16,7 @@ function Salvos({ onNavigate, usuarioId }) {
   const chave = chaveUsuario(CHAVE_SALVOS, usuarioId);
   const [salvos, setSalvos] = useState(() => lerSalvos(chave));
   const [busca, setBusca] = useState("");
-
-  useEffect(() => {
-    salvarValorSeguro(chave, JSON.stringify(salvos));
-  }, [chave, salvos]);
+  const [erroPersistencia, setErroPersistencia] = useState("");
 
   const filtrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
@@ -33,7 +30,13 @@ function Salvos({ onNavigate, usuarioId }) {
   }, [busca, salvos]);
 
   function remover(id) {
-    setSalvos((estado) => estado.filter((item) => item.id !== id));
+    const proximos = salvos.filter((item) => item.id !== id);
+    if (!salvarValorSeguro(chave, JSON.stringify(proximos))) {
+      setErroPersistencia("Não foi possível remover esta oportunidade dos salvos. Verifique o armazenamento do navegador e tente novamente.");
+      return;
+    }
+    setSalvos(proximos);
+    setErroPersistencia("");
   }
 
   return (
@@ -50,6 +53,8 @@ function Salvos({ onNavigate, usuarioId }) {
             <span>{salvos.length === 1 ? "oportunidade salva" : "oportunidades salvas"}</span>
           </div>
         </section>
+
+        {erroPersistencia && <p className="saved-persistence-error" role="alert">{erroPersistencia}</p>}
 
         <section className="saved-toolbar animate__animated animate__fadeInUp">
           <div className="saved-search">
