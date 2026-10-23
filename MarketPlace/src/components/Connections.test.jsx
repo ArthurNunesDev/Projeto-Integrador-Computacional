@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import Connections from "./Connections.jsx";
@@ -28,7 +28,7 @@ describe("Conexões", () => {
     const user = userEvent.setup();
     render(<Connections usuarioId="conta-a" />);
 
-    await user.click(screen.getByRole("button", { name: /Encontrar pessoas/ }));
+    await user.click(within(screen.getByRole("navigation", { name: "Seções de conexões" })).getByRole("button", { name: /Encontrar pessoas/ }));
     const botoesConectar = screen.getAllByRole("button", { name: "+ Conectar" });
     await user.click(botoesConectar[0]);
 
