@@ -607,3 +607,331 @@
     font-size: 11px;
   }
 }
+
+
+/* Layout desktop do perfil: avatar, identificação e ações em áreas distintas. */
+@media (min-width: 851px) {
+  .perfil-page {
+    padding: 36px clamp(24px, 3vw, 48px) 64px;
+  }
+
+  .perfil-container {
+    width: min(1240px, 100%);
+  }
+
+  .perfil-page-header {
+    align-items: center;
+    margin-bottom: 26px;
+  }
+
+  .perfil-page-header h1 {
+    font-size: clamp(28px, 2.4vw, 36px);
+    letter-spacing: -0.7px;
+  }
+
+  .perfil-page-header p {
+    max-width: 620px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .perfil-main-card {
+    padding: 30px 32px 24px;
+    border-radius: 22px;
+  }
+
+  .perfil-main-top {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 28px;
+  }
+
+  .perfil-avatar-area {
+    width: 150px;
+    min-width: 0;
+    align-self: center;
+  }
+
+  .perfil-avatar-large {
+    width: 112px;
+    height: 112px;
+    font-size: 30px;
+  }
+
+  .perfil-photo-actions {
+    width: 100%;
+    max-width: 150px;
+    gap: 7px;
+  }
+
+  .perfil-photo-upload,
+  .perfil-photo-remove {
+    min-height: 32px;
+    padding: 7px 11px;
+    font-size: 10px;
+  }
+
+  .perfil-photo-optional {
+    font-size: 10px;
+  }
+
+  .perfil-photo-error {
+    max-width: 150px;
+    font-size: 11px;
+  }
+
+  .perfil-main-info {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .perfil-main-info h2 {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    color: var(--mf-text);
+    font-size: clamp(22px, 2vw, 28px);
+    line-height: 1.25;
+    letter-spacing: -0.45px;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+
+  .perfil-main-info h2 .perfil-visibility-badge {
+    display: inline-flex;
+    align-items: center;
+    width: auto;
+    margin: 0;
+    padding: 6px 10px;
+    font-size: 10px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .perfil-main-info > span {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  .perfil-main-info > .perfil-meta:not(.perfil-meta-editando) {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px 20px;
+    width: 100%;
+    margin: 0;
+    text-align: left;
+  }
+
+  .perfil-main-info > .perfil-meta:not(.perfil-meta-editando) > span {
+    font-size: 12px;
+    line-height: 1.5;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+
+  .perfil-main-info > .perfil-edit-field {
+    width: 100%;
+  }
+
+  .perfil-edit-field > span {
+    font-size: 12px;
+  }
+
+  .perfil-edit-field .perfil-name-input,
+  .perfil-edit-field .perfil-inline-input,
+  .perfil-edit-field .perfil-bio-input {
+    min-height: 42px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+  }
+
+  .perfil-meta-editando {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin: 0;
+  }
+
+  .perfil-actions {
+    align-self: start;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    max-width: 190px;
+    padding-top: 2px;
+  }
+
+  .perfil-actions .perfil-button {
+    min-height: 42px;
+    padding: 11px 16px;
+    border-radius: 12px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .perfil-statistics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 26px;
+    padding-top: 22px;
+  }
+
+  .perfil-stat strong {
+    font-size: 24px;
+  }
+
+  .perfil-stat span {
+    font-size: 11px;
+  }
+
+  .perfil-grid {
+    grid-template-columns: minmax(0, 1fr) 310px;
+    gap: 24px;
+    margin-top: 24px;
+  }
+
+  .perfil-column-main,
+  .perfil-column-side {
+    gap: 20px;
+    min-width: 0;
+  }
+
+  .perfil-section-card,
+  .perfil-side-card {
+    padding: 26px;
+    border-radius: 18px;
+  }
+
+  .perfil-section-heading {
+    margin-bottom: 18px;
+  }
+
+  .perfil-section-heading h3,
+  .perfil-side-title h3,
+  .perfil-quick-actions h3 {
+    font-size: 18px;
+  }
+
+  .perfil-section-heading span,
+  .perfil-side-title span {
+    font-size: 10px;
+  }
+
+  .perfil-section-link {
+    font-size: 12px;
+  }
+
+  .perfil-bio {
+    font-size: 14px;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+  }
+
+  .perfil-skills,
+  .perfil-interests {
+    gap: 10px;
+  }
+
+  .perfil-skill {
+    padding: 9px 13px;
+    font-size: 12px;
+  }
+
+  .perfil-interest {
+    gap: 9px;
+    font-size: 13px;
+  }
+
+  .perfil-interest-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .perfil-information-item {
+    padding: 15px 0;
+  }
+
+  .perfil-information-item span {
+    margin-bottom: 6px;
+    font-size: 11px;
+  }
+
+  .perfil-information-item strong {
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .perfil-completion-card {
+    padding: 20px;
+    gap: 12px;
+  }
+
+  .perfil-completion-card strong {
+    font-size: 13px;
+  }
+
+  .perfil-completion-card p {
+    font-size: 11px;
+    line-height: 1.6;
+  }
+
+  .perfil-completion-card > button {
+    padding: 8px 12px;
+    font-size: 11px;
+  }
+
+  .perfil-quick-actions {
+    gap: 8px;
+  }
+
+  .perfil-quick-actions button {
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 12px;
+    font-size: 12px;
+  }
+}
+
+@media (min-width: 851px) and (max-width: 1100px) {
+  .perfil-main-top {
+    grid-template-columns: 125px minmax(0, 1fr) auto;
+    gap: 20px;
+  }
+
+  .perfil-avatar-area {
+    width: 125px;
+  }
+
+  .perfil-avatar-large {
+    width: 100px;
+    height: 100px;
+  }
+
+  .perfil-actions {
+    max-width: 160px;
+  }
+
+  .perfil-actions .perfil-button {
+    padding-inline: 12px;
+  }
+
+  .perfil-grid {
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 18px;
+  }
+
+  .perfil-section-card,
+  .perfil-side-card {
+    padding: 22px;
+  }
+}
