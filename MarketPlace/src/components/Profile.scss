@@ -477,3 +477,133 @@
 .perfil-form-error{margin:0 0 16px;padding:12px 14px;border:1px solid #c94b4b;border-radius:10px;background:rgba(201,75,75,.08);color:#a52828;font-size:12px;line-height:1.5}
 .perfil-save-feedback[role="status"]{margin-bottom:16px}
 [data-theme="dark"] .perfil-form-error{color:#ffb4b4;border-color:#a94b4b;background:rgba(201,75,75,.12)}
+
+
+/* Corrige a quebra dos campos de edição em larguras intermediárias. */
+.perfil-main-top {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 18px;
+}
+
+.perfil-main-info {
+  min-width: 0;
+}
+
+.perfil-main-info h2 {
+  overflow-wrap: anywhere;
+}
+
+.perfil-edit-field {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+  color: var(--mf-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.perfil-edit-field > span {
+  display: block;
+  line-height: 1.4;
+}
+
+.perfil-edit-field .perfil-name-input,
+.perfil-edit-field .perfil-inline-input,
+.perfil-edit-field .perfil-bio-input {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.perfil-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 12px;
+}
+
+.perfil-meta .perfil-edit-field {
+  width: 100%;
+}
+
+.perfil-inline-input.small {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.perfil-actions {
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.perfil-actions .perfil-button {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.perfil-information-item strong {
+  display: block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  line-height: 1.5;
+}
+
+.perfil-skill,
+.perfil-interest,
+.perfil-quick-actions button {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1000px) {
+  .perfil-main-top {
+    grid-template-columns: 76px minmax(0, 1fr);
+  }
+
+  .perfil-actions {
+    grid-column: 2;
+    width: 100%;
+  }
+}
+
+@media (max-width: 850px) {
+  .perfil-main-top {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .perfil-actions {
+    grid-column: 1;
+  }
+
+  .perfil-main-info {
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .perfil-meta {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .perfil-main-top {
+    gap: 12px;
+  }
+
+  .perfil-actions .perfil-button {
+    flex: 1 1 140px;
+  }
+
+  .perfil-information-item strong {
+    font-size: 11px;
+  }
+}
