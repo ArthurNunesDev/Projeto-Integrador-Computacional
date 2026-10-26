@@ -38,6 +38,7 @@ function Header({ paginaAtual, onNavigate, onSearch, usuario, onLogout }) {
           onClick={() => {
             setMenuAberto((estado) => !estado);
             setPerfilMenuAberto(false);
+            setNotificacoesAbertas(false);
           }}
         >
           <span className="menu-lines"><span></span><span></span><span></span></span>
