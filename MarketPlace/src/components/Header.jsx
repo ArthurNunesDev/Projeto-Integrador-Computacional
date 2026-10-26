@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 function Header({ paginaAtual, onNavigate, onSearch, usuario, onLogout }) {
   const [menuAberto, setMenuAberto] = useState(false);
   const [perfilMenuAberto, setPerfilMenuAberto] = useState(false);
+  const [notificacoesAbertas, setNotificacoesAbertas] = useState(false);
   const perfilMenuRef = useRef(null);
   const baseUrl = import.meta.env.BASE_URL;
   const nome = usuario?.nome || "João Silva";
@@ -21,6 +22,7 @@ function Header({ paginaAtual, onNavigate, onSearch, usuario, onLogout }) {
 
   function navegar(pagina) {
     setPerfilMenuAberto(false);
+    setNotificacoesAbertas(false);
     setMenuAberto(false);
     onNavigate(pagina);
   }
@@ -76,10 +78,36 @@ function Header({ paginaAtual, onNavigate, onSearch, usuario, onLogout }) {
         </form>
 
         <div className="div-icons">
-          <button className="header-icon-button notification-button" type="button" aria-label="Notificações">
-            <span className="notification-icon" aria-hidden="true">♢</span>
-            <span className="notification-dot"></span>
-          </button>
+          <div className="notification-menu-wrapper">
+            <button
+              className={`header-icon-button notification-button ${notificacoesAbertas ? "ativo" : ""}`}
+              type="button"
+              aria-label="Notificações"
+              aria-expanded={notificacoesAbertas}
+              aria-controls="notification-panel"
+              onClick={() => {
+                setNotificacoesAbertas((estado) => !estado);
+                setPerfilMenuAberto(false);
+                setMenuAberto(false);
+              }}
+            >
+              <img className="notification-icon" src={`${baseUrl}Imagens/Sino.svg`} alt="" />
+            </button>
+
+            {notificacoesAbertas && (
+              <section className="notification-panel" id="notification-panel" aria-label="Painel de notificações">
+                <div className="notification-panel__header">
+                  <strong>Notificações</strong>
+                  <span>MarketFAESA</span>
+                </div>
+                <div className="notification-panel__empty" role="status">
+                  <span className="notification-panel__empty-icon" aria-hidden="true">♢</span>
+                  <strong>Nenhuma notificação</strong>
+                  <p>Quando houver novidades, elas aparecerão aqui.</p>
+                </div>
+              </section>
+            )}
+          </div>
 
           <div className="profile-menu-wrapper" ref={perfilMenuRef}>
             <button
@@ -89,6 +117,7 @@ function Header({ paginaAtual, onNavigate, onSearch, usuario, onLogout }) {
               aria-expanded={perfilMenuAberto}
               onClick={() => {
                 setPerfilMenuAberto((estado) => !estado);
+                setNotificacoesAbertas(false);
                 setMenuAberto(false);
               }}
             >
