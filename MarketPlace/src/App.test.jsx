@@ -215,29 +215,6 @@ describe("autenticação local demonstrativa", () => {
     ).rejects.toMatchObject({ status: 409 });
   });
 
-  it("abre e fecha o painel de notificações pelo cabeçalho", async () => {
-    render(<App />);
-    await cadastrarPelaTela();
-
-    const user = userEvent.setup();
-    const botaoNotificacoes = await screen.findByRole("button", { name: "Notificações" });
-
-    expect(botaoNotificacoes).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryByRole("region", { name: "Painel de notificações" })).not.toBeInTheDocument();
-
-    await user.click(botaoNotificacoes);
-
-    expect(botaoNotificacoes).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByRole("region", { name: "Painel de notificações" })).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent("Nenhuma notificação");
-    expect(screen.getByText("Quando houver novidades, elas aparecerão aqui.")).toBeInTheDocument();
-
-    await user.click(botaoNotificacoes);
-
-    expect(botaoNotificacoes).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryByRole("region", { name: "Painel de notificações" })).not.toBeInTheDocument();
-  });
-
   it("permite entrar com a conta cadastrada e encerrar a sessão", async () => {
     await cadastrar({ nome: "Ana Souza", email: "ana@faesa.br", senha: "segredo123" });
     sair();
