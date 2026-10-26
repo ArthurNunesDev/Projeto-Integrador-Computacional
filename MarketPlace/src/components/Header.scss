@@ -430,3 +430,78 @@
   border-color: #D98324;
   box-shadow: 0 0 0 3px rgba(217, 131, 36, .2);
 }
+
+
+/* Painel de notificações: contraste e interação nos dois temas. */
+.notification-button {
+  transition: background-color .18s ease, box-shadow .18s ease;
+}
+.notification-button:focus-visible {
+  outline: 3px solid var(--mf-orange);
+  outline-offset: 3px;
+}
+.notification-panel {
+  background: var(--mf-surface);
+  color: var(--mf-text);
+  border-color: var(--mf-border);
+  box-shadow: 0 18px 48px rgba(30, 39, 97, .16);
+  animation: notificationPanelIn .16s ease-out;
+}
+.notification-panel__header {
+  background: var(--mf-surface);
+  border-bottom-color: var(--mf-border);
+}
+.notification-panel__header strong,
+.notification-panel__empty strong {
+  color: var(--mf-text);
+}
+.notification-panel__header span,
+.notification-panel__empty p {
+  color: var(--mf-muted);
+}
+.notification-panel__empty-icon {
+  background: var(--mf-light);
+  color: var(--mf-navy);
+}
+@keyframes notificationPanelIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+[data-theme="dark"] .notification-icon {
+  filter: brightness(0) invert(1);
+}
+[data-theme="dark"] .notification-button:hover,
+[data-theme="dark"] .notification-button.ativo {
+  background: #303B83;
+  box-shadow: inset 0 0 0 1px rgba(202, 220, 252, .18);
+}
+[data-theme="dark"] .notification-panel {
+  background: #1A214A;
+  color: #F7F9FF;
+  border-color: rgba(202, 220, 252, .2);
+  box-shadow: 0 20px 52px rgba(0, 0, 0, .42);
+}
+[data-theme="dark"] .notification-panel__header {
+  background: #1A214A;
+  border-bottom-color: rgba(202, 220, 252, .16);
+}
+[data-theme="dark"] .notification-panel__header strong,
+[data-theme="dark"] .notification-panel__empty strong {
+  color: #F7F9FF;
+}
+[data-theme="dark"] .notification-panel__header span {
+  color: #AEBCE0;
+}
+[data-theme="dark"] .notification-panel__empty p {
+  color: #CADCFC;
+}
+[data-theme="dark"] .notification-panel__empty-icon {
+  background: #303B83;
+  color: #FFFFFF;
+  box-shadow: inset 0 0 0 1px rgba(202, 220, 252, .12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notification-panel { animation: none; }
+}
