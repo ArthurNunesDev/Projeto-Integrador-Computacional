@@ -3,8 +3,22 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 
 import App from "./App.jsx";
-import { cadastrar, login, obterSessaoLocal, sair } from "./api/auth.js";
-import { chaveUsuario, lerJsonUsuario, salvarJsonUsuario } from "./storage.js";
+import { obterToken, salvarToken } from "./api/client.js";
+import { chamadas, CONFIGURACOES, erroApi, mockarApi, oportunidade, USUARIO_API } from "./test/apiFalsa.js";
+
+// Rotas que a página inicial consulta depois de entrar.
+const ROTAS_INICIO = {
+  "GET /api/usuarios/me/configuracoes": CONFIGURACOES,
+  "GET /api/oportunidades": [
+    oportunidade(10, "Revisão de Contratos Digitais"),
+    oportunidade(11, "App para Clínica"),
+  ],
+  "GET /api/areas": [],
+  "GET /api/habilidades-publicadas": [],
+  "GET /api/pessoas": [],
+  "GET /api/conexoes": [],
+  "GET /api/usuarios/me/participacoes": [],
+};
 
 beforeEach(() => {
   localStorage.clear();
@@ -14,286 +28,171 @@ afterEach(() => {
   cleanup();
 });
 
-async function cadastrarPelaTela({
-  nome = "Ana Souza",
-  email = "ana@faesa.br",
-  senha = "segredo123",
-  confirmar = senha,
-} = {}) {
+async function entrarPelaTela(email = "ana@faesa.br", senha = "segredo123") {
   const user = userEvent.setup();
-  await user.click(screen.getByRole("button", { name: "Criar conta" }));
-  await user.type(screen.getByLabelText("Nome"), nome);
   await user.type(screen.getByLabelText("E-mail"), email);
   await user.type(screen.getByLabelText("Senha"), senha);
-  await user.type(screen.getByLabelText("Confirmar senha"), confirmar);
-  await user.click(screen.getByRole("button", { name: "Cadastrar" }));
+  await user.click(screen.getByRole("button", { name: "Entrar" }));
   return user;
 }
 
-describe("autenticação local demonstrativa", () => {
-  it("mostra a tela de login quando não há sessão salva", () => {
+describe("autenticação pela API", () => {
+  it("mostra o login sem token e não chama a API", () => {
+    const fetchFalso = mockarApi({});
     render(<App />);
 
     expect(screen.getByRole("heading", { name: "Entrar" })).toBeInTheDocument();
-    expect(obterSessaoLocal()).toBeNull();
+    expect(fetchFalso).not.toHaveBeenCalled();
   });
 
-  it("não carrega nem grava preferências genéricas quando não há conta ativa", () => {
-    localStorage.setItem("marketfaesa-theme:sem-conta", "dark");
-    localStorage.setItem(
-      "marketfaesa-preferencias:sem-conta",
-      JSON.stringify({ area: "dados-de-outra-conta" }),
-    );
-    localStorage.setItem(
-      "marketfaesa-configuracoes:sem-conta",
-      JSON.stringify({ tema: "dark", perfilPublico: false }),
-    );
+  it("apaga do navegador as contas e dados do modo demonstrativo", () => {
+    mockarApi({});
+    localStorage.setItem("marketfaesa-users", JSON.stringify([{ email: "a@b.c", senha: "texto-puro" }]));
+    localStorage.setItem("marketfaesa-auth", "{}");
+    localStorage.setItem("marketfaesa-salvos:1", "[]");
+    localStorage.setItem("marketfaesa-pagina:1", "perfil");
 
     render(<App />);
 
-    expect(screen.getByRole("heading", { name: "Entrar" })).toBeInTheDocument();
-    expect(document.documentElement.dataset.theme).toBe("light");
-    expect(localStorage.getItem("marketfaesa-theme:sem-conta")).toBe("dark");
-    expect(JSON.parse(localStorage.getItem("marketfaesa-preferencias:sem-conta"))).toEqual({
-      area: "dados-de-outra-conta",
-    });
-    expect(JSON.parse(localStorage.getItem("marketfaesa-configuracoes:sem-conta"))).toEqual({
-      tema: "dark",
-      perfilPublico: false,
-    });
-  });
-
-  it("ignora contas corrompidas ao cadastrar e autenticar", async () => {
-    localStorage.setItem("marketfaesa-users", JSON.stringify([
-      null,
-      42,
-      { email: "incompleto@example.com" },
-      { id: "conta-valida", email: "valida@example.com", senha: "segredo123", nome: "Conta Válida" },
-    ]));
-
-    await expect(cadastrar({ nome: "Ana Souza", email: "ana@example.com", senha: "segredo123" }))
-      .resolves.toMatchObject({ usuario: { email: "ana@example.com" } });
-    await expect(login({ email: "valida@example.com", senha: "errada" }))
-      .rejects.toMatchObject({ status: 401 });
-    await expect(login({ email: "valida@example.com", senha: "segredo123" }))
-      .resolves.toMatchObject({ usuario: { id: "conta-valida", email: "valida@example.com" } });
-  });
-
-  it("recusa restaurar uma sessão que não contém identidade válida", () => {
-    localStorage.setItem("marketfaesa-auth", JSON.stringify({ nome: "Sessão incompleta" }));
-    expect(obterSessaoLocal()).toBeNull();
-
-    localStorage.setItem("marketfaesa-auth", JSON.stringify([{ id: "conta-a", nome: "Ana", email: "ana@example.com" }]));
-    expect(obterSessaoLocal()).toBeNull();
-  });
-
-  it("valida a senha antes de cadastrar", async () => {
-    render(<App />);
-
-    await cadastrarPelaTela({ senha: "1234567" });
-
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "A senha deve ter pelo menos 8 caracteres.",
-    );
     expect(localStorage.getItem("marketfaesa-users")).toBeNull();
+    expect(localStorage.getItem("marketfaesa-auth")).toBeNull();
+    expect(localStorage.getItem("marketfaesa-salvos:1")).toBeNull();
+    expect(localStorage.getItem("marketfaesa-pagina:1")).toBe("perfil");
   });
 
-  it("cadastra uma conta local e entra automaticamente", async () => {
+  it("entra com POST /api/auth/login, guarda só o token e aplica o tema da API", async () => {
+    const fetchFalso = mockarApi({
+      ...ROTAS_INICIO,
+      "POST /api/auth/login": { token: "jwt-1", usuario: USUARIO_API },
+      "GET /api/usuarios/me/configuracoes": { ...CONFIGURACOES, tema: "dark" },
+    });
     render(<App />);
 
-    await cadastrarPelaTela();
+    await entrarPelaTela();
 
     expect(await screen.findByRole("button", { name: "Menu do perfil" })).toBeInTheDocument();
-    expect(obterSessaoLocal()).toMatchObject({
-      nome: "Ana Souza",
-      email: "ana@faesa.br",
-    });
+    expect(chamadas(fetchFalso, "POST /api/auth/login")).toEqual([{ email: "ana@faesa.br", senha: "segredo123" }]);
+    expect(obterToken()).toBe("jwt-1");
+    await waitFor(() => expect(document.documentElement.dataset.theme).toBe("dark"));
+    expect(Object.keys(localStorage).some((chave) => /senha|users|auth/.test(chave))).toBe(false);
   });
 
-  it("mostra oportunidades de tecnologia multidisciplinar ao filtrar Tecnologia na página inicial", async () => {
+  it("mostra erro de credenciais quando o login volta 401", async () => {
+    mockarApi({ "POST /api/auth/login": erroApi(401, "Credenciais inválidas") });
     render(<App />);
-    const user = await cadastrarPelaTela();
 
-    await user.click(screen.getByRole("button", { name: "Tecnologia" }));
+    await entrarPelaTela("ana@faesa.br", "errada123");
 
-    expect(
-      screen.getByRole("heading", { name: "Desenvolvimento de App para Clínica" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "Revisão Jurídica de Contratos Digitais" }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent("E-mail ou senha inválidos.");
+    expect(obterToken()).toBeNull();
   });
 
+  it("cadastra e entra em seguida", async () => {
+    const fetchFalso = mockarApi({
+      ...ROTAS_INICIO,
+      "POST /api/auth/register": USUARIO_API,
+      "POST /api/auth/login": { token: "jwt-1", usuario: USUARIO_API },
+    });
+    render(<App />);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "Criar conta" }));
+    await user.type(screen.getByLabelText("Nome"), "Ana Souza");
+    await user.type(screen.getByLabelText("E-mail"), "ana@faesa.br");
+    await user.type(screen.getByLabelText("Senha"), "segredo123");
+    await user.type(screen.getByLabelText("Confirmar senha"), "segredo123");
+    await user.click(screen.getByRole("button", { name: "Cadastrar" }));
+
+    expect(await screen.findByRole("button", { name: "Menu do perfil" })).toBeInTheDocument();
+    expect(chamadas(fetchFalso, "POST /api/auth/register")).toEqual([
+      { nome: "Ana Souza", email: "ana@faesa.br", senha: "segredo123" },
+    ]);
+  });
+
+  it("avisa quando o e-mail já está cadastrado (409)", async () => {
+    mockarApi({ "POST /api/auth/register": erroApi(409, "E-mail já cadastrado") });
+    render(<App />);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "Criar conta" }));
+    await user.type(screen.getByLabelText("Nome"), "Ana Souza");
+    await user.type(screen.getByLabelText("E-mail"), "ana@faesa.br");
+    await user.type(screen.getByLabelText("Senha"), "segredo123");
+    await user.type(screen.getByLabelText("Confirmar senha"), "segredo123");
+    await user.click(screen.getByRole("button", { name: "Cadastrar" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Este e-mail já está cadastrado.");
+  });
+
+  it("restaura a sessão com GET /api/usuarios/me e volta para a página salva", async () => {
+    salvarToken("jwt-salvo");
+    localStorage.setItem("marketfaesa-pagina:1", "oportunidades");
+    const fetchFalso = mockarApi({ ...ROTAS_INICIO, "GET /api/usuarios/me": USUARIO_API });
+
+    render(<App />);
+
+    expect(screen.getByRole("status")).toHaveTextContent("Carregando sua sessão...");
+    expect(await screen.findByRole("heading", { name: "Oportunidades" })).toBeInTheDocument();
+    const [, opcoes] = fetchFalso.mock.calls.find(([url]) => url.endsWith("/api/usuarios/me"));
+    expect(opcoes.headers.Authorization).toBe("Bearer jwt-salvo");
+  });
+
+  it("volta ao login com aviso quando o token salvo expirou", async () => {
+    salvarToken("jwt-vencido");
+    mockarApi({ "GET /api/usuarios/me": erroApi(401, "Não autenticado") });
+
+    render(<App />);
+
+    expect(await screen.findByText("Sua sessão expirou. Entre novamente.")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Entrar" })).toBeInTheDocument();
+    expect(obterToken()).toBeNull();
+  });
+
+  it("sai da conta descartando o token", async () => {
+    salvarToken("jwt-salvo");
+    mockarApi({ ...ROTAS_INICIO, "GET /api/usuarios/me": USUARIO_API });
+    render(<App />);
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole("button", { name: "Menu do perfil" }));
+    await user.click(screen.getByRole("button", { name: /Sair/ }));
+
+    expect(await screen.findByRole("heading", { name: "Entrar" })).toBeInTheDocument();
+    expect(obterToken()).toBeNull();
+    expect(document.documentElement.dataset.theme).toBe("light");
+  });
+});
+
+describe("navegação com dados da API", () => {
   it("encaminha a busca do cabeçalho para oportunidades com o termo aplicado", async () => {
+    salvarToken("jwt-salvo");
+    mockarApi({ ...ROTAS_INICIO, "GET /api/usuarios/me": USUARIO_API });
     render(<App />);
-    const user = await cadastrarPelaTela();
+    const user = userEvent.setup();
 
-    const buscaGlobal = screen.getByRole("searchbox", {
-      name: "Buscar oportunidades no MarketFAESA",
-    });
+    const buscaGlobal = await screen.findByRole("searchbox", { name: "Buscar oportunidades no MarketFAESA" });
     await user.type(buscaGlobal, "Contratos");
     await user.keyboard("{Enter}");
 
-    expect(await screen.findByRole("heading", { name: "Oportunidades" })).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "Revisão Jurídica de Contratos Digitais" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("heading", { name: "Desenvolvimento de App para Clínica" }),
-    ).not.toBeInTheDocument();
-
-    const buscaDaPagina = screen.getByRole("searchbox", { name: "Buscar oportunidades" });
-    await user.clear(buscaDaPagina);
-    await user.type(buscaDaPagina, "Clínica");
-    expect(
-      screen.getByRole("heading", { name: "Desenvolvimento de App para Clínica" }),
-    ).toBeInTheDocument();
-
-    await user.click(buscaGlobal);
-    await user.keyboard("{Enter}");
-    expect(
-      screen.getByRole("heading", { name: "Revisão Jurídica de Contratos Digitais" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("heading", { name: "Desenvolvimento de App para Clínica" }),
-    ).not.toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Revisão de Contratos Digitais" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "App para Clínica" })).not.toBeInTheDocument();
   });
 
-  it("continua renderizando após sair de Oportunidades pelo menu principal", async () => {
+  it("vai do menu para Mensagens e volta ao início", async () => {
+    salvarToken("jwt-salvo");
+    mockarApi({ ...ROTAS_INICIO, "GET /api/usuarios/me": USUARIO_API, "GET /api/conversas": [] });
     render(<App />);
-    await cadastrarPelaTela();
-
     const user = userEvent.setup();
-    await screen.findByRole("button", { name: "Menu do perfil" });
 
-    await user.click(screen.getByRole("button", { name: "Abrir menu principal" }));
-    const menuPrincipal = screen.getByRole("navigation");
-    await user.click(within(menuPrincipal).getByRole("button", { name: /Oportunidades/ }));
-    expect(await screen.findByRole("heading", { name: "Oportunidades" })).toBeInTheDocument();
-    expect(screen.queryByRole("contentinfo")).not.toBeInTheDocument();
+    await user.click(await screen.findByRole("button", { name: "Abrir menu principal" }));
+    await user.click(within(screen.getByRole("navigation")).getByRole("button", { name: /Mensagens/ }));
+    expect(await screen.findByRole("heading", { name: "Nenhuma conversa" })).toBeInTheDocument();
 
     const menuToggle = screen.getByRole("button", { name: /menu principal/i });
-    if (menuToggle.getAttribute("aria-expanded") !== "true") {
-      await user.click(menuToggle);
-    }
+    if (menuToggle.getAttribute("aria-expanded") !== "true") await user.click(menuToggle);
     await user.click(within(screen.getByRole("navigation")).getByRole("button", { name: /Início/ }));
 
     expect(await screen.findByRole("heading", { name: /Oportunidades em Destaque/i })).toBeInTheDocument();
     expect(screen.getByRole("contentinfo")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Menu do perfil" })).toBeInTheDocument();
-  });
-
-  it("continua renderizando após sair de Mensagens pelo menu principal", async () => {
-    render(<App />);
-    await cadastrarPelaTela();
-
-    const user = userEvent.setup();
-    await screen.findByRole("button", { name: "Menu do perfil" });
-
-    await user.click(screen.getByRole("button", { name: "Abrir menu principal" }));
-    const menuPrincipal = screen.getByRole("navigation");
-    await user.click(within(menuPrincipal).getByRole("button", { name: /Mensagens/ }));
-    expect(await screen.findByRole("heading", { name: "Mensagens" })).toBeInTheDocument();
-    expect(screen.getByText("Modo demonstração")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Ana Souza/ })).toBeInTheDocument();
-
-    const menuToggle = screen.getByRole("button", { name: /menu principal/i });
-    if (menuToggle.getAttribute("aria-expanded") !== "true") {
-      await user.click(menuToggle);
-    }
-    await user.click(within(screen.getByRole("navigation")).getByRole("button", { name: /Início/ }));
-
-    expect(await screen.findByRole("heading", { name: /Oportunidades em Destaque/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Menu do perfil" })).toBeInTheDocument();
-  });
-
-  it("normaliza o e-mail e impede cadastro duplicado", async () => {
-    await cadastrar({ nome: "Ana Souza", email: "ANA@FAESA.BR", senha: "segredo123" });
-
-    await expect(
-      cadastrar({ nome: "Outra Ana", email: "ana@faesa.br", senha: "outrasenha123" }),
-    ).rejects.toMatchObject({ status: 409 });
-  });
-
-  it("permite entrar com a conta cadastrada e encerrar a sessão", async () => {
-    await cadastrar({ nome: "Ana Souza", email: "ana@faesa.br", senha: "segredo123" });
-    sair();
-    render(<App />);
-
-    const user = userEvent.setup();
-    await user.type(screen.getByLabelText("E-mail"), "ana@faesa.br");
-    await user.type(screen.getByLabelText("Senha"), "segredo123");
-    await user.click(screen.getByRole("button", { name: "Entrar" }));
-
-    expect(await screen.findByRole("button", { name: "Menu do perfil" })).toBeInTheDocument();
-    expect((await login({ email: "ana@faesa.br", senha: "segredo123" })).usuario.nome).toBe("Ana Souza");
-
-    await user.click(screen.getByRole("button", { name: "Menu do perfil" }));
-    await user.click(screen.getByRole("button", { name: /Sair/ }));
-
-    await waitFor(() => expect(screen.getByRole("heading", { name: "Entrar" })).toBeInTheDocument());
-    expect(obterSessaoLocal()).toBeNull();
-  });
-});
-
-describe("normalização de configurações persistidas", () => {
-  it("usa valores padrão quando configurações e preferências contêm tipos inválidos", async () => {
-    localStorage.setItem("marketfaesa-auth", JSON.stringify({
-      id: "conta-a",
-      nome: "Ana Souza",
-      email: "ana@example.com",
-      curso: { nome: "ADS" },
-      periodo: "3",
-      cidade: "Vitória",
-      bio: "",
-    }));
-    localStorage.setItem("marketfaesa-pagina:conta-a", "configuracoes");
-    localStorage.setItem("marketfaesa-configuracoes:conta-a", JSON.stringify({
-      perfilPublico: "false",
-      mostrarEmail: 1,
-      permitirMensagens: null,
-      mensagens: "sim",
-      tema: "desconhecido",
-    }));
-    localStorage.setItem("marketfaesa-preferencias:conta-a", JSON.stringify({
-      area: 7,
-      modalidade: "modo-inexistente",
-      frequencia: null,
-    }));
-
-    const user = userEvent.setup();
-    render(<App />);
-
-    await user.click(screen.getByRole("button", { name: /Privacidade/ }));
-    expect(screen.getByRole("switch", { name: "Perfil público" })).toHaveAttribute("aria-checked", "true");
-    expect(screen.getByRole("switch", { name: "Exibir e-mail" })).toHaveAttribute("aria-checked", "false");
-    expect(screen.getByRole("switch", { name: "Permitir mensagens" })).toHaveAttribute("aria-checked", "true");
-
-    await user.click(screen.getByRole("button", { name: /Preferências/ }));
-    expect(screen.getByLabelText("Área principal de interesse")).toHaveValue("tecnologia");
-    expect(screen.getByLabelText("Modalidade preferida")).toHaveValue("todas");
-    expect(screen.getByLabelText("Frequência dos avisos")).toHaveValue("imediato");
-  });
-});
-
-describe("armazenamento isolado por conta", () => {
-  it("gera chaves diferentes para contas diferentes", () => {
-    expect(chaveUsuario("marketfaesa-salvos", "conta-a")).not.toBe(
-      chaveUsuario("marketfaesa-salvos", "conta-b"),
-    );
-  });
-
-  it("mantém os dados separados entre usuários", () => {
-    salvarJsonUsuario("marketfaesa-salvos", "conta-a", [{ id: 1 }]);
-    salvarJsonUsuario("marketfaesa-salvos", "conta-b", [{ id: 2 }]);
-
-    expect(lerJsonUsuario("marketfaesa-salvos", "conta-a", [])).toEqual([{ id: 1 }]);
-    expect(lerJsonUsuario("marketfaesa-salvos", "conta-b", [])).toEqual([{ id: 2 }]);
-  });
-
-  it("retorna o valor padrão quando o JSON salvo está corrompido", () => {
-    localStorage.setItem(chaveUsuario("marketfaesa-salvos", "conta-a"), "{json inválido");
-
-    expect(lerJsonUsuario("marketfaesa-salvos", "conta-a", [])).toEqual([]);
   });
 });

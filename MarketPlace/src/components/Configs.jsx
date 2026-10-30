@@ -1,5 +1,12 @@
 import { useState } from "react";
+import { listarCursos } from "../api/catalogos.js";
+import { alterarSenha, excluirConta } from "../api/usuarios.js";
+import { formatarPeriodo } from "../perfil.js";
+import { PERIODOS } from "../rotulos.js";
 import { chaveUsuario, lerValorSeguro, salvarValorSeguro } from "../storage.js";
+import { mensagemDoErro, useCarregar } from "../useCarregar.js";
+
+const SENHA_VAZIA = { senhaAtual: "", novaSenha: "", confirmar: "" };
 
 const CONFIG_SECTIONS = [
   { id:"conta", label:"Conta", description:"Informações pessoais", icon:"👤" },
@@ -13,7 +20,7 @@ const CONFIG_SECTIONS = [
 function Configs({
   onNavigate, tema, onChangeTema, configuracoes, onAlterarConfiguracao,
   erroConfiguracoes, configuracoesCarregadas = true, erroCarregarConfiguracoes = "", onRecarregarConfiguracoes,
-  preferencias, onAlterarPreferencia, usuario, onLogout, onUpdateUsuario,
+  preferencias, onAlterarPreferencia, usuario, onLogout, onUpdateUsuario, onContaExcluida,
 }) {
   // Opções salvas na API ficam travadas até o GET de configurações terminar.
   const bloqueado = !configuracoesCarregadas;
@@ -23,9 +30,15 @@ function Configs({
   const [conta, setConta] = useState({
     nome: usuario?.nome || "",
     email: usuario?.email || "",
-    curso: usuario?.curso || "",
-    periodo: usuario?.periodo || "",
+    cursoId: String(usuario?.cursoId ?? ""),
+    periodo: String(usuario?.periodoNumero ?? ""),
   });
+  const { dados: cursos } = useCarregar(listarCursos, []);
+  const [senha, setSenha] = useState(SENHA_VAZIA);
+  const [mensagemSenha, setMensagemSenha] = useState({ erro: "", sucesso: "" });
+  const [senhaExclusao, setSenhaExclusao] = useState("");
+  const [erroExclusao, setErroExclusao] = useState("");
+  const [enviando, setEnviando] = useState(false);
   const [doisFatores, setDoisFatores] = useState(() => lerValorSeguro(chaveUsuario("marketfaesa-2fa", usuario?.id)) === "true");
 
   function mostrarSalvo() {
@@ -34,26 +47,69 @@ function Configs({
     window.setTimeout(() => setSalvo(false), 2500);
   }
 
-  function registrarResultado(resultado, mensagem = "Não foi possível salvar as alterações. Verifique o armazenamento do navegador e tente novamente.") {
+  function registrarResultado(resultado, mensagem) {
     if (resultado === false) {
       setSalvo(false);
-      setErroAcao(mensagem);
+      setErroAcao(mensagem || "Não foi possível salvar as alterações. Tente novamente.");
       return false;
     }
     mostrarSalvo();
     return true;
   }
 
-  function salvarConta() {
+  async function salvarConta() {
     const nome = conta.nome.trim();
     if (!nome) {
       setSalvo(false);
       setErroAcao("Informe seu nome completo antes de salvar.");
       return;
     }
-    // Salvo localmente até existir PUT /api/usuarios/me (ver src/perfil.js).
-    const resultado = onUpdateUsuario?.({ nome, curso: conta.curso, periodo: conta.periodo });
-    registrarResultado(resultado);
+    const resultado = await onUpdateUsuario?.({
+      nome,
+      cursoId: conta.cursoId ? Number(conta.cursoId) : null,
+      periodo: conta.periodo ? Number(conta.periodo) : null,
+    });
+    registrarResultado(resultado?.sucesso === true, resultado?.mensagem);
+  }
+
+  async function trocarSenha() {
+    const { senhaAtual, novaSenha, confirmar } = senha;
+    let erro = "";
+    if (!senhaAtual || !novaSenha) erro = "Preencha a senha atual e a nova senha.";
+    else if (novaSenha.length < 8 || novaSenha.length > 72) erro = "A nova senha deve ter de 8 a 72 caracteres.";
+    else if (novaSenha !== confirmar) erro = "A confirmação não confere com a nova senha.";
+    if (erro) {
+      setMensagemSenha({ erro, sucesso: "" });
+      return;
+    }
+
+    setEnviando(true);
+    try {
+      await alterarSenha({ senhaAtual, novaSenha });
+      setSenha(SENHA_VAZIA);
+      setMensagemSenha({ erro: "", sucesso: "Senha alterada." });
+    } catch (e) {
+      const campo = e?.campos?.senhaAtual ? `Senha atual: ${e.campos.senhaAtual}.` : e?.campos?.novaSenha ? `Nova senha: ${e.campos.novaSenha}.` : "";
+      setMensagemSenha({ erro: campo || mensagemDoErro(e), sucesso: "" });
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  async function confirmarExclusao() {
+    if (!senhaExclusao) {
+      setErroExclusao("Digite sua senha para confirmar a exclusão.");
+      return;
+    }
+    setEnviando(true);
+    try {
+      await excluirConta(senhaExclusao);
+    } catch (e) {
+      setErroExclusao(e?.campos?.senha ? `Senha: ${e.campos.senha}.` : mensagemDoErro(e));
+      setEnviando(false);
+      return;
+    }
+    onContaExcluida?.();
   }
 
   function alterarCampoConta(campo, valor) {
@@ -102,14 +158,16 @@ function Configs({
           <div className="configs-form-grid">
             <ConfigField label="Nome completo" value={conta.nome} onChange={(v)=>alterarCampoConta("nome",v)} />
             <ConfigField label="E-mail" value={conta.email} type="email" readOnly />
-            <ConfigField label="Curso" value={conta.curso} onChange={(v)=>alterarCampoConta("curso",v)} />
-            <ConfigField label="Período" value={conta.periodo} onChange={(v)=>alterarCampoConta("periodo",v)} />
+            <ConfigSelect label="Curso" value={conta.cursoId} onChange={(v)=>alterarCampoConta("cursoId",v)} options={[["","Curso não informado"],...cursos.map((curso)=>[String(curso.id),curso.nome])]} />
+            <ConfigSelect label="Período" value={conta.periodo} onChange={(v)=>alterarCampoConta("periodo",v)} options={[["","Não informado"],...PERIODOS.map((p)=>[String(p),formatarPeriodo(p)])]} />
           </div>
           <div className="configs-inline-save"><button type="button" className="configs-save-button" onClick={salvarConta}>Salvar dados da conta</button></div>
           <ConfigDivider />
           <div className="configs-danger-zone">
-            <div><strong>Excluir conta</strong><p>Disponível em breve: a exclusão de conta ainda não existe na API.</p></div>
-            <button type="button" className="configs-danger-button" disabled title="Disponível em breve">Excluir conta</button>
+            <div><strong>Excluir conta</strong><p>Apaga sua conta e todos os seus dados. Essa ação não pode ser desfeita.</p></div>
+            <ConfigField label="Confirme sua senha" value={senhaExclusao} type="password" onChange={(v)=>{setSenhaExclusao(v);setErroExclusao("");}} />
+            <button type="button" className="configs-danger-button" onClick={confirmarExclusao} disabled={enviando}>Excluir conta</button>
+            {erroExclusao && <p className="configs-action-message" role="alert">{erroExclusao}</p>}
           </div>
         </section>;
 
@@ -118,14 +176,14 @@ function Configs({
           <ConfigHeader eyebrow="SEGURANÇA" title="Segurança e acesso" description="Mantenha sua conta protegida." />
           <div className="configs-password-box">
             <h3>Alterar senha</h3>
-            {/* Sem rota na API para trocar a senha ainda. */}
             <div className="configs-password-grid">
-              <ConfigField label="Senha atual" value="" type="password" disabled />
-              <ConfigField label="Nova senha" value="" type="password" disabled />
-              <ConfigField label="Confirmar nova senha" value="" type="password" disabled />
+              <ConfigField label="Senha atual" value={senha.senhaAtual} type="password" onChange={(v)=>setSenha((s)=>({...s,senhaAtual:v}))} />
+              <ConfigField label="Nova senha" value={senha.novaSenha} type="password" onChange={(v)=>setSenha((s)=>({...s,novaSenha:v}))} />
+              <ConfigField label="Confirmar nova senha" value={senha.confirmar} type="password" onChange={(v)=>setSenha((s)=>({...s,confirmar:v}))} />
             </div>
-            <button type="button" className="configs-action-primary" disabled>Alterar senha</button>
-            <p className="configs-action-message">Disponível em breve.</p>
+            <button type="button" className="configs-action-primary" onClick={trocarSenha} disabled={enviando}>Alterar senha</button>
+            {mensagemSenha.erro && <p className="configs-action-message" role="alert">{mensagemSenha.erro}</p>}
+            {mensagemSenha.sucesso && <p className="configs-saved" role="status">✓ {mensagemSenha.sucesso}</p>}
           </div>
           <ConfigDivider />
           <div className="configs-security-list">

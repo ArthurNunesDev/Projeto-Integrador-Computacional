@@ -1,39 +1,47 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { calcularProgressoPerfil, conquistaPerfilExibida, marcarConquistaPerfilExibida, montarUsuario } from "./perfil.js";
+import {
+  calcularProgressoPerfil,
+  conquistaPerfilExibida,
+  corpoAtualizacao,
+  marcarConquistaPerfilExibida,
+  montarUsuario,
+} from "./perfil.js";
 
-const API = { id: 7, nome: "Ana", email: "Ana@Faesa.br", curso: null, periodo: null };
+const API = {
+  id: 7, nome: "Ana", email: "ana@faesa.br", curso: { id: 3, nome: "ADS" }, periodo: 3,
+  cidade: "Vitória", bio: null, fotoUrl: null, criadoEm: "2026-10-01T10:00:00Z",
+};
 
 beforeEach(() => {
   localStorage.clear();
 });
 
-describe("montarUsuario", () => {
-  it("move o perfil salvo por e-mail para a chave por id", () => {
-    localStorage.setItem("marketfaesa-perfil:ana@faesa.br", JSON.stringify({ bio: "Olá", cidade: "Serra" }));
-
-    const usuario = montarUsuario(API);
-
-    expect(usuario).toMatchObject({ bio: "Olá", cidade: "Serra" });
-    expect(JSON.parse(localStorage.getItem("marketfaesa-perfil:7"))).toEqual({ bio: "Olá", cidade: "Serra" });
-    expect(localStorage.getItem("marketfaesa-perfil:ana@faesa.br")).toBeNull();
+describe("montarUsuario e corpoAtualizacao", () => {
+  it("converte o usuário da API em textos e guarda os valores crus para o PUT", () => {
+    expect(montarUsuario(API)).toMatchObject({
+      curso: "ADS", cursoId: 3, periodo: "3º período", periodoNumero: 3, bio: "",
+    });
+    expect(montarUsuario({ ...API, curso: null, periodo: null })).toMatchObject({
+      curso: "", cursoId: null, periodo: "", periodoNumero: null,
+    });
   });
 
-  it("não sobrescreve o perfil que já existe por id", () => {
-    localStorage.setItem("marketfaesa-perfil:ana@faesa.br", JSON.stringify({ bio: "Antiga" }));
-    localStorage.setItem("marketfaesa-perfil:7", JSON.stringify({ bio: "Atual" }));
+  it("monta o corpo completo com as alterações por cima", () => {
+    const usuario = montarUsuario(API);
 
-    expect(montarUsuario(API).bio).toBe("Atual");
-    expect(localStorage.getItem("marketfaesa-perfil:ana@faesa.br")).not.toBeNull();
+    expect(corpoAtualizacao(usuario, { bio: "Olá", periodo: 4 })).toEqual({
+      nome: "Ana", cursoId: 3, periodo: 4, cidade: "Vitória", bio: "Olá", fotoUrl: null,
+    });
   });
 });
 
-
 describe("progresso do perfil", () => {
-  it("não falha quando habilidades salvas contêm registros inválidos", () => {
-    const usuario = { id: 7, nome: "Ana", email: "ana@faesa.br", curso: "ADS", periodo: "3º", cidade: "Vitória", bio: "Olá" };
-    localStorage.setItem("marketfaesa-habilidades:7", JSON.stringify([null, 42, { nome: 7 }, { nome: "React" }]));
+  it("chega a 100% só com todos os campos e ao menos uma habilidade publicada", () => {
+    const usuario = { ...montarUsuario(API), bio: "Olá" };
 
-    expect(calcularProgressoPerfil(usuario)).toBe(100);
+    expect(calcularProgressoPerfil(usuario, 0)).toBe(86);
+    expect(calcularProgressoPerfil(usuario, 2)).toBe(100);
+    expect(calcularProgressoPerfil(null, 2)).toBe(0);
   });
 });
 
