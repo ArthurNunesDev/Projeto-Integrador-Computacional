@@ -129,7 +129,7 @@ A conexão vem de variáveis de ambiente, lidas em `application.properties`:
 | `DATABASE_DIRECT_URL` | opcional: URL JDBC **direta** (host sem `-pooler`), usada pelo Flyway nas migrations; se faltar, usa `DATABASE_URL` |
 | `JWT_SECRET` | **obrigatória**: segredo que assina o JWT (HS256), com pelo menos 32 bytes. Sem ela a aplicação não sobe. Gere com `openssl rand -base64 48` (o texto gerado é usado como está, sem decodificar) |
 | `JWT_EXPIRACAO` | opcional: validade do token, no formato de `Duration` do Spring (`24h`, `30m`); padrão `24h` |
-| `CORS_ALLOWED_ORIGINS` | opcional: origens liberadas no CORS, separadas por vírgula; padrão `https://arthurnunesdev.github.io,http://localhost:5173` |
+| `CORS_ALLOWED_ORIGINS` | opcional: origens liberadas no CORS, separadas por vírgula; padrão `https://arthurnunesdev.github.io,http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173` |
 
 O Neon mostra a conexão como URI (`postgresql://usuario:senha@host/neondb?sslmode=require`). O JDBC não aceita esse formato: troque o prefixo por `jdbc:postgresql://`, tire `usuario:senha@` da URL e passe usuário e senha nas variáveis separadas. Exemplo:
 
@@ -176,18 +176,34 @@ O workflow `.github/workflows/backend.yml` roda `./mvnw -B test` (Java 21) em to
 
 <h2 id="api">📍 API</h2>
 
-Base em desenvolvimento: `http://localhost:8080/api`. As rotas de `/api/usuarios/me` exigem `Authorization: Bearer <token>`; o id do usuário sai do token, então não existe `/usuarios/{id}`. O contrato com exemplos de corpo está no [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md#2-contrato-da-api).
+Base em desenvolvimento: `http://localhost:8080/api`. São públicas só `GET /api/health`, os catálogos (`/api/cursos`, `/api/areas`, `/api/habilidades`) e `POST /api/auth/register` e `/login`; as demais exigem `Authorization: Bearer <token>`. O id do usuário sai do token, então não existe `/usuarios/{id}`. Os corpos, exemplos e onde o front usa cada rota estão no [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md#2-contrato-da-api).
 
-| Método | Rota | Autenticação | Corpo | Respostas |
-|---|---|---|---|---|
-| GET | `/api/health` | pública | | `200 {"status":"ok"}` |
-| POST | `/api/auth/register` | pública | `{nome, email, senha}` | `201` com o usuário (sem token); `400` dados inválidos; `409` e-mail já cadastrado |
-| POST | `/api/auth/login` | pública | `{email, senha}` | `200 {token, usuario}`; `400` campos faltando; `401` e-mail ou senha inválidos |
-| GET | `/api/usuarios/me` | Bearer | | `200 {id, nome, email, curso, periodo, cidade, bio, fotoUrl, criadoEm}` |
-| GET | `/api/usuarios/me/configuracoes` | Bearer | | `200` com `tema` e os 9 booleanos |
-| PUT | `/api/usuarios/me/configuracoes` | Bearer | todos os campos de configuração | `200` com a configuração salva; `400` campo faltando ou tema diferente de `light`/`dark` |
-
-As demais rotas (perfil, senha, exclusão de conta, catálogos, oportunidades, habilidades publicadas, pessoas, conexões e conversas) e onde o front usa cada uma estão no [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md#2-contrato-da-api).
+| Método | Rota | Respostas |
+|---|---|---|
+| GET | `/api/health` | `200 {"status":"ok"}` |
+| POST | `/api/auth/register` | `201` usuário (sem token); `400`; `409` e-mail já cadastrado |
+| POST | `/api/auth/login` | `200 {token, usuario}`; `400`; `401` e-mail ou senha inválidos |
+| GET / PUT | `/api/usuarios/me` | `200` usuário; `400` no PUT inválido (ex.: `fotoUrl` que não é data URL de imagem nem `https`) |
+| PUT | `/api/usuarios/me/senha` | `204`; `400` senha atual errada ou nova inválida |
+| DELETE | `/api/usuarios/me` (corpo `{senha}`) | `204`; `400` senha errada |
+| GET / PUT | `/api/usuarios/me/configuracoes` | `200` `tema` e os 9 booleanos; `400` campo faltando |
+| GET | `/api/cursos`, `/api/areas`, `/api/habilidades?areaId=` | `200` catálogo |
+| GET | `/api/oportunidades?tipo=&areaId=&modalidade=&status=&autorId=&busca=` | `200` lista, mais novas primeiro |
+| POST | `/api/oportunidades` | `201` com `Location`; `400` |
+| GET / PUT / DELETE | `/api/oportunidades/{id}` | `200` / `200` / `204`; `403` se não for o autor; `404` |
+| POST / DELETE | `/api/oportunidades/{id}/participacao` | `204`; `400` na própria; `409` fechada ou repetida |
+| PUT / DELETE | `/api/oportunidades/{id}/salvo` | `204` |
+| GET | `/api/usuarios/me/participacoes`, `/api/usuarios/me/salvos` | `200` lista |
+| GET | `/api/habilidades-publicadas?usuarioId=&categoria=&busca=`, `/{id}` | `200` |
+| POST | `/api/habilidades-publicadas` | `201`; `400` |
+| PUT / DELETE | `/api/habilidades-publicadas/{id}` | `200` / `204`; `403` se não for o dono |
+| GET | `/api/pessoas?busca=&categoria=`, `/api/pessoas/{id}` | `200` perfis públicos (sem o próprio usuário na lista); `404` perfil privado |
+| GET | `/api/conexoes`, `/api/conexoes/recebidas`, `/api/conexoes/enviadas` | `200` lista |
+| POST | `/api/conexoes` (corpo `{destinatarioId}`) | `201` pedido; `400` consigo; `404`; `409` já existe |
+| POST | `/api/conexoes/{id}/aceitar`, `/api/conexoes/{id}/recusar` | `200` / `204`; `403` se não for o destinatário |
+| DELETE | `/api/conexoes/{id}` | `204` desconecta ou cancela o pedido |
+| GET / POST | `/api/conversas` (POST com `{usuarioId}`) | `200` lista com `naoLidas` / `200` conversa nova ou existente |
+| GET / POST | `/api/conversas/{id}/mensagens` | `200` (marca como lidas) / `201`; `403` fora da conversa ou se a pessoa não aceita mensagens |
 
 Regras:
 
@@ -196,7 +212,7 @@ Regras:
 - **Login**: e-mail inexistente e senha errada devolvem o mesmo `401`, com o mesmo corpo.
 - **Cadastro**: devolve `201` sem token; para entrar, o front chama `/api/auth/login` em seguida. O cadastro cria também a linha de configurações com os valores padrão.
 - **Erros**: sempre `{status, erro, campos}`, com `campos` só nos erros de validação (`{"campo": "mensagem"}`). Sem token, token inválido ou expirado, ou token de um usuário que não existe mais: `401 {"status":401,"erro":"Não autenticado"}`. As mensagens de validação seguem o idioma do `Accept-Language` da requisição.
-- **Segurança**: API stateless, CORS liberado para `http://localhost:5173` e para o GitHub Pages (configurável por `CORS_ALLOWED_ORIGINS`).
+- **Segurança**: API stateless, CORS liberado para o Vite local (`localhost:5173`, `127.0.0.1:5173`, preview em `localhost:4173`) e para o GitHub Pages (configurável por `CORS_ALLOWED_ORIGINS`).
 
 <h3 id="curl">Testando com curl</h3>
 
