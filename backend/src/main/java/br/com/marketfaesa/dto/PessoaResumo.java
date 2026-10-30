@@ -16,8 +16,7 @@ public record PessoaResumo(Long id, String nome, CursoResposta curso, Short peri
     public static PessoaResumo de(ResultSet rs, String prefixo) throws SQLException {
         long cursoId = rs.getLong(prefixo + "_curso_id");
         CursoResposta curso = rs.wasNull() ? null : new CursoResposta(cursoId, rs.getString(prefixo + "_curso_nome"));
-        short periodo = rs.getShort(prefixo + "_periodo");
         return new PessoaResumo(rs.getLong(prefixo + "_id"), rs.getString(prefixo + "_nome"), curso,
-                rs.wasNull() ? null : periodo);
+                rs.getObject(prefixo + "_periodo", Short.class));
     }
 }

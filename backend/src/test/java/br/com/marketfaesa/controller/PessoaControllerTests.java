@@ -70,6 +70,7 @@ class PessoaControllerTests {
                 .andExpect(jsonPath("$[0].id").value(ana.id()))
                 .andExpect(jsonPath("$[0].email").value(nullValue()))
                 .andExpect(jsonPath("$[0].fotoUrl").value(nullValue()))
+                .andExpect(jsonPath("$[0].periodo").value(nullValue()))
                 .andExpect(jsonPath("$[0].senhaHash").doesNotExist())
                 .andExpect(jsonPath("$[0].habilidades[*].nome", contains("React")))
                 .andExpect(jsonPath("$[0].habilidades[0].categoria").value("Tecnologia"))
