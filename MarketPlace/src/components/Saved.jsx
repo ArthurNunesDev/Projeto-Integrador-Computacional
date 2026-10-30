@@ -1,37 +1,14 @@
 import { useMemo, useState } from "react";
-import { chaveUsuario, lerValorSeguro, salvarValorSeguro } from "../storage.js";
+import { definirSalva, listarSalvas } from "../api/oportunidades.js";
+import { formatarOportunidade } from "../rotulos.js";
+import { mensagemDoErro, useCarregar } from "../useCarregar.js";
 
-const CHAVE_SALVOS = "marketfaesa-salvos";
-
-function lerSalvos(chave) {
-  try {
-    const dados = JSON.parse(lerValorSeguro(chave));
-    if (!Array.isArray(dados)) return [];
-
-    // Dados antigos ou editados manualmente não devem quebrar a renderização.
-    return dados.filter((item) =>
-      item &&
-      typeof item === "object" &&
-      !Array.isArray(item) &&
-      (typeof item.id === "string" || typeof item.id === "number") &&
-      typeof item.titulo === "string" &&
-      typeof item.descricao === "string" &&
-      typeof item.tipo === "string" &&
-      typeof item.area === "string" &&
-      typeof item.modalidade === "string" &&
-      typeof item.pessoa === "string" &&
-      typeof item.curso === "string" &&
-      typeof item.inicial === "string" &&
-      typeof item.icon === "string",
-    );
-  } catch {
-    return [];
-  }
+function carregarSalvas() {
+  return listarSalvas().then((lista) => lista.map(formatarOportunidade));
 }
 
-function Salvos({ onNavigate, usuarioId }) {
-  const chave = chaveUsuario(CHAVE_SALVOS, usuarioId);
-  const [salvos, setSalvos] = useState(() => lerSalvos(chave));
+function Salvos({ onNavigate }) {
+  const { dados: salvos, carregando, erro, recarregar, setDados } = useCarregar(carregarSalvas, []);
   const [busca, setBusca] = useState("");
   const [erroPersistencia, setErroPersistencia] = useState("");
 
@@ -46,14 +23,14 @@ function Salvos({ onNavigate, usuarioId }) {
     );
   }, [busca, salvos]);
 
-  function remover(id) {
-    const proximos = salvos.filter((item) => item.id !== id);
-    if (!salvarValorSeguro(chave, JSON.stringify(proximos))) {
-      setErroPersistencia("Não foi possível remover esta oportunidade dos salvos. Verifique o armazenamento do navegador e tente novamente.");
-      return;
+  async function remover(id) {
+    try {
+      await definirSalva(id, false);
+      setDados((lista) => lista.filter((item) => item.id !== id));
+      setErroPersistencia("");
+    } catch (e) {
+      setErroPersistencia(mensagemDoErro(e));
     }
-    setSalvos(proximos);
-    setErroPersistencia("");
   }
 
   return (
@@ -81,7 +58,16 @@ function Salvos({ onNavigate, usuarioId }) {
           <button type="button" className="saved-explore" onClick={() => onNavigate?.("oportunidades")}>Explorar oportunidades →</button>
         </section>
 
-        {filtrados.length ? (
+        {carregando ? (
+          <p className="saved-loading" role="status">Carregando seus salvos...</p>
+        ) : erro ? (
+          <section className="saved-empty">
+            <div className="saved-empty-icon">!</div>
+            <h2>Não foi possível carregar seus salvos</h2>
+            <p>{erro}</p>
+            <button type="button" onClick={recarregar}>Tentar novamente</button>
+          </section>
+        ) : filtrados.length ? (
           <section className="saved-results">
             {filtrados.map((item, index) => (
               <article className="saved-card animate__animated animate__fadeInUp" style={{ animationDelay: `${index * 60}ms` }} key={item.id}>
