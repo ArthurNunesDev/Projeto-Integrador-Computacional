@@ -117,7 +117,7 @@ Fica em `MarketPlace/src/api/`:
 - `usuarios.js`: `obterMe()`, `obterConfiguracoes()` e `salvarConfiguracoes(config)`.
 
 - **Variável de ambiente**: `VITE_API_URL` (padrão `http://localhost:8080`, sem `/api`; veja `MarketPlace/.env.example`). Falta configurar a URL de produção no build (secret/variável no workflow de deploy).
-- **CORS**: o backend já libera `http://localhost:5173` (Vite) e `https://arthurnunesdev.github.io`; outras origens entram por `CORS_ALLOWED_ORIGINS` (separadas por vírgula).
+- **CORS**: o backend já libera `http://localhost:5173` e `http://127.0.0.1:5173` (Vite), `http://localhost:4173` (vite preview) e `https://arthurnunesdev.github.io`; outras origens entram por `CORS_ALLOWED_ORIGINS` (separadas por vírgula).
 
 ---
 
