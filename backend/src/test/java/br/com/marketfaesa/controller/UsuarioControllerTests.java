@@ -1,5 +1,8 @@
 package br.com.marketfaesa.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.nullValue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -16,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +41,9 @@ class UsuarioControllerTests {
 
     @Autowired
     ConfiguracaoUsuarioRepository configuracoes;
+
+    @Autowired
+    JdbcClient jdbc;
 
     private String token;
 
@@ -137,5 +144,117 @@ class UsuarioControllerTests {
                 .contentType(MediaType.APPLICATION_JSON).content("{\"tema\": \"dark\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.campos.perfilPublico").exists());
+    }
+
+    private String perfil(Long cursoId, String fotoUrl) {
+        return """
+                {"nome": "  Diana Prado ", "cursoId": %s, "periodo": 5, "cidade": "Vitória, ES",
+                 "bio": "Gosto de dados.", "fotoUrl": %s}""".formatted(cursoId, fotoUrl == null ? "null" : "\"" + fotoUrl + "\"");
+    }
+
+    @Test
+    void putMeAtualizaPerfilComCursoEFoto() throws Exception {
+        Long cursoId = jdbc.sql("INSERT INTO cursos (nome) VALUES ('Curso de Teste') RETURNING id").query(Long.class).single();
+        String foto = "data:image/png;base64," + "A".repeat(1_000_000);
+
+        mvc.perform(put("/api/usuarios/me").header("Authorization", bearer())
+                .contentType(MediaType.APPLICATION_JSON).content(perfil(cursoId, foto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nome").value("Diana Prado"))
+                .andExpect(jsonPath("$.email").value("diana@faesa.br"))
+                .andExpect(jsonPath("$.curso.id").value(cursoId))
+                .andExpect(jsonPath("$.curso.nome").value("Curso de Teste"))
+                .andExpect(jsonPath("$.periodo").value(5))
+                .andExpect(jsonPath("$.cidade").value("Vitória, ES"))
+                .andExpect(jsonPath("$.bio").value("Gosto de dados."))
+                .andExpect(jsonPath("$.fotoUrl").value(foto));
+
+        // PUT substitui: campos ausentes ficam nulos
+        mvc.perform(put("/api/usuarios/me").header("Authorization", bearer())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"nome\": \"Diana\", \"cidade\": \"  \"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.curso").value(nullValue()))
+                .andExpect(jsonPath("$.periodo").value(nullValue()))
+                .andExpect(jsonPath("$.cidade").value(nullValue()))
+                .andExpect(jsonPath("$.fotoUrl").value(nullValue()));
+    }
+
+    @Test
+    void putMeInvalidoDevolve400ComCampos() throws Exception {
+        mvc.perform(put("/api/usuarios/me").header("Authorization", bearer())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nome\": \"\", \"periodo\": 21, \"fotoUrl\": \"javascript:alert(1)\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.campos.nome").exists())
+                .andExpect(jsonPath("$.campos.periodo").exists())
+                .andExpect(jsonPath("$.campos.fotoUrl").exists());
+
+        mvc.perform(put("/api/usuarios/me").header("Authorization", bearer())
+                .contentType(MediaType.APPLICATION_JSON).content(perfil(999_999L, null)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.campos.cursoId").exists());
+
+        mvc.perform(put("/api/usuarios/me").header("Authorization", bearer())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(perfil(null, "data:image/png;base64," + "A".repeat(1_500_000))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.campos.fotoUrl").exists());
+    }
+
+    @Test
+    void rotasDePerfilSemTokenDevolvem401() throws Exception {
+        mvc.perform(put("/api/usuarios/me").contentType(MediaType.APPLICATION_JSON).content(perfil(null, null)))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(put("/api/usuarios/me/senha").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"senhaAtual\": \"senhaforte1\", \"novaSenha\": \"novasenha1\"}"))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(delete("/api/usuarios/me").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"senha\": \"senhaforte1\"}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void alterarSenhaExigeSenhaAtualETrocaOLogin() throws Exception {
+        mvc.perform(put("/api/usuarios/me/senha").header("Authorization", bearer())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"senhaAtual\": \"errada123\", \"novaSenha\": \"novasenha1\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.campos.senhaAtual").exists());
+
+        mvc.perform(put("/api/usuarios/me/senha").header("Authorization", bearer())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"senhaAtual\": \"senhaforte1\", \"novaSenha\": \"curta\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.campos.novaSenha").exists());
+
+        mvc.perform(put("/api/usuarios/me/senha").header("Authorization", bearer())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"senhaAtual\": \"senhaforte1\", \"novaSenha\": \"novasenha1\"}"))
+                .andExpect(status().isNoContent());
+
+        mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\": \"diana@faesa.br\", \"senha\": \"senhaforte1\"}"))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\": \"diana@faesa.br\", \"senha\": \"novasenha1\"}"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void excluirContaExigeSenhaEApagaOUsuario() throws Exception {
+        mvc.perform(delete("/api/usuarios/me").header("Authorization", bearer())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"senha\": \"errada123\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.campos.senha").exists());
+        assertThat(usuarios.existsByEmail("diana@faesa.br")).isTrue();
+
+        mvc.perform(delete("/api/usuarios/me").header("Authorization", bearer())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"senha\": \"senhaforte1\"}"))
+                .andExpect(status().isNoContent());
+
+        assertThat(jdbc.sql("SELECT count(*) FROM usuarios WHERE email = 'diana@faesa.br'").query(Long.class).single())
+                .isZero();
+        mvc.perform(get("/api/usuarios/me").header("Authorization", bearer()))
+                .andExpect(status().isUnauthorized());
     }
 }
