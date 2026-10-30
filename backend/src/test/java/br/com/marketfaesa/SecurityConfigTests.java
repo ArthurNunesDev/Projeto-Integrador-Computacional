@@ -81,6 +81,17 @@ class SecurityConfigTests {
     }
 
     @Test
+    void preflightCorsDoPreviewEDo127ELiberado() throws Exception {
+        for (String origem : new String[] { "http://127.0.0.1:5173", "http://localhost:4173" }) {
+            mvc.perform(options("/api/auth/login")
+                            .header(HttpHeaders.ORIGIN, origem)
+                            .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST"))
+                    .andExpect(status().isOk())
+                    .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, origem));
+        }
+    }
+
+    @Test
     void preflightCorsDeOrigemDesconhecidaEBarrado() throws Exception {
         mvc.perform(options("/api/auth/login")
                         .header(HttpHeaders.ORIGIN, "https://exemplo.invalido")
