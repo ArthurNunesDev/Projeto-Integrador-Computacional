@@ -25,7 +25,11 @@ public class ErroApiException extends RuntimeException {
 
     // Recurso existe, mas é de outro usuário.
     public static ErroApiException acessoNegado() {
-        return new ErroApiException(HttpStatus.FORBIDDEN, "Acesso negado", null);
+        return acessoNegado("Acesso negado");
+    }
+
+    public static ErroApiException acessoNegado(String erro) {
+        return new ErroApiException(HttpStatus.FORBIDDEN, erro, null);
     }
 
     public static ErroApiException conflito(String erro) {
