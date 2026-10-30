@@ -50,6 +50,8 @@ export default defineConfig(({ mode }) => {
     test: {
       environment: 'jsdom',
       setupFiles: ['@testing-library/jest-dom/vitest'],
+      // Cada teste começa sem o fetch falso do anterior (ver src/test/apiFalsa.js).
+      unstubGlobals: true,
     },
   }
 })

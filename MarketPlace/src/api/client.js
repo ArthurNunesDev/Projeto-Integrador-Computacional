@@ -65,6 +65,16 @@ export function definirOnNaoAutenticado(callback) {
   }
 }
 
+/** Acrescenta ao caminho a query string dos filtros preenchidos (ignora null, undefined e ''). */
+export function comFiltros(caminho, filtros = {}) {
+  const params = new URLSearchParams()
+  for (const [chave, valor] of Object.entries(filtros)) {
+    if (valor != null && valor !== '') params.set(chave, valor)
+  }
+  const query = params.toString()
+  return query ? `${caminho}?${query}` : caminho
+}
+
 async function lerCorpo(resposta) {
   const texto = await resposta.text()
   if (!texto) return null

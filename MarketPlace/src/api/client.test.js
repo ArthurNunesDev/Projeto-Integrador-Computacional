@@ -3,6 +3,7 @@ import {
   API_URL,
   ApiError,
   MENSAGEM_FALHA_REDE,
+  comFiltros,
   definirOnNaoAutenticado,
   obterToken,
   requisicao,
@@ -154,5 +155,15 @@ describe('requisicao', () => {
     const erro = await obterMe().catch((e) => e)
 
     expect(erro).toMatchObject({ status: 502, mensagem: 'Erro na requisição (502)', campos: null })
+  })
+})
+
+describe('comFiltros', () => {
+  it('monta a query só com os filtros preenchidos', () => {
+    expect(comFiltros('/api/oportunidades', { tipo: 'PROJETO', areaId: 3, busca: '', autorId: null })).toBe(
+      '/api/oportunidades?tipo=PROJETO&areaId=3',
+    )
+    expect(comFiltros('/api/pessoas', { busca: 'ana souza' })).toBe('/api/pessoas?busca=ana+souza')
+    expect(comFiltros('/api/pessoas')).toBe('/api/pessoas')
   })
 })
