@@ -34,6 +34,20 @@ Base: `http://localhost:8080/api` em desenvolvimento.
 | GET | `/api/usuarios/me` | restaurar a sessão ao abrir o app; dados do perfil (`src/perfil.js`) | `200` usuário (sem senha); `401` sem token |
 | GET | `/api/usuarios/me/configuracoes` | carregar tema e configurações ao logar | `200` configurações |
 | PUT | `/api/usuarios/me/configuracoes` | salvar alterações em `Configs.jsx` | `200` configurações salvas; `400` se faltar campo |
+| PUT | `/api/usuarios/me` | editar perfil e foto (`Profile.jsx`, `Configs.jsx` → `atualizarUsuario` em `App.jsx`), sempre com o perfil completo | `200` usuário |
+| PUT | `/api/usuarios/me/senha` | "Alterar senha" em `Configs.jsx` | `204`; `400` com `campos.senhaAtual` se a senha atual estiver errada |
+| DELETE | `/api/usuarios/me` | "Excluir conta" em `Configs.jsx` (corpo `{senha}`), depois sai da sessão | `204`; `400` senha errada |
+| GET | `/api/cursos`, `/api/areas` | select de curso (perfil e configurações); filtros de área (início e oportunidades) | `200 [{id, nome}]` (públicas) |
+| GET | `/api/oportunidades` | início (destaques e contagem de abertas) e `Opportunities.jsx`; filtro e busca no front | `200` lista, mais novas primeiro |
+| POST/DELETE | `/api/oportunidades/{id}/participacao` | botão "Participar" | `204`; `400` na própria; `409` fechada ou repetida |
+| PUT/DELETE | `/api/oportunidades/{id}/salvo` | coração de salvar e remoção em `Saved.jsx` | `204` |
+| GET | `/api/usuarios/me/salvos`, `/api/usuarios/me/participacoes` | `Saved.jsx`; contagem de projetos no início e no perfil | `200` lista |
+| GET/POST/PUT/DELETE | `/api/habilidades-publicadas` | `Skills.jsx` (publicar), `Publications.jsx` (editar/excluir, `?usuarioId=` do usuário), números do início | `200`/`201`/`204` |
+| GET | `/api/pessoas` | `PeopleSkills.jsx` e aba "Encontrar pessoas" de `Connections.jsx` | `200` perfis públicos (sem o usuário) |
+| GET | `/api/conexoes`, `/recebidas`, `/enviadas` | estado de cada pessoa (`useConexoes.js`): conectado, pedido enviado ou recebido | `200` lista |
+| POST | `/api/conexoes`, `/{id}/aceitar`, `/{id}/recusar`; DELETE `/{id}` | conectar, aceitar, recusar, desconectar ou cancelar pedido | `201`/`200`/`204` |
+| GET/POST | `/api/conversas` | lista de `Messages.jsx`; botão "Mensagem" no perfil de uma pessoa abre (ou cria) a conversa | `200`; `403` se a pessoa não aceita mensagens |
+| GET/POST | `/api/conversas/{id}/mensagens` | conversa aberta (recarregada a cada 5 s) e envio | `200`/`201` |
 
 Todas as rotas acima já existem. A proposta anterior usava `/api/users/{id}`; a API usa `/api/usuarios/me`, com o id tirado do token.
 
@@ -94,19 +108,27 @@ Erros seguem um formato único:
 
 ### O que já está integrado
 
+Todas as telas usam a API; não há mais dados de demonstração no front.
+
 - **Login** (`App.jsx` → `fazerLogin`): campo "E-mail" (`type="email"`) e corpo `{email, senha}`. O token fica no `localStorage` (`marketfaesa-token`); `401` mostra "E-mail ou senha inválidos." e falha de rede mostra a mensagem do client. O botão fica desabilitado enquanto envia.
 - **Cadastro** (`fazerCadastro`): senha de 8 a 72 caracteres validada no front, como na API; erros de `campos` aparecem embaixo de cada campo; `409` mostra "Este e-mail já está cadastrado."; depois do cadastro o front faz o login automaticamente.
-- **Sessão**: ao abrir o app com token salvo, `GET /api/usuarios/me` restaura o usuário (tela "Carregando sua sessão..."). Um `401` em qualquer requisição autenticada volta para o login com o aviso de sessão expirada (`definirOnNaoAutenticado`). O "Sair" descarta o token.
-- **Perfil**: nome, e-mail, curso (`curso.nome`), período (`Nº período`), cidade e bio vêm da API (`src/perfil.js` converte para o formato das telas).
-- **Configurações e tema**: carregados com `GET /api/usuarios/me/configuracoes` após o login e salvos com `PUT` (objeto completo) a cada alteração; se o `PUT` falhar, a tela desfaz a mudança e mostra o erro. O tema continua copiado no `localStorage` (`marketfaesa-theme`) só para não piscar na carga.
-- **Limpeza**: o login de dev (`VITE_DEV_USER`/`VITE_DEV_PASS`) e as contas locais com senha em texto puro foram removidos; na primeira carga o front apaga as chaves antigas `marketfaesa-users`, `marketfaesa-auth` e `marketfaesa-config`.
+- **Sessão**: ao abrir o app com token salvo, `GET /api/usuarios/me` restaura o usuário (tela "Carregando sua sessão...") e volta para a última página aberta. Um `401` em qualquer requisição autenticada volta para o login com o aviso de sessão expirada (`definirOnNaoAutenticado`). O "Sair" descarta o token.
+- **Perfil** (`Profile.jsx`, aba Conta de `Configs.jsx`): edição de nome, curso (select de `/api/cursos`, envia `cursoId`), período (1 a 20, inteiro), cidade, bio e foto (data URL de até 1 MB) com `PUT /api/usuarios/me`; `src/perfil.js` monta o corpo completo a partir do perfil atual. Números de conexões, oportunidades e habilidades vêm das listas da API.
+- **Senha e conta**: troca de senha e exclusão de conta (com confirmação da senha) em `Configs.jsx`; o botão de excluir do perfil leva para lá.
+- **Configurações e tema**: carregados com `GET /api/usuarios/me/configuracoes` após o login e salvos com `PUT` (objeto completo) a cada alteração; se o `PUT` falhar, a tela recarrega o que está salvo e mostra o erro. Antes do login o tema é sempre o claro.
+- **Oportunidades** (início, `Opportunities.jsx`, `Saved.jsx`): lista, participar/sair e salvar/remover pela API; a busca e o filtro por área rodam no front sobre a lista. A própria oportunidade e as encerradas não mostram "Participar".
+- **Habilidades publicadas** (`Skills.jsx`, `Publications.jsx`): criar, editar e excluir; os selects enviam os códigos (`INTERMEDIARIO`, `PROJETOS_FREELAS`...) e as telas mostram os rótulos (`src/rotulos.js`).
+- **Pessoas e conexões** (`PeopleSkills.jsx`, `Connections.jsx`): diretório de `/api/pessoas` e todas as ações de conexão; o card de uma conexão completa cidade e habilidades com os dados do diretório.
+- **Mensagens** (`Messages.jsx`): conversas e mensagens reais. Sem tempo real: com uma conversa aberta, mensagens e lista são recarregadas a cada 5 s (o intervalo para ao sair da tela).
+- **Início** (`Body.jsx`): números (estudantes, oportunidades abertas, habilidades), destaques e "Categorias com mais habilidades" calculados a partir das listas da API.
+- **Limpeza**: na primeira carga o front apaga as chaves do modo demonstrativo (`marketfaesa-users` com senhas em texto puro, `marketfaesa-auth`, salvos, participações, habilidades, conexões, mensagens, configurações, perfil e foto locais; ver `limparDadosAntigos` em `src/storage.js`).
 
-### O que ainda falta
+### O que ainda fica no navegador (ou falta)
 
-- **`PUT /api/usuarios/me`**: as edições do perfil (nome, curso, período, cidade, bio) ainda ficam só no navegador, em `marketfaesa-perfil:<id do usuário>` (`src/perfil.js`, com TODO). O e-mail não é editável no front.
-- **Troca de senha** e **exclusão de conta**: sem rota na API; os controles em `Configs.jsx` e `Profile.jsx` estão desabilitados com "Disponível em breve".
-- **Catálogo de cursos** (`/api/cursos`): o curso hoje é texto livre na edição local.
-- Habilidades, conexões, mensagens, salvos, preferências e verificação em duas etapas continuam só no `localStorage`.
+- **No `localStorage`, por conta**: a página aberta, as preferências de conteúdo da aba Preferências (sem campo na API), o registro de que a animação de perfil completo já foi exibida e a **verificação em duas etapas**, que continua só demonstrativa (a API não tem 2FA).
+- **Criação de oportunidades**: a API tem `POST/PUT/DELETE /api/oportunidades`, mas o front ainda não tem tela para publicar ou editar oportunidades (`criarOportunidade` já existe em `src/api/oportunidades.js`).
+- **Notificações**: o painel do cabeçalho continua vazio; não há rota de notificações.
+- **Fotos nas listas**: a API não manda `fotoUrl` nas listas, então os cards usam as iniciais do nome; o ícone da oportunidade vem do tipo.
 
 ### Cliente de API
 
@@ -114,10 +136,12 @@ Fica em `MarketPlace/src/api/`:
 
 - `client.js`: `requisicao(caminho, {method, body, signal})` monta a URL a partir de `VITE_API_URL`, envia JSON e o `Authorization: Bearer` quando há token (`localStorage`, chave `marketfaesa-token`). Erros viram `ApiError` com `status`, `mensagem` (o `erro` da API) e `campos`; falha de rede vira `status: 0` com mensagem amigável. Um `401` em requisição com token limpa o token e chama o callback registrado em `definirOnNaoAutenticado(fn)`.
 - `auth.js`: `cadastrar({nome, email, senha})`, `login({email, senha})` (salva o token) e `sair()`.
-- `usuarios.js`: `obterMe()`, `obterConfiguracoes()` e `salvarConfiguracoes(config)`.
+- `usuarios.js`: `obterMe()`, `atualizarMe(perfil)`, `alterarSenha({senhaAtual, novaSenha})`, `excluirConta(senha)`, `obterConfiguracoes()` e `salvarConfiguracoes(config)`.
+- `catalogos.js`, `oportunidades.js`, `habilidades.js`, `pessoas.js`, `conexoes.js` e `conversas.js`: uma função por rota, todas sobre `requisicao` (filtros de lista viram query string com `comFiltros`).
+- Nas telas, `src/useCarregar.js` carrega uma lista ao montar (com `carregando`, `erro` e `recarregar`) e `mensagemDoErro` traduz o `ApiError`.
 
-- **Variável de ambiente**: `VITE_API_URL` (padrão `http://localhost:8080`, sem `/api`; veja `MarketPlace/.env.example`). Falta configurar a URL de produção no build (secret/variável no workflow de deploy).
-- **CORS**: o backend já libera `http://localhost:5173` (Vite) e `https://arthurnunesdev.github.io`; outras origens entram por `CORS_ALLOWED_ORIGINS` (separadas por vírgula).
+- **Variável de ambiente**: `VITE_API_URL` (padrão `http://localhost:8080`, sem `/api`; veja `MarketPlace/.env.example`). Falta configurar a URL de produção no build (variável `VITE_API_URL` do repositório, lida pelo workflow de deploy). Sem ela, a demo do GitHub Pages não funciona: o front não tem mais modo demonstrativo e depende de um backend hospedado.
+- **CORS**: o backend já libera `http://localhost:5173` e `http://127.0.0.1:5173` (Vite), `http://localhost:4173` (vite preview) e `https://arthurnunesdev.github.io`; outras origens entram por `CORS_ALLOWED_ORIGINS` (separadas por vírgula).
 
 ---
 
@@ -148,7 +172,7 @@ O GitHub Pages serve apenas arquivos estáticos: o frontend continua lá, mas o 
 - [x] `POST /api/auth/login` retornando JWT
 - [x] `GET /api/usuarios/me` protegido por token
 - [x] Testes de integração do cadastro e login
-- [ ] `PUT /api/usuarios/me` (editar perfil) e catálogos (`/api/cursos` etc.)
+- [x] `PUT /api/usuarios/me` (editar perfil) e catálogos (`/api/cursos` etc.)
 
 ### Fase 3 — Integração do front
 - [x] Remover a divisão incompleta do Login.jsx (`auth/components`, `auth/hooks`, `auth/utils`)
@@ -160,13 +184,15 @@ O GitHub Pages serve apenas arquivos estáticos: o frontend continua lá, mas o 
 - [x] Estados de carregamento e erro no login e cadastro
 - [x] Logout (botão "Sair" já existe no cabeçalho) limpando o token; `401` redireciona para o login
 - [x] Restaurar a sessão com `GET /api/usuarios/me` e apagar as contas locais antigas
-- [ ] Enviar as edições do perfil para `PUT /api/usuarios/me` (quando existir) e remover `marketfaesa-perfil:<id>`
-- [ ] Troca de senha e exclusão de conta (rotas na API e ligar os controles desabilitados)
+- [x] Enviar as edições do perfil para `PUT /api/usuarios/me` e remover `marketfaesa-perfil:<id>`
+- [x] Troca de senha e exclusão de conta
+- [x] Oportunidades, salvos, habilidades publicadas, pessoas, conexões e mensagens pela API (sem `localStorage`)
+- [ ] Tela para publicar e editar oportunidades (`POST/PUT/DELETE /api/oportunidades`)
 
 ### Fase 4 — Configurações
 - [x] `GET/PUT /api/usuarios/me/configuracoes`
 - [x] Carregar configurações após o login e salvar ao alterar em `Configs.jsx`
-- [x] Manter `localStorage` só como cache do tema
+- [x] Tema só da API (sem cópia no `localStorage`)
 
 ### Fase 5 — Produção
 - [x] Usar PostgreSQL (Neon)

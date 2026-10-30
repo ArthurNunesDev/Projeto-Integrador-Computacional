@@ -1,199 +1,63 @@
 import { useEffect, useState } from "react";
 
+import { listarAreas } from "../api/catalogos.js";
+import { listarConexoes } from "../api/conexoes.js";
+import { listarHabilidadesPublicadas } from "../api/habilidades.js";
+import { listarParticipacoes } from "../api/oportunidades.js";
+import { listarPessoas } from "../api/pessoas.js";
 import { calcularProgressoPerfil, conquistaPerfilExibida, marcarConquistaPerfilExibida } from "../perfil.js";
-import { chaveUsuario, lerValorSeguro, salvarValorSeguro, removerValorSeguro } from "../storage.js";
+import { iniciais } from "../rotulos.js";
+import { useCarregar } from "../useCarregar.js";
+import { carregarOportunidades, useAcoesOportunidade } from "./acoesOportunidade.js";
 
-function chaveConclusaoPerfil(usuario) {
-  return usuario?.email
-    ? "marketfaesa-perfil-completo-pendente:" + usuario.email.trim().toLowerCase()
-    : "";
+// Números do painel e da barra lateral, todos calculados a partir das listas da API.
+function carregarPainel() {
+  return Promise.all([listarHabilidadesPublicadas(), listarPessoas(), listarConexoes(), listarParticipacoes()])
+    .then(([habilidades, pessoas, conexoes, participacoes]) => ({
+      habilidades,
+      pessoas: pessoas.length,
+      conexoes: conexoes.length,
+      participacoes: participacoes.length,
+    }));
 }
 
-function conclusaoPerfilPendente(usuario) {
-  const chave = chaveConclusaoPerfil(usuario);
-  return Boolean(chave) && lerValorSeguro(chave) === "1";
-}
-
-function lerArraySeguro(chave) {
-  try {
-    const dados = JSON.parse(lerValorSeguro(chave));
-    return Array.isArray(dados) ? dados : [];
-  } catch {
-    return [];
-  }
-}
-
-function oportunidadeSalvaValida(item) {
-  return Boolean(
-    item &&
-    typeof item === "object" &&
-    !Array.isArray(item) &&
-    Number.isInteger(item.id) &&
-    typeof item.titulo === "string" &&
-    typeof item.tipo === "string" &&
-    typeof item.area === "string" &&
-    typeof item.modalidade === "string" &&
-    typeof item.pessoa === "string" &&
-    typeof item.curso === "string" &&
-    typeof item.inicial === "string" &&
-    typeof item.icon === "string" &&
-    typeof item.descricao === "string"
-  );
+// As 5 categorias com mais habilidades publicadas.
+function categoriasEmDestaque(habilidades) {
+  const contagem = new Map();
+  habilidades.forEach((h) => contagem.set(h.categoria, (contagem.get(h.categoria) || 0) + 1));
+  return [...contagem].sort((a, b) => b[1] - a[1]).slice(0, 5);
 }
 
 function Body({ onNavigate, usuario }) {
-  const nomeUsuario = usuario?.nome || "João Silva";
-  const cursoUsuario = usuario?.curso || "Ciência da Computação";
-  const periodoUsuario = usuario?.periodo || "4º período";
-  const iniciaisUsuario = nomeUsuario.split(" ").filter(Boolean).slice(0, 2).map((parte) => parte[0]).join("").toUpperCase() || "JS";
+  const nomeUsuario = usuario?.nome || "";
+  const iniciaisUsuario = iniciais(nomeUsuario, "US");
   const [areaSelecionada, setAreaSelecionada] = useState("Todos");
-  const chaveParticipando = chaveUsuario("marketfaesa-participando", usuario?.id);
-  const chaveSalvos = chaveUsuario("marketfaesa-salvos", usuario?.id);
-  const [participando, setParticipando] = useState(() => [...new Set(lerArraySeguro(chaveParticipando).filter((id) => Number.isInteger(id) && id > 0))]);
-  const [detalheAberto, setDetalheAberto] = useState(null);
-  const [perfilProgresso, setPerfilProgresso] = useState(() => (conclusaoPerfilPendente(usuario) || conquistaPerfilExibida(usuario) ? 100 : calcularProgressoPerfil(usuario)));
-  const [perfilConcluido, setPerfilConcluido] = useState(() => conquistaPerfilExibida(usuario) || conclusaoPerfilPendente(usuario) || calcularProgressoPerfil(usuario) === 100);
-  const [mostrarPerfilCompleto, setMostrarPerfilCompleto] = useState(() => conclusaoPerfilPendente(usuario));
-  const [salvos, setSalvos] = useState(() => lerArraySeguro(chaveSalvos).filter(oportunidadeSalvaValida));
-  const [erroArmazenamento, setErroArmazenamento] = useState("");
+  const [detalheId, setDetalheId] = useState(null);
+  const { dados: oportunidades, carregando: carregandoOportunidades, erro: erroOportunidades, setDados } = useCarregar(carregarOportunidades, []);
+  const { dados: listaAreas } = useCarregar(listarAreas, []);
+  const { dados: painel } = useCarregar(carregarPainel);
+  const { erro: erroAcao, alternar } = useAcoesOportunidade(setDados);
+
+  const minhasHabilidades = painel ? painel.habilidades.filter((h) => h.usuario?.id === usuario?.id).length : 0;
+  const perfilProgresso = calcularProgressoPerfil(usuario, minhasHabilidades);
+  // A conquista é permanente por conta: depois de registrada o card não volta.
+  const perfilConcluido = conquistaPerfilExibida(usuario) || perfilProgresso === 100;
 
   useEffect(() => {
-    // A conquista é permanente por conta. Nunca reexiba o card depois de registrada.
-    const jaConcluido = conquistaPerfilExibida(usuario);
-    const pendente = conclusaoPerfilPendente(usuario);
-    const progressoInicial = calcularProgressoPerfil(usuario);
+    if (painel && perfilProgresso === 100) marcarConquistaPerfilExibida(usuario);
+  }, [painel, perfilProgresso, usuario]);
 
-    if (pendente || progressoInicial === 100 || jaConcluido) {
-      // O estado inicial já considera estes valores; aqui só persistimos a conquista.
-      marcarConquistaPerfilExibida(usuario);
-    }
-
-    if (pendente) {
-      removerValorSeguro(chaveConclusaoPerfil(usuario));
-      const timer = window.setTimeout(() => setMostrarPerfilCompleto(false), 4200);
-      return () => window.clearTimeout(timer);
-    }
-
-    const atualizarProgresso = () => {
-      // A verificação persistente tem prioridade sobre o progresso atual: apagar dados
-      // depois da conquista não faz o card voltar.
-      if (conquistaPerfilExibida(usuario)) {
-        setPerfilConcluido(true);
-        setPerfilProgresso(100);
-        return;
-      }
-
-      const progresso = calcularProgressoPerfil(usuario);
-      setPerfilProgresso(progresso);
-      if (progresso === 100) {
-        marcarConquistaPerfilExibida(usuario);
-        setPerfilConcluido(true);
-      } else {
-        setPerfilConcluido(false);
-      }
-    };
-
-    window.addEventListener("storage", atualizarProgresso);
-    window.addEventListener("marketfaesa-perfil-atualizado", atualizarProgresso);
-
-    return () => {
-      window.removeEventListener("storage", atualizarProgresso);
-      window.removeEventListener("marketfaesa-perfil-atualizado", atualizarProgresso);
-    };
-  }, [usuario]);
-
-  const areas = ["Todos", "Tecnologia", "Saúde", "Direito", "Engenharia", "Administração", "Design"];
-
-  const oportunidades = [
-    {
-      icon: "💻",
-      tipo: "PROJETO",
-      titulo: "Desenvolvimento de App para Clínica",
-      area: "Saúde + TI",
-      categorias: ["Saúde", "Tecnologia"],
-      modalidade: "Remoto",
-      pessoa: "Maria Lima",
-      curso: "Medicina",
-      id: 1,
-      inicial: "ML",
-      descricao: "Apoio na criação de um aplicativo para organização de atendimentos.",
-    },
-    {
-      icon: "⚖️",
-      tipo: "CONSULTORIA",
-      titulo: "Revisão Jurídica de Contratos Digitais",
-      area: "Direito + TI",
-      categorias: ["Direito", "Tecnologia"],
-      modalidade: "Híbrido",
-      pessoa: "Rafael Costa",
-      curso: "Direito",
-      id: 2,
-      inicial: "RC",
-      descricao: "Revisão e organização de contratos para um projeto universitário.",
-    },
-    {
-      icon: "📊",
-      tipo: "PESQUISA",
-      titulo: "Análise de Dados Acadêmicos",
-      area: "Tecnologia",
-      modalidade: "Remoto",
-      pessoa: "Ana Souza",
-      curso: "Computação",
-      id: 3,
-      inicial: "AS",
-      descricao: "Análise exploratória de dados para uma pesquisa acadêmica.",
-    },
-    {
-      icon: "🎨",
-      tipo: "DESIGN",
-      titulo: "Criação de identidade visual",
-      area: "Design",
-      modalidade: "Híbrido",
-      pessoa: "Lucas Martins",
-      curso: "Design",
-      id: 4,
-      inicial: "LM",
-      descricao: "Criação de identidade visual para uma iniciativa estudantil.",
-    },
-  ];
-
-  const oportunidadesFiltradas = oportunidades.filter((item) =>
-    areaSelecionada === "Todos" ||
-    item.area.toLowerCase().includes(areaSelecionada.toLowerCase()) ||
-    item.categorias?.includes(areaSelecionada),
-  );
-
-  function alternarSalvo(item) {
-    const novosSalvos = salvos.some((salvo) => salvo.id === item.id)
-      ? salvos.filter((salvo) => salvo.id !== item.id)
-      : [...salvos, item];
-
-    if (!salvarValorSeguro(chaveSalvos, JSON.stringify(novosSalvos))) {
-      setErroArmazenamento("Não foi possível salvar esta alteração no navegador. Verifique o armazenamento disponível e tente novamente.");
-      return;
-    }
-
-    setSalvos(novosSalvos);
-    setErroArmazenamento("");
-  }
-
-  function alternarParticipacao(id) {
-    const novaParticipacao = participando.includes(id)
-      ? participando.filter((item) => item !== id)
-      : [...participando, id];
-
-    if (!salvarValorSeguro(chaveParticipando, JSON.stringify(novaParticipacao))) {
-      setErroArmazenamento("Não foi possível salvar esta alteração no navegador. Verifique o armazenamento disponível e tente novamente.");
-      return;
-    }
-
-    setParticipando(novaParticipacao);
-    setErroArmazenamento("");
-  }
+  const areas = ["Todos", ...listaAreas.map((area) => area.nome)];
+  const oportunidadesFiltradas = oportunidades
+    .filter((item) => areaSelecionada === "Todos" || item.areas.includes(areaSelecionada))
+    .slice(0, 4);
+  const detalheAberto = oportunidades.find((item) => item.id === detalheId) || null;
+  const abertas = oportunidades.filter((item) => item.status === "ABERTA").length;
+  const destaque = painel ? categoriasEmDestaque(painel.habilidades) : [];
 
   return (
     <main className="main-content">
-      {erroArmazenamento && <p className="home-storage-error" role="alert">{erroArmazenamento}</p>}
+      {erroAcao && <p className="home-storage-error" role="alert">{erroAcao}</p>}
       <div className="dashboard-container">
         <section className="dashboard-main">
           {/* HERO */}
@@ -224,27 +88,27 @@ function Body({ onNavigate, usuario }) {
           {/* ESTATÍSTICAS */}
           <section className="stats-grid">
             <div className="stat-card animate__animated animate__zoomIn">
-              <strong>1.847</strong>
+              <strong>{painel ? painel.pessoas + 1 : "–"}</strong>
 
               <span>Estudantes ativos</span>
 
-              <small>↑ +23 esta semana</small>
+              <small>com perfil público</small>
             </div>
 
             <div className="stat-card animate__animated animate__zoomIn">
-              <strong>342</strong>
+              <strong>{carregandoOportunidades ? "–" : abertas}</strong>
 
               <span>Oportunidades abertas</span>
 
-              <small>↑ +18 novos hoje</small>
+              <small>de {oportunidades.length} publicadas</small>
             </div>
 
             <div className="stat-card animate__animated animate__zoomIn">
-              <strong>96</strong>
+              <strong>{painel ? painel.habilidades.length : "–"}</strong>
 
               <span>Habilidades disponíveis</span>
 
-              <small>↑ +7 esta semana</small>
+              <small>publicadas por estudantes</small>
             </div>
           </section>
 
@@ -281,21 +145,29 @@ function Body({ onNavigate, usuario }) {
               <button className="see-all-button" type="button" onClick={() => onNavigate?.("oportunidades")}>Ver todas →</button>
             </div>
 
-            {oportunidadesFiltradas.length > 0 ? (
+            {carregandoOportunidades ? (
+              <div className="opportunities-empty-home" role="status">
+                <strong>Carregando oportunidades...</strong>
+              </div>
+            ) : erroOportunidades ? (
+              <div className="opportunities-empty-home" role="alert">
+                <strong>Não foi possível carregar as oportunidades</strong>
+                <span>{erroOportunidades}</span>
+              </div>
+            ) : oportunidadesFiltradas.length > 0 ? (
               <div className="opportunities-grid">
                 {oportunidadesFiltradas.map((item) => {
-                  const entrou = participando.includes(item.id);
                   return (
-                    <article className="opportunity-card animate__animated animate__fadeInUp" key={item.titulo}>
+                    <article className="opportunity-card animate__animated animate__fadeInUp" key={item.id}>
                       <button
-                        className={salvos.some((salvo) => salvo.id === item.id) ? "save-button save-button-home salvo" : "save-button save-button-home"}
+                        className={item.salva ? "save-button save-button-home salvo" : "save-button save-button-home"}
                         type="button"
-                        onClick={() => alternarSalvo(item)}
-                        aria-label={salvos.some((salvo) => salvo.id === item.id) ? "Remover dos salvos" : "Salvar oportunidade"}
+                        onClick={() => alternar(item, "salva")}
+                        aria-label={item.salva ? "Remover dos salvos" : "Salvar oportunidade"}
                       >
-                        {salvos.some((salvo) => salvo.id === item.id) ? "♥" : "♡"}
+                        {item.salva ? "♥" : "♡"}
                       </button>
-                      <button className="opportunity-card-open" type="button" onClick={() => setDetalheAberto(item)} aria-label={"Ver detalhes de " + item.titulo}>
+                      <button className="opportunity-card-open" type="button" onClick={() => setDetalheId(item.id)} aria-label={"Ver detalhes de " + item.titulo}>
                         <div className="opportunity-top">
                           <div className="opportunity-icon">{item.icon}</div>
                           <div className="opportunity-top-actions">
@@ -314,10 +186,8 @@ function Body({ onNavigate, usuario }) {
                           <div><strong>{item.pessoa}</strong><span>{item.curso}</span></div>
                         </div>
                         <div className="opportunity-actions">
-                          <button className="details-button" type="button" onClick={() => setDetalheAberto(item)}>Detalhes</button>
-                          <button className={entrou ? "participating-button" : ""} type="button" onClick={() => alternarParticipacao(item.id)}>
-                            {entrou ? "✓ Participando" : "Participar"}
-                          </button>
+                          <button className="details-button" type="button" onClick={() => setDetalheId(item.id)}>Detalhes</button>
+                          <BotaoParticipar item={item} usuarioId={usuario?.id} onAlternar={alternar} />
                         </div>
                       </div>
                     </article>
@@ -326,8 +196,8 @@ function Body({ onNavigate, usuario }) {
               </div>
             ) : (
               <div className="opportunities-empty-home">
-                <strong>Nenhuma oportunidade nesta área</strong>
-                <span>Escolha outra área para continuar explorando.</span>
+                <strong>{oportunidades.length ? "Nenhuma oportunidade nesta área" : "Ainda não há oportunidades publicadas"}</strong>
+                <span>{oportunidades.length ? "Escolha outra área para continuar explorando." : "Quando alguém publicar, ela aparecerá aqui."}</span>
               </div>
             )}
           </section>
@@ -340,28 +210,28 @@ function Body({ onNavigate, usuario }) {
 
             <h3>{nomeUsuario}</h3>
 
-            <p>{cursoUsuario} · {periodoUsuario.replace(/\s*período$/i, " per.")}</p>
+            <p>{[usuario?.curso || "Curso não informado", usuario?.periodo?.replace(/\s*período$/i, " per.")].filter(Boolean).join(" · ")}</p>
 
             <div className="profile-stats">
               <div>
-                <strong>7</strong>
+                <strong>{painel?.conexoes ?? "–"}</strong>
                 <span>Conexões</span>
               </div>
 
               <div>
-                <strong>3</strong>
+                <strong>{painel?.participacoes ?? "–"}</strong>
                 <span>Projetos</span>
               </div>
 
               <div>
-                <strong>2</strong>
+                <strong>{painel ? minhasHabilidades : "–"}</strong>
                 <span>Skills</span>
               </div>
             </div>
           </section>
 
           {/* COMPLETAR PERFIL */}
-          {!perfilConcluido && (
+          {painel && !perfilConcluido && (
             <section className="complete-card">
               <h3>✨ Complete seu perfil</h3>
               <div className="progress-bar"><span style={{ width: perfilProgresso + "%" }}></span></div>
@@ -371,52 +241,23 @@ function Body({ onNavigate, usuario }) {
             </section>
           )}
 
-          {mostrarPerfilCompleto && (
-            <div className="perfil-completo-overlay" role="dialog" aria-modal="true">
-              <div className="perfil-completo-card">
-                <div className="perfil-completo-icon">🎉</div>
-                <span>PERFIL COMPLETO!</span>
-                <h2>Obrigado por completar seu perfil! ✨</h2>
-                <p>Agora sua presença na MarketFAESA está pronta para conectar você a novas oportunidades.</p>
-                <div className="perfil-completo-sparkles">✦{"\u3000"}✧{"\u3000"}✦</div>
-              </div>
-            </div>
-          )}
-
-          {/* MAIS BUSCADAS */}
+          {/* CATEGORIAS EM DESTAQUE */}
           <section className="popular-card">
-            <h3>🔥 Habilidades mais buscadas</h3>
+            <h3>🔥 Categorias com mais habilidades</h3>
 
             <ol>
-              <li>
-                <span>1</span>
-                <strong>Desenvolvimento Web</strong>
-                <small>128 buscas</small>
-              </li>
-
-              <li>
-                <span>2</span>
-                <strong>Design UX/UI</strong>
-                <small>94 buscas</small>
-              </li>
-
-              <li>
-                <span>3</span>
-                <strong>Análise de Dados</strong>
-                <small>87 buscas</small>
-              </li>
-
-              <li>
-                <span>4</span>
-                <strong>Marketing Digital</strong>
-                <small>72 buscas</small>
-              </li>
-
-              <li>
-                <span>5</span>
-                <strong>Redação Jurídica</strong>
-                <small>61 buscas</small>
-              </li>
+              {destaque.length ? destaque.map(([categoria, total], index) => (
+                <li key={categoria}>
+                  <span>{index + 1}</span>
+                  <strong>{categoria}</strong>
+                  <small>{total} {total === 1 ? "habilidade" : "habilidades"}</small>
+                </li>
+              )) : (
+                <li>
+                  <span>–</span>
+                  <strong>{painel ? "Nenhuma habilidade publicada ainda" : "Carregando..."}</strong>
+                </li>
+              )}
             </ol>
           </section>
         </aside>
@@ -424,10 +265,10 @@ function Body({ onNavigate, usuario }) {
 
       {detalheAberto && (
         <div className="opportunity-modal-backdrop" role="presentation" onClick={(event) => {
-          if (event.target === event.currentTarget) setDetalheAberto(null);
+          if (event.target === event.currentTarget) setDetalheId(null);
         }}>
           <section className="opportunity-modal animate__animated animate__fadeInUp" role="dialog" aria-modal="true">
-            <button className="opportunity-modal-close" type="button" onClick={() => setDetalheAberto(null)} aria-label="Fechar detalhes">×</button>
+            <button className="opportunity-modal-close" type="button" onClick={() => setDetalheId(null)} aria-label="Fechar detalhes">×</button>
             <div className="opportunity-modal-icon">{detalheAberto.icon}</div>
             <span className="opportunity-type">{detalheAberto.tipo}</span>
             <h2>{detalheAberto.titulo}</h2>
@@ -439,15 +280,24 @@ function Body({ onNavigate, usuario }) {
             </div>
             <div className="opportunity-modal-footer">
               <div className="person"><div className="person-avatar">{detalheAberto.inicial}</div><div><strong>{detalheAberto.pessoa}</strong><span>{detalheAberto.curso}</span></div></div>
-              <button className={salvos.some((salvo) => salvo.id === detalheAberto.id) ? "save-button save-button-modal salvo" : "save-button save-button-modal"} type="button" onClick={() => alternarSalvo(detalheAberto)}>{salvos.some((salvo) => salvo.id === detalheAberto.id) ? "♥ Salvo" : "♡ Salvar"}</button>
-              <button className={participando.includes(detalheAberto.id) ? "participating-button" : ""} type="button" onClick={() => alternarParticipacao(detalheAberto.id)}>
-                {participando.includes(detalheAberto.id) ? "✓ Participando" : "Participar"}
-              </button>
+              <button className={detalheAberto.salva ? "save-button save-button-modal salvo" : "save-button save-button-modal"} type="button" onClick={() => alternar(detalheAberto, "salva")}>{detalheAberto.salva ? "♥ Salvo" : "♡ Salvar"}</button>
+              <BotaoParticipar item={detalheAberto} usuarioId={usuario?.id} onAlternar={alternar} />
             </div>
           </section>
         </div>
       )}
     </main>
+  );
+}
+
+// Participar/sair; desabilitado na própria oportunidade e nas encerradas.
+function BotaoParticipar({ item, usuarioId, onAlternar }) {
+  if (item.autorId === usuarioId) return <button type="button" disabled>Sua oportunidade</button>;
+  if (item.status === "FECHADA" && !item.participando) return <button type="button" disabled>Encerrada</button>;
+  return (
+    <button className={item.participando ? "participating-button" : ""} type="button" onClick={() => onAlternar(item, "participando")}>
+      {item.participando ? "✓ Participando" : "Participar"}
+    </button>
   );
 }
 

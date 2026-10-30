@@ -1,95 +1,95 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import * as storage from "../storage.js";
+
 import Body from "./Body.jsx";
+import {
+  AREAS, chamadas, erroApi, habilidadePublicada, mockarApi, oportunidade, pessoa, pessoaResumo, USUARIO,
+} from "../test/apiFalsa.js";
 
-const usuario = {
-  id: "conta-a",
-  nome: "Ana Souza",
-  email: "ana@example.com",
-  curso: "ADS",
-  periodo: "3º período",
-};
-
-beforeEach(() => {
-  localStorage.clear();
-});
+function rotas(extras = {}) {
+  return {
+    "GET /api/oportunidades": [
+      oportunidade(1, "App para Clínica", { areas: [AREAS[1]] }),
+      oportunidade(2, "Análise de Dados", { status: "FECHADA" }),
+    ],
+    "GET /api/areas": AREAS,
+    "GET /api/habilidades-publicadas": [
+      habilidadePublicada(1, "React"),
+      habilidadePublicada(2, "Figma", { categoria: "Design", usuario: pessoaResumo(2, "Bruno Lima") }),
+      habilidadePublicada(3, "Vue", { usuario: pessoaResumo(2, "Bruno Lima") }),
+    ],
+    "GET /api/pessoas": [pessoa(2, "Bruno Lima"), pessoa(3, "Carla Dias")],
+    "GET /api/conexoes": [{ id: 1, status: "ACEITA", pessoa: pessoaResumo(2, "Bruno Lima") }],
+    "GET /api/usuarios/me/participacoes": [],
+    ...extras,
+  };
+}
 
 afterEach(() => {
   cleanup();
-  vi.restoreAllMocks();
 });
 
-describe("Página inicial — persistência das oportunidades", () => {
-  it("ignora oportunidades salvas inválidas sem quebrar a página inicial", () => {
-    localStorage.setItem("marketfaesa-salvos:conta-a", JSON.stringify([
-      null,
-      42,
-      { id: 1 },
-      {
-        icon: "💻",
-        tipo: "PROJETO",
-        titulo: "Desenvolvimento de App para Clínica",
-        area: "Saúde + TI",
-        categorias: ["Saúde", "Tecnologia"],
-        modalidade: "Remoto",
-        pessoa: "Maria Lima",
-        curso: "Medicina",
-        id: 1,
-        inicial: "ML",
-        descricao: "Apoio na criação de um aplicativo para organização de atendimentos.",
-      },
-    ]));
+describe("Página inicial", () => {
+  it("mostra números e destaques calculados a partir da API", async () => {
+    mockarApi(rotas());
+    render(<Body onNavigate={vi.fn()} usuario={USUARIO} />);
 
-    render(<Body usuario={usuario} onNavigate={vi.fn()} />);
-
-    expect(screen.getByRole("button", { name: "Remover dos salvos" })).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "Salvar oportunidade" })).toHaveLength(3);
+    expect(await screen.findByRole("heading", { name: "App para Clínica" })).toBeInTheDocument();
+    const estudantes = (await screen.findByText("Estudantes ativos")).closest(".stat-card");
+    expect(within(estudantes).getByText("3")).toBeInTheDocument();
+    const abertas = screen.getByText("Oportunidades abertas").closest(".stat-card");
+    expect(within(abertas).getByText("1")).toBeInTheDocument();
+    const popular = screen.getByRole("heading", { name: /Categorias com mais habilidades/ }).closest("section");
+    expect(within(popular).getAllByRole("listitem")[0]).toHaveTextContent("Tecnologia2 habilidades");
+    expect(within(screen.getByText("Conexões").closest("div")).getByText("1")).toBeInTheDocument();
   });
 
-  it("não marca oportunidade como salva quando o armazenamento falha", async () => {
-    vi.spyOn(storage, "salvarValorSeguro").mockReturnValue(false);
+  it("filtra os destaques pela área e desabilita participar de oportunidade encerrada", async () => {
+    mockarApi(rotas());
     const user = userEvent.setup();
-    render(<Body usuario={usuario} onNavigate={vi.fn()} />);
+    render(<Body onNavigate={vi.fn()} usuario={USUARIO} />);
+    await screen.findByRole("heading", { name: "Análise de Dados" });
 
-    await user.click(screen.getAllByRole("button", { name: "Salvar oportunidade" })[0]);
+    const encerrada = screen.getByRole("heading", { name: "Análise de Dados" }).closest("article");
+    expect(within(encerrada).getByRole("button", { name: "Encerrada" })).toBeDisabled();
 
-    expect(screen.getByRole("alert")).toHaveTextContent("Não foi possível salvar esta alteração");
-    expect(screen.getAllByRole("button", { name: "Salvar oportunidade" })).toHaveLength(4);
+    await user.click(await screen.findByRole("button", { name: "Saúde" }));
+    expect(screen.queryByRole("heading", { name: "Análise de Dados" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "App para Clínica" })).toBeInTheDocument();
   });
 
-  it("não marca participação quando o armazenamento falha", async () => {
-    vi.spyOn(storage, "salvarValorSeguro").mockReturnValue(false);
+  it("salva pela API e não marca quando a chamada falha", async () => {
+    const fetchFalso = mockarApi(rotas({
+      "PUT /api/oportunidades/1/salvo": null,
+      "PUT /api/oportunidades/2/salvo": erroApi(404, "Oportunidade não encontrada"),
+    }));
     const user = userEvent.setup();
-    render(<Body usuario={usuario} onNavigate={vi.fn()} />);
+    render(<Body onNavigate={vi.fn()} usuario={USUARIO} />);
+    await screen.findByRole("heading", { name: "App para Clínica" });
 
-    const botoesParticipar = screen.getAllByRole("button", { name: "Participar" });
-    await user.click(botoesParticipar[0]);
+    const card = screen.getByRole("heading", { name: "App para Clínica" }).closest("article");
+    await user.click(within(card).getByRole("button", { name: "Salvar oportunidade" }));
+    expect(await within(card).findByRole("button", { name: "Remover dos salvos" })).toBeInTheDocument();
+    expect(chamadas(fetchFalso, "PUT /api/oportunidades/1/salvo")).toHaveLength(1);
 
-    expect(screen.getByRole("alert")).toHaveTextContent("Não foi possível salvar esta alteração");
-    expect(screen.getAllByRole("button", { name: "Participar" })).toHaveLength(4);
-    expect(screen.queryByRole("button", { name: "✓ Participando" })).not.toBeInTheDocument();
+    const outro = screen.getByRole("heading", { name: "Análise de Dados" }).closest("article");
+    await user.click(within(outro).getByRole("button", { name: "Salvar oportunidade" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Oportunidade não encontrada");
+    expect(within(outro).getByRole("button", { name: "Salvar oportunidade" })).toBeInTheDocument();
   });
 
-  it("persiste e atualiza a interface quando salvar uma oportunidade funciona", async () => {
+  it("participa pelo modal de detalhes", async () => {
+    const fetchFalso = mockarApi(rotas({ "POST /api/oportunidades/1/participacao": null }));
     const user = userEvent.setup();
-    render(<Body usuario={usuario} onNavigate={vi.fn()} />);
+    render(<Body onNavigate={vi.fn()} usuario={USUARIO} />);
+    await screen.findByRole("heading", { name: "App para Clínica" });
 
-    await user.click(screen.getAllByRole("button", { name: "Salvar oportunidade" })[0]);
+    await user.click(screen.getByRole("button", { name: "Ver detalhes de App para Clínica" }));
+    const modal = screen.getByRole("dialog");
+    await user.click(within(modal).getByRole("button", { name: "Participar" }));
 
-    expect(screen.getByRole("button", { name: "Remover dos salvos" })).toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem("marketfaesa-salvos:conta-a"))).toHaveLength(1);
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-  });
-
-  it("persiste a participação quando o armazenamento funciona", async () => {
-    const user = userEvent.setup();
-    render(<Body usuario={usuario} onNavigate={vi.fn()} />);
-
-    await user.click(screen.getAllByRole("button", { name: "Participar" })[0]);
-
-    expect(screen.getByRole("button", { name: "✓ Participando" })).toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem("marketfaesa-participando:conta-a"))).toEqual([1]);
+    expect(await within(modal).findByRole("button", { name: "✓ Participando" })).toBeInTheDocument();
+    expect(chamadas(fetchFalso, "POST /api/oportunidades/1/participacao")).toHaveLength(1);
   });
 });

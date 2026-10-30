@@ -1,56 +1,33 @@
-import { useState } from "react";
-import { chaveUsuario, lerValorSeguro, salvarValorSeguro } from "../storage.js";
+import { useCallback, useState } from "react";
+import { listarHabilidadesPublicadas, publicarHabilidade } from "../api/habilidades.js";
 import { calcularProgressoPerfil, conquistaPerfilExibida, marcarConquistaPerfilExibida } from "../perfil.js";
+import { CATEGORIAS, DISPONIBILIDADES, NIVEIS } from "../rotulos.js";
+import { mensagemDoErro, useCarregar } from "../useCarregar.js";
 
-const CHAVE_HABILIDADES = "marketfaesa-habilidades";
+const FORMULARIO_VAZIO = {
+  nome: "",
+  categoria: "Tecnologia",
+  nivel: "INTERMEDIARIO",
+  descricao: "",
+  disponibilidade: "PROJETOS_FREELAS",
+};
 
-function habilidadeValida(item) {
-  return Boolean(
-    item &&
-    typeof item === "object" &&
-    !Array.isArray(item) &&
-    (typeof item.id === "string" || typeof item.id === "number") &&
-    typeof item.nome === "string" &&
-    typeof item.categoria === "string" &&
-    typeof item.nivel === "string" &&
-    typeof item.descricao === "string" &&
-    typeof item.disponibilidade === "string"
-  );
-}
-
-function obterHabilidades(chave) {
-  try {
-    const salvo = lerValorSeguro(chave);
-    if (salvo) {
-      const dados = JSON.parse(salvo);
-      if (Array.isArray(dados)) return dados.filter(habilidadeValida);
-    }
-  } catch {
-    // localStorage indisponível ou com JSON inválido: começa sem habilidades
-  }
-  return [];
-}
-
-function Habilidades({ onNavigate, usuarioId, usuario }) {
-  const chave = chaveUsuario(CHAVE_HABILIDADES, usuarioId);
-  const [habilidades, setHabilidades] = useState(() => obterHabilidades(chave));
+function Habilidades({ onNavigate, usuario }) {
+  const usuarioId = usuario?.id;
+  const carregar = useCallback(() => listarHabilidadesPublicadas({ usuarioId }), [usuarioId]);
+  const { dados: habilidades, carregando, erro, recarregar, setDados } = useCarregar(carregar, []);
   const [criando, setCriando] = useState(false);
+  const [enviando, setEnviando] = useState(false);
   const [salva, setSalva] = useState(false);
   const [mostrarConquista, setMostrarConquista] = useState(false);
   const [erroFormulario, setErroFormulario] = useState("");
-  const [formulario, setFormulario] = useState({
-    nome: "",
-    categoria: "Tecnologia",
-    nivel: "Intermediário",
-    descricao: "",
-    disponibilidade: "Projetos e freelas",
-  });
+  const [formulario, setFormulario] = useState(FORMULARIO_VAZIO);
 
   function alterarCampo(campo, valor) {
     setFormulario((estado) => ({ ...estado, [campo]: valor }));
   }
 
-  function publicar(event) {
+  async function publicar(event) {
     event.preventDefault();
 
     const nome = formulario.nome.trim();
@@ -61,35 +38,24 @@ function Habilidades({ onNavigate, usuarioId, usuario }) {
     }
 
     setErroFormulario("");
-    const novaHabilidade = {
-      id: Date.now(),
-      nome,
-      categoria: formulario.categoria,
-      nivel: formulario.nivel,
-      descricao,
-      disponibilidade: formulario.disponibilidade,
-    };
-
-    const novasHabilidades = [novaHabilidade, ...habilidades];
-    // Só confirma a publicação quando a gravação no navegador for concluída.
-    if (!salvarValorSeguro(chave, JSON.stringify(novasHabilidades))) {
-      setErroFormulario("Não foi possível salvar a habilidade neste navegador. Verifique o armazenamento e tente novamente.");
+    setEnviando(true);
+    let novaHabilidade;
+    try {
+      novaHabilidade = await publicarHabilidade({ ...formulario, nome, descricao });
+    } catch (e) {
+      setErroFormulario(mensagemDoErro(e));
       return;
+    } finally {
+      setEnviando(false);
     }
-    setHabilidades(novasHabilidades);
-    setFormulario({
-      nome: "",
-      categoria: "Tecnologia",
-      nivel: "Intermediário",
-      descricao: "",
-      disponibilidade: "Projetos e freelas",
-    });
+
+    setDados((lista) => [novaHabilidade, ...lista]);
+    setFormulario(FORMULARIO_VAZIO);
     setCriando(false);
     setSalva(true);
     window.setTimeout(() => setSalva(false), 2800);
 
-    window.dispatchEvent(new Event("marketfaesa-perfil-atualizado"));
-    const progressoFinal = calcularProgressoPerfil(usuario);
+    const progressoFinal = calcularProgressoPerfil(usuario, habilidades.length + 1);
     if (progressoFinal === 100 && !conquistaPerfilExibida(usuario)) {
       marcarConquistaPerfilExibida(usuario);
       setMostrarConquista(true);
@@ -145,52 +111,39 @@ function Habilidades({ onNavigate, usuarioId, usuario }) {
               <div className="skill-form-grid">
                 <label>
                   <span>Nome da habilidade</span>
-                  <input value={formulario.nome} onChange={(event) => alterarCampo("nome", event.target.value)} placeholder="Ex.: Desenvolvimento Web" required />
+                  <input value={formulario.nome} onChange={(event) => alterarCampo("nome", event.target.value)} placeholder="Ex.: Desenvolvimento Web" maxLength={150} required />
                 </label>
 
                 <label>
                   <span>Categoria</span>
                   <select value={formulario.categoria} onChange={(event) => alterarCampo("categoria", event.target.value)}>
-                    <option>Tecnologia</option>
-                    <option>Design</option>
-                    <option>Negócios</option>
-                    <option>Comunicação</option>
-                    <option>Saúde</option>
-                    <option>Direito</option>
-                    <option>Engenharia</option>
-                    <option>Outras</option>
+                    {CATEGORIAS.map((categoria) => <option key={categoria}>{categoria}</option>)}
                   </select>
                 </label>
 
                 <label>
                   <span>Nível</span>
                   <select value={formulario.nivel} onChange={(event) => alterarCampo("nivel", event.target.value)}>
-                    <option>Iniciante</option>
-                    <option>Intermediário</option>
-                    <option>Avançado</option>
-                    <option>Especialista</option>
+                    {Object.entries(NIVEIS).map(([codigo, rotulo]) => <option key={codigo} value={codigo}>{rotulo}</option>)}
                   </select>
                 </label>
 
                 <label>
                   <span>Disponibilidade</span>
                   <select value={formulario.disponibilidade} onChange={(event) => alterarCampo("disponibilidade", event.target.value)}>
-                    <option>Projetos e freelas</option>
-                    <option>Projetos acadêmicos</option>
-                    <option>Monitorias e aulas</option>
-                    <option>Colaborações</option>
+                    {Object.entries(DISPONIBILIDADES).map(([codigo, rotulo]) => <option key={codigo} value={codigo}>{rotulo}</option>)}
                   </select>
                 </label>
 
                 <label className="skill-form-full">
                   <span>Sobre esta habilidade</span>
-                  <textarea value={formulario.descricao} onChange={(event) => alterarCampo("descricao", event.target.value)} placeholder="Conte brevemente o que você sabe fazer, ferramentas que domina e em quais atividades pode ajudar." rows={5} required />
+                  <textarea value={formulario.descricao} onChange={(event) => alterarCampo("descricao", event.target.value)} placeholder="Conte brevemente o que você sabe fazer, ferramentas que domina e em quais atividades pode ajudar." rows={5} maxLength={5000} required />
                 </label>
               </div>
 
               <div className="skill-form-footer">
                 <button type="button" className="skill-cancel-button" onClick={() => setCriando(false)}>Cancelar</button>
-                <button type="submit" className="skill-submit-button">Publicar habilidade</button>
+                <button type="submit" className="skill-submit-button" disabled={enviando}>{enviando ? "Publicando..." : "Publicar habilidade"}</button>
               </div>
             </form>
           </section>
@@ -203,19 +156,27 @@ function Habilidades({ onNavigate, usuarioId, usuario }) {
           </div>
         </section>
 
-        {habilidades.length > 0 ? (
+        {carregando ? (
+          <p className="skills-loading" role="status">Carregando suas habilidades...</p>
+        ) : erro ? (
+          <section className="skills-empty-state" role="alert">
+            <h3>Não foi possível carregar suas habilidades</h3>
+            <p>{erro}</p>
+            <button type="button" className="skills-create-button" onClick={recarregar}>Tentar novamente</button>
+          </section>
+        ) : habilidades.length > 0 ? (
           <section className="skills-grid" aria-label="Habilidades publicadas">
             {habilidades.map((habilidade, index) => (
               <article className="skill-card animate__animated animate__fadeInUp" style={{ animationDelay: `${index * 70}ms` }} key={habilidade.id}>
                 <div className="skill-card-top">
                   <div className="skill-icon">✦</div>
-                  <span>{habilidade.nivel}</span>
+                  <span>{NIVEIS[habilidade.nivel] || habilidade.nivel}</span>
                 </div>
                 <h3>{habilidade.nome}</h3>
                 <div className="skill-category">{habilidade.categoria}</div>
                 <p>{habilidade.descricao}</p>
                 <footer>
-                  <span>Disponível para <strong>{habilidade.disponibilidade.toLowerCase()}</strong></span>
+                  <span>Disponível para <strong>{(DISPONIBILIDADES[habilidade.disponibilidade] || habilidade.disponibilidade).toLowerCase()}</strong></span>
                 </footer>
               </article>
             ))}

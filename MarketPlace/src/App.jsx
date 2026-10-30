@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import Header from "./components/Header.jsx";
 import Body from "./components/Body.jsx";
@@ -15,10 +15,12 @@ import Footer from "./components/Footer.jsx";
 
 import Login from "./auth/Login.jsx";
 
-import { cadastrar, login, obterSessaoLocal, sair } from "./api/auth.js";
-import { ApiError } from "./api/client.js";
-import { chaveUsuario, lerJsonUsuario, salvarJsonUsuario, lerValorSeguro, salvarValorSeguro } from "./storage.js";
-import { montarUsuario, persistirPerfilLocal } from "./perfil.js";
+import { cadastrar, login, sair } from "./api/auth.js";
+import { definirOnNaoAutenticado, obterToken } from "./api/client.js";
+import { atualizarMe, obterConfiguracoes, obterMe, salvarConfiguracoes } from "./api/usuarios.js";
+import { chaveUsuario, lerJsonUsuario, salvarJsonUsuario, lerValorSeguro, salvarValorSeguro, limparDadosAntigos } from "./storage.js";
+import { corpoAtualizacao, montarUsuario } from "./perfil.js";
+import { mensagemDoErro } from "./useCarregar.js";
 
 import "./index.scss";
 import "./components/Header.scss";
@@ -34,27 +36,13 @@ import "./components/Publications.scss";
 import "./components/Footer.scss";
 import "./ResponsiveAudit.scss";
 
-const CHAVE_TEMA = "marketfaesa-theme";
+// Só preferências de interface ficam no navegador, por conta: a página aberta e as preferências
+// de conteúdo (sem campo na API). Perfil, tema e configurações vêm da API.
 const CHAVE_PAGINA = "marketfaesa-pagina";
 const CHAVE_PREFERENCIAS = "marketfaesa-preferencias";
-const CHAVE_CONFIGURACOES = "marketfaesa-configuracoes";
 const PREFERENCIAS_PADRAO = { area: "tecnologia", modalidade: "todas", frequencia: "imediato" };
 
-function obterTemaInicial(usuarioId) {
-  if (usuarioId == null || usuarioId === "") return "light";
-
-  const configuracoesSalvas = lerJsonUsuario(CHAVE_CONFIGURACOES, usuarioId, null);
-  if (configuracoesSalvas?.tema === "dark" || configuracoesSalvas?.tema === "light") {
-    return configuracoesSalvas.tema;
-  }
-  try {
-    return lerValorSeguro(chaveUsuario(CHAVE_TEMA, usuarioId)) === "dark" ? "dark" : "light";
-  } catch {
-    return "light";
-  }
-}
-
-// Configurações demonstrativas guardadas separadamente para cada conta.
+// Mesmos campos de ConfiguracaoDto (menos o tema): o PUT exige todos.
 const CONFIG_PADRAO = {
   perfilPublico: true,
   mostrarEmail: false,
@@ -73,16 +61,6 @@ const VALORES_PREFERENCIAS = {
   frequencia: ["imediato", "diario", "semanal"],
 };
 
-function normalizarConfiguracoes(dados) {
-  const origem = dados && typeof dados === "object" && !Array.isArray(dados) ? dados : {};
-  return Object.fromEntries(
-    Object.entries(CONFIG_PADRAO).map(([campo, padrao]) => [
-      campo,
-      typeof origem[campo] === "boolean" ? origem[campo] : padrao,
-    ]),
-  );
-}
-
 function normalizarPreferencias(dados) {
   const origem = dados && typeof dados === "object" && !Array.isArray(dados) ? dados : {};
   return Object.fromEntries(
@@ -93,116 +71,143 @@ function normalizarPreferencias(dados) {
   );
 }
 
-const MENSAGEM_ERRO_PADRAO = "Não foi possível concluir a operação. Tente novamente.";
-
-function mensagemDoErro(erro, porStatus = {}) {
-  if (!(erro instanceof ApiError)) return MENSAGEM_ERRO_PADRAO;
-  return porStatus[erro.status] || erro.mensagem || MENSAGEM_ERRO_PADRAO;
-}
+const MENSAGEM_SESSAO_EXPIRADA = "Sua sessão expirou. Entre novamente.";
 
 function App() {
-  const [usuario, setUsuario] = useState(() => {
-    const sessao = obterSessaoLocal();
-    return sessao ? montarUsuario(sessao) : null;
-  });
-  // A sessão demonstrativa é restaurada diretamente do localStorage, sem backend.
-  const [restaurando, setRestaurando] = useState(false);
+  const [usuario, setUsuario] = useState(null);
+  // Com token salvo, a sessão é restaurada via GET /api/usuarios/me antes de mostrar o app.
+  const [restaurando, setRestaurando] = useState(() => Boolean(obterToken()));
   const [erroSessao, setErroSessao] = useState("");
   const [avisoLogin, setAvisoLogin] = useState("");
   const [buscaInicialOportunidades, setBuscaInicialOportunidades] = useState("");
   const [versaoBuscaOportunidades, setVersaoBuscaOportunidades] = useState(0);
-  const [pagina, setPagina] = useState(() => {
-    const sessao = obterSessaoLocal();
-    try {
-      return lerValorSeguro(chaveUsuario(CHAVE_PAGINA, sessao?.id)) || "inicio";
-    } catch {
-      return "inicio";
-    }
-  });
-  const [tema, setTema] = useState(() => obterTemaInicial(obterSessaoLocal()?.id));
-  const [configuracoes, setConfiguracoes] = useState(() => {
-    const sessao = obterSessaoLocal();
-    if (!sessao?.id) return { ...CONFIG_PADRAO };
-
-    const salvo = lerJsonUsuario(CHAVE_CONFIGURACOES, sessao.id, {});
-    const origem = salvo && typeof salvo === "object" && !Array.isArray(salvo) ? salvo : {};
-    return normalizarConfiguracoes(origem);
-  });
-  const [configuracoesCarregadas, setConfiguracoesCarregadas] = useState(true);
+  const [conversaInicial, setConversaInicial] = useState(null);
+  const [pagina, setPagina] = useState("inicio");
+  const [tema, setTema] = useState("light");
+  const [configuracoes, setConfiguracoes] = useState(CONFIG_PADRAO);
+  // Enquanto o GET não termina, as opções ficam travadas para não salvar os padrões por cima.
+  const [configuracoesCarregadas, setConfiguracoesCarregadas] = useState(false);
   const [erroCarregarConfiguracoes, setErroCarregarConfiguracoes] = useState("");
   const [erroConfiguracoes, setErroConfiguracoes] = useState("");
-  const [preferencias, setPreferencias] = useState(() => {
-    const sessao = obterSessaoLocal();
-    return sessao?.id
-      ? normalizarPreferencias(lerJsonUsuario(CHAVE_PREFERENCIAS, sessao.id, PREFERENCIAS_PADRAO))
-      : { ...PREFERENCIAS_PADRAO };
-  });
+  const [preferencias, setPreferencias] = useState(PREFERENCIAS_PADRAO);
+  // Muda a cada login/logout: respostas de uma sessão anterior são ignoradas.
+  const geracaoRef = useRef(0);
+  // PUTs de configuração rodam em fila, um por vez, na ordem dos cliques.
+  const filaSalvarRef = useRef(Promise.resolve());
+  const salvamentosPendentesRef = useRef(0);
+  const falhaAoSalvarRef = useRef(false);
 
   useEffect(() => {
-    if (!usuario?.id) {
-      document.documentElement.dataset.theme = "light";
-      return;
-    }
-
-    try {
-      salvarValorSeguro(chaveUsuario(CHAVE_TEMA, usuario.id), tema);
-    } catch {
-      // A interface continua funcionando se o navegador bloquear o armazenamento.
-    }
-    document.documentElement.dataset.theme = tema;
-  }, [tema, usuario?.id]);
-
-  const carregarConfiguracoes = useCallback((usuarioId) => {
-    const salvo = lerJsonUsuario(CHAVE_CONFIGURACOES, usuarioId, {});
-    const { tema: temaSalvo, ...resto } = salvo && typeof salvo === "object" && !Array.isArray(salvo) ? salvo : {};
-    setTema(temaSalvo === "dark" || temaSalvo === "light" ? temaSalvo : obterTemaInicial(usuarioId));
-    setConfiguracoes(normalizarConfiguracoes(resto));
-    setConfiguracoesCarregadas(true);
-    setErroCarregarConfiguracoes("");
-    setErroConfiguracoes("");
+    limparDadosAntigos();
   }, []);
 
-  const entrarComo = useCallback(
-    (usuarioApi) => {
-      setUsuario(montarUsuario(usuarioApi));
-      setErroSessao("");
-      setAvisoLogin("");
-      setPagina("inicio");
-      try {
-        salvarValorSeguro(chaveUsuario(CHAVE_PAGINA, usuarioApi.id), "inicio");
-      } catch {
-        // A navegação inicial funciona mesmo sem persistência local.
-      }
-      setPreferencias(normalizarPreferencias(lerJsonUsuario(CHAVE_PREFERENCIAS, usuarioApi.id, PREFERENCIAS_PADRAO)));
-      carregarConfiguracoes(usuarioApi.id);
-    },
-    [carregarConfiguracoes],
-  );
+  useEffect(() => {
+    document.documentElement.dataset.theme = usuario ? tema : "light";
+  }, [tema, usuario]);
+
+  const novaGeracao = useCallback(() => {
+    geracaoRef.current += 1;
+    salvamentosPendentesRef.current = 0;
+    falhaAoSalvarRef.current = false;
+    setConfiguracoes(CONFIG_PADRAO);
+    setConfiguracoesCarregadas(false);
+    setErroCarregarConfiguracoes("");
+    setErroConfiguracoes("");
+    return geracaoRef.current;
+  }, []);
 
   const encerrarSessao = useCallback((aviso = "") => {
+    novaGeracao();
     setUsuario(null);
     setErroSessao("");
     setAvisoLogin(aviso);
     setPagina("inicio");
     setTema("light");
-    setConfiguracoes(CONFIG_PADRAO);
-    setConfiguracoesCarregadas(true);
-    setErroCarregarConfiguracoes("");
-    setErroConfiguracoes("");
     setPreferencias(PREFERENCIAS_PADRAO);
-  }, []);
+    setConversaInicial(null);
+  }, [novaGeracao]);
 
+  // 401 em qualquer rota autenticada: o client já limpou o token.
+  useEffect(
+    () => definirOnNaoAutenticado(() => encerrarSessao(MENSAGEM_SESSAO_EXPIRADA)),
+    [encerrarSessao],
+  );
+
+  // Erro de uma requisição da sessão atual. Devolve false se a resposta é de uma sessão já encerrada.
+  // O gancho do client já trata o 401; aqui ele é tratado de novo para nunca ficar sem voltar ao login.
+  const tratarErroDaSessao = useCallback(
+    (geracao, erro) => {
+      if (geracao !== geracaoRef.current) return false;
+      if (erro?.status === 401) {
+        encerrarSessao(MENSAGEM_SESSAO_EXPIRADA);
+        return false;
+      }
+      return true;
+    },
+    [encerrarSessao],
+  );
+
+  const carregarConfiguracoes = useCallback(
+    async (geracao) => {
+      setErroCarregarConfiguracoes("");
+      try {
+        const { tema: temaSalvo, ...resto } = await obterConfiguracoes();
+        if (geracao !== geracaoRef.current) return;
+        setTema(temaSalvo === "dark" ? "dark" : "light");
+        setConfiguracoes({ ...CONFIG_PADRAO, ...resto });
+        setConfiguracoesCarregadas(true);
+      } catch (erro) {
+        if (!tratarErroDaSessao(geracao, erro)) return;
+        setConfiguracoesCarregadas(false);
+        setErroCarregarConfiguracoes(`Não foi possível carregar suas configurações. ${mensagemDoErro(erro)}`);
+      }
+    },
+    [tratarErroDaSessao],
+  );
+
+  // restaurarPagina: ao restaurar a sessão volta para a página salva; no login começa no início.
+  const entrarComo = useCallback(
+    (usuarioApi, restaurarPagina = false) => {
+      const geracao = novaGeracao();
+      setUsuario(montarUsuario(usuarioApi));
+      setErroSessao("");
+      setAvisoLogin("");
+      const chavePagina = chaveUsuario(CHAVE_PAGINA, usuarioApi.id);
+      const paginaInicial = (restaurarPagina && lerValorSeguro(chavePagina)) || "inicio";
+      setPagina(paginaInicial);
+      salvarValorSeguro(chavePagina, paginaInicial);
+      setPreferencias(normalizarPreferencias(lerJsonUsuario(CHAVE_PREFERENCIAS, usuarioApi.id, PREFERENCIAS_PADRAO)));
+      carregarConfiguracoes(geracao);
+    },
+    [novaGeracao, carregarConfiguracoes],
+  );
+
+  useEffect(() => {
+    if (!restaurando) return undefined;
+
+    let cancelado = false;
+    obterMe()
+      .then((usuarioApi) => {
+        if (!cancelado) entrarComo(usuarioApi, true);
+      })
+      .catch((erro) => {
+        if (cancelado) return;
+        if (erro?.status === 401) encerrarSessao(MENSAGEM_SESSAO_EXPIRADA);
+        else setErroSessao(mensagemDoErro(erro));
+      })
+      .finally(() => {
+        if (!cancelado) setRestaurando(false);
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [restaurando, entrarComo, encerrarSessao]);
 
   async function fazerLogin({ email, senha }) {
     try {
       const resposta = await login({ email, senha });
       entrarComo(resposta.usuario);
-      setPagina("inicio");
-      try {
-        salvarValorSeguro(chaveUsuario(CHAVE_PAGINA, resposta.usuario.id), "inicio");
-      } catch {
-        // O login não deve falhar apenas porque a página não pôde ser persistida.
-      }
       return { sucesso: true };
     } catch (erro) {
       return { sucesso: false, mensagem: mensagemDoErro(erro, { 401: "E-mail ou senha inválidos." }) };
@@ -231,21 +236,18 @@ function App() {
   }
 
   function fazerLogout() {
-    if (usuario) {
-      try {
-        salvarValorSeguro(chaveUsuario(CHAVE_PAGINA, usuario.id), "inicio");
-      } catch {
-        // O logout deve continuar mesmo se o navegador bloquear o armazenamento.
-      }
-    }
     sair();
     encerrarSessao();
+  }
+
+  function contaExcluida() {
+    sair();
+    encerrarSessao("Sua conta foi excluída.");
   }
 
   function sairDaSessaoComErro() {
     sair();
     setErroSessao("");
-    setTema("light");
   }
 
   function tentarRestaurarDeNovo() {
@@ -253,14 +255,18 @@ function App() {
     setRestaurando(true);
   }
 
-  // Campos do perfil sem rota na API: ficam no navegador (ver src/perfil.js).
-  function atualizarUsuario(dadosAtualizados) {
-    if (!usuario?.id) return false;
-    const resultado = persistirPerfilLocal(usuario.id, dadosAtualizados);
-    if (!resultado.sucesso) return false;
-    setUsuario((atual) => ({ ...atual, ...resultado.aplicados }));
-    window.dispatchEvent(new Event("marketfaesa-perfil-atualizado"));
-    return true;
+  // PUT /api/usuarios/me com o perfil completo. Devolve {sucesso, mensagem?, campos?}.
+  async function atualizarUsuario(alteracoes) {
+    if (!usuario) return { sucesso: false };
+    const geracao = geracaoRef.current;
+    try {
+      const usuarioApi = await atualizarMe(corpoAtualizacao(usuario, alteracoes));
+      if (geracao === geracaoRef.current) setUsuario(montarUsuario(usuarioApi));
+      return { sucesso: true };
+    } catch (erro) {
+      tratarErroDaSessao(geracao, erro);
+      return { sucesso: false, mensagem: mensagemDoErro(erro), campos: erro?.campos || null };
+    }
   }
 
   function alterarPreferencia(campo, valor) {
@@ -271,43 +277,68 @@ function App() {
     return true;
   }
 
+  // Atualiza na hora e envia a configuração completa. Os PUTs vão em fila, então o
+  // último clique é o último gravado. Se algum falhar, ao fim da fila a tela é
+  // recarregada com o que está salvo na API.
   function persistirConfiguracoes(novoTema, novasConfiguracoes) {
-    if (!usuario?.id) return false;
-    const temaNormalizado = novoTema === "dark" ? "dark" : "light";
-    const sucesso = salvarJsonUsuario(CHAVE_CONFIGURACOES, usuario.id, {
-      tema: temaNormalizado,
-      ...novasConfiguracoes,
-    });
-    if (!sucesso) return false;
-    setTema(temaNormalizado);
+    if (!configuracoesCarregadas) return;
+    const geracao = geracaoRef.current;
+    const corpo = { tema: novoTema, ...novasConfiguracoes };
+    setTema(novoTema);
     setConfiguracoes(novasConfiguracoes);
-    setConfiguracoesCarregadas(true);
     setErroConfiguracoes("");
-    setErroCarregarConfiguracoes("");
-    return true;
+    salvamentosPendentesRef.current += 1;
+
+    filaSalvarRef.current = filaSalvarRef.current
+      .then(() => (geracao === geracaoRef.current ? salvarConfiguracoes(corpo) : null))
+      .then(
+        () => terminarSalvamento(geracao),
+        (erro) => {
+          if (!tratarErroDaSessao(geracao, erro)) return;
+          falhaAoSalvarRef.current = true;
+          setErroConfiguracoes(`Não foi possível salvar. ${mensagemDoErro(erro)}`);
+          terminarSalvamento(geracao);
+        },
+      );
+  }
+
+  function terminarSalvamento(geracao) {
+    if (geracao !== geracaoRef.current) return;
+    salvamentosPendentesRef.current -= 1;
+    if (salvamentosPendentesRef.current > 0 || !falhaAoSalvarRef.current) return;
+    falhaAoSalvarRef.current = false;
+    recarregarDepoisDeFalha(geracao);
+  }
+
+  async function recarregarDepoisDeFalha(geracao) {
+    try {
+      const { tema: temaSalvo, ...resto } = await obterConfiguracoes();
+      if (geracao !== geracaoRef.current || salvamentosPendentesRef.current > 0) return;
+      setTema(temaSalvo === "dark" ? "dark" : "light");
+      setConfiguracoes({ ...CONFIG_PADRAO, ...resto });
+    } catch (erro) {
+      if (!tratarErroDaSessao(geracao, erro)) return;
+      // Sem saber o que ficou salvo, trava as opções até recarregar.
+      setConfiguracoesCarregadas(false);
+      setErroCarregarConfiguracoes(`Não foi possível carregar suas configurações. ${mensagemDoErro(erro)}`);
+    }
   }
 
   function recarregarConfiguracoes() {
-    if (usuario) carregarConfiguracoes(usuario.id);
+    carregarConfiguracoes(geracaoRef.current);
   }
 
   function alterarTema(novoTema) {
-    return persistirConfiguracoes(novoTema === "dark" ? "dark" : "light", configuracoes);
+    persistirConfiguracoes(novoTema === "dark" ? "dark" : "light", configuracoes);
   }
 
   function alterarConfiguracao(campo) {
-    return persistirConfiguracoes(tema, { ...configuracoes, [campo]: !configuracoes[campo] });
+    persistirConfiguracoes(tema, { ...configuracoes, [campo]: !configuracoes[campo] });
   }
 
   function navegarPara(novaPagina) {
     setPagina(novaPagina);
-    if (usuario?.id) {
-      try {
-        salvarValorSeguro(chaveUsuario(CHAVE_PAGINA, usuario.id), novaPagina);
-      } catch {
-        // A navegação deve funcionar mesmo sem persistência local.
-      }
-    }
+    if (usuario?.id) salvarValorSeguro(chaveUsuario(CHAVE_PAGINA, usuario.id), novaPagina);
 
     const reduzirMovimento = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     window.scrollTo({
@@ -322,6 +353,12 @@ function App() {
     navegarPara("oportunidades");
   }
 
+  // Chamado depois de POST /api/conversas: abre a tela de mensagens já nessa conversa.
+  function abrirConversaNaTela(conversaId) {
+    setConversaInicial(conversaId);
+    navegarPara("mensagens");
+  }
+
   function renderizarPagina() {
     switch (pagina) {
       case "oportunidades":
@@ -334,16 +371,16 @@ function App() {
         );
 
       case "habilidades":
-        return <PeopleSkills onNavigate={navegarPara} usuarioId={usuario?.id} />;
+        return <PeopleSkills onNavigate={navegarPara} onAbrirConversa={abrirConversaNaTela} />;
 
       case "conexoes":
-        return <Connections onNavigate={navegarPara} usuarioId={usuario?.id} />;
+        return <Connections onNavigate={navegarPara} onAbrirConversa={abrirConversaNaTela} />;
 
       case "mensagens":
-        return <Messages usuarioId={usuario?.id} />;
+        return <Messages conversaInicial={conversaInicial} />;
 
       case "salvos":
-        return <Salvos onNavigate={navegarPara} usuarioId={usuario?.id} />;
+        return <Salvos onNavigate={navegarPara} />;
 
       case "publicacoes":
         return <MinhasPublicacoes onNavigate={navegarPara} usuarioId={usuario?.id} />;
@@ -376,11 +413,12 @@ function App() {
             usuario={usuario}
             onLogout={fazerLogout}
             onUpdateUsuario={atualizarUsuario}
+            onContaExcluida={contaExcluida}
           />
         );
 
       case "publicar-habilidade":
-        return <Habilidades onNavigate={navegarPara} usuarioId={usuario?.id} usuario={usuario} />;
+        return <Habilidades onNavigate={navegarPara} usuario={usuario} />;
 
       case "inicio":
       default:
