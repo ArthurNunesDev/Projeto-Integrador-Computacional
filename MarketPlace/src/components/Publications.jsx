@@ -1,34 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { chaveUsuario, lerValorSeguro, salvarValorSeguro } from "../storage.js";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { atualizarHabilidade, excluirHabilidade, listarHabilidadesPublicadas } from "../api/habilidades.js";
+import { CATEGORIAS, DISPONIBILIDADES, NIVEIS } from "../rotulos.js";
+import { mensagemDoErro, useCarregar } from "../useCarregar.js";
 
-const CHAVE = "marketfaesa-habilidades";
-
-function publicacaoValida(item) {
-  return Boolean(
-    item &&
-    typeof item === "object" &&
-    !Array.isArray(item) &&
-    (typeof item.id === "string" || typeof item.id === "number") &&
-    typeof item.nome === "string" &&
-    typeof item.categoria === "string" &&
-    typeof item.nivel === "string" &&
-    typeof item.descricao === "string" &&
-    typeof item.disponibilidade === "string"
-  );
-}
-
-function lerPublicacoes(chave) {
-  try {
-    const dados = JSON.parse(lerValorSeguro(chave));
-    return Array.isArray(dados) ? dados.filter(publicacaoValida) : [];
-  } catch {
-    return [];
-  }
+function opcoes(rotulos) {
+  return Object.entries(rotulos).map(([codigo, rotulo]) => <option key={codigo} value={codigo}>{rotulo}</option>);
 }
 
 function MinhasPublicacoes({ onNavigate, usuarioId }) {
-  const chave = chaveUsuario(CHAVE, usuarioId);
-  const [publicacoes, setPublicacoes] = useState(() => lerPublicacoes(chave));
+  const carregar = useCallback(() => listarHabilidadesPublicadas({ usuarioId }), [usuarioId]);
+  const { dados: publicacoes, carregando, erro, recarregar, setDados: setPublicacoes } = useCarregar(carregar, []);
+  const [enviando, setEnviando] = useState(false);
   const [busca, setBusca] = useState("");
   const [editando, setEditando] = useState(null);
   const [confirmandoExclusao, setConfirmandoExclusao] = useState(null);
@@ -86,24 +68,29 @@ function MinhasPublicacoes({ onNavigate, usuarioId }) {
     const termo = busca.trim().toLowerCase();
     if (!termo) return publicacoes;
     return publicacoes.filter((item) =>
-      [item.nome, item.categoria, item.nivel, item.descricao, item.disponibilidade]
+      [item.nome, item.categoria, NIVEIS[item.nivel], item.descricao, DISPONIBILIDADES[item.disponibilidade]]
         .join(" ").toLowerCase().includes(termo)
     );
   }, [busca, publicacoes]);
 
-  function excluir() {
+  async function excluir() {
     if (!confirmandoExclusao) return;
-    const novasPublicacoes = publicacoes.filter((item) => item.id !== confirmandoExclusao.id);
-    if (!salvarValorSeguro(chave, JSON.stringify(novasPublicacoes))) {
-      setErroPersistencia("Não foi possível excluir a publicação neste navegador. Verifique o armazenamento e tente novamente.");
+    const id = confirmandoExclusao.id;
+    setEnviando(true);
+    try {
+      await excluirHabilidade(id);
+    } catch (e) {
+      setErroPersistencia(mensagemDoErro(e));
       return;
+    } finally {
+      setEnviando(false);
     }
-    setPublicacoes(novasPublicacoes);
+    setPublicacoes((lista) => lista.filter((item) => item.id !== id));
     setErroPersistencia("");
     setConfirmandoExclusao(null);
   }
 
-  function salvarEdicao(event) {
+  async function salvarEdicao(event) {
     event.preventDefault();
     const nome = editando.nome.trim();
     const descricao = editando.descricao.trim();
@@ -111,15 +98,18 @@ function MinhasPublicacoes({ onNavigate, usuarioId }) {
       setErroPersistencia("Preencha o nome e a descrição da publicação.");
       return;
     }
-    const publicacaoAtualizada = { ...editando, nome, descricao };
-    const novasPublicacoes = publicacoes.map((item) =>
-      item.id === editando.id ? publicacaoAtualizada : item
-    );
-    if (!salvarValorSeguro(chave, JSON.stringify(novasPublicacoes))) {
-      setErroPersistencia("Não foi possível salvar as alterações neste navegador. Verifique o armazenamento e tente novamente.");
+    const { categoria, nivel, disponibilidade } = editando;
+    setEnviando(true);
+    let publicacaoAtualizada;
+    try {
+      publicacaoAtualizada = await atualizarHabilidade(editando.id, { nome, categoria, nivel, descricao, disponibilidade });
+    } catch (e) {
+      setErroPersistencia(mensagemDoErro(e));
       return;
+    } finally {
+      setEnviando(false);
     }
-    setPublicacoes(novasPublicacoes);
+    setPublicacoes((lista) => lista.map((item) => (item.id === publicacaoAtualizada.id ? publicacaoAtualizada : item)));
     setErroPersistencia("");
     setEditando(null);
   }
@@ -149,18 +139,27 @@ function MinhasPublicacoes({ onNavigate, usuarioId }) {
           </div>
         </section>
 
-        {filtradas.length ? (
+        {carregando ? (
+          <p className="publications-loading" role="status">Carregando suas publicações...</p>
+        ) : erro ? (
+          <section className="publications-empty" role="alert">
+            <div>!</div>
+            <h2>Não foi possível carregar suas publicações</h2>
+            <p>{erro}</p>
+            <button type="button" className="publications-create-button" onClick={recarregar}>Tentar novamente</button>
+          </section>
+        ) : filtradas.length ? (
           <section className="publications-grid">
             {filtradas.map((item, index) => (
               <article className="publication-card animate__animated animate__fadeInUp" style={{ animationDelay: `${index * 60}ms` }} key={item.id}>
                 <div className="publication-top">
                   <div className="publication-icon">✦</div>
-                  <span>{item.nivel}</span>
+                  <span>{NIVEIS[item.nivel] || item.nivel}</span>
                 </div>
                 <div className="publication-category">{item.categoria}</div>
                 <h2>{item.nome}</h2>
                 <p>{item.descricao}</p>
-                <div className="publication-availability">Disponível para <strong>{item.disponibilidade.toLowerCase()}</strong></div>
+                <div className="publication-availability">Disponível para <strong>{(DISPONIBILIDADES[item.disponibilidade] || item.disponibilidade).toLowerCase()}</strong></div>
                 <div className="publication-actions">
                   <button type="button" onClick={() => { setErroPersistencia(""); setEditando({ ...item }); }}>Editar</button>
                   <button type="button" className="danger" onClick={() => { setErroPersistencia(""); setConfirmandoExclusao({ ...item }); }}>Excluir</button>
@@ -202,7 +201,7 @@ function MinhasPublicacoes({ onNavigate, usuarioId }) {
               </p>
               <div className="publication-delete-actions">
                 <button type="button" className="publication-delete-cancel" onClick={() => { setConfirmandoExclusao(null); setErroPersistencia(""); }}>Cancelar</button>
-                <button type="button" className="publication-delete-confirm" onClick={excluir}>Sim, excluir</button>
+                <button type="button" className="publication-delete-confirm" onClick={excluir} disabled={enviando}>Sim, excluir</button>
               </div>
             </section>
           </div>
@@ -229,14 +228,14 @@ function MinhasPublicacoes({ onNavigate, usuarioId }) {
               </div>
               <form onSubmit={salvarEdicao}>
                 {erroPersistencia && <p className="publication-persistence-error" role="alert">{erroPersistencia}</p>}
-                <label>Nome<input value={editando.nome} onChange={(e) => setEditando({...editando,nome:e.target.value})} required /></label>
+                <label>Nome<input value={editando.nome} onChange={(e) => setEditando({...editando,nome:e.target.value})} maxLength={150} required /></label>
                 <div className="publication-form-row">
-                  <label>Categoria<select value={editando.categoria} onChange={(e) => setEditando({...editando,categoria:e.target.value})}><option>Tecnologia</option><option>Design</option><option>Negócios</option><option>Comunicação</option><option>Saúde</option><option>Direito</option><option>Engenharia</option><option>Outras</option></select></label>
-                  <label>Nível<select value={editando.nivel} onChange={(e) => setEditando({...editando,nivel:e.target.value})}><option>Iniciante</option><option>Intermediário</option><option>Avançado</option><option>Especialista</option></select></label>
+                  <label>Categoria<select value={editando.categoria} onChange={(e) => setEditando({...editando,categoria:e.target.value})}>{[...new Set([...CATEGORIAS, editando.categoria])].map((categoria) => <option key={categoria}>{categoria}</option>)}</select></label>
+                  <label>Nível<select value={editando.nivel} onChange={(e) => setEditando({...editando,nivel:e.target.value})}>{opcoes(NIVEIS)}</select></label>
                 </div>
-                <label>Descrição<textarea rows="5" value={editando.descricao} onChange={(e) => setEditando({...editando,descricao:e.target.value})} required /></label>
-                <label>Disponibilidade<select value={editando.disponibilidade} onChange={(e) => setEditando({...editando,disponibilidade:e.target.value})}><option>Projetos e freelas</option><option>Projetos acadêmicos</option><option>Monitorias e aulas</option><option>Colaborações</option></select></label>
-                <div className="publication-modal-actions"><button type="button" onClick={() => setEditando(null)}>Cancelar</button><button type="submit">Salvar alterações</button></div>
+                <label>Descrição<textarea rows="5" value={editando.descricao} onChange={(e) => setEditando({...editando,descricao:e.target.value})} maxLength={5000} required /></label>
+                <label>Disponibilidade<select value={editando.disponibilidade} onChange={(e) => setEditando({...editando,disponibilidade:e.target.value})}>{opcoes(DISPONIBILIDADES)}</select></label>
+                <div className="publication-modal-actions"><button type="button" onClick={() => setEditando(null)}>Cancelar</button><button type="submit" disabled={enviando}>Salvar alterações</button></div>
               </form>
             </section>
           </div>
