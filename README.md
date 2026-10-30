@@ -54,7 +54,7 @@
 
 O **frontend em React** tem interface funcional e responsiva, publicada no GitHub Pages. O **backend em Java com Spring Boot** já sobe com Spring Security configurado e se conecta a um **PostgreSQL** (hospedado no [Neon](https://neon.tech)): o schema é criado por migrations do Flyway e as entidades `Usuario` e `ConfiguracaoUsuario` já estão mapeadas, com seus repositórios. A [API](#api) já tem cadastro, login com JWT, perfil e configurações do usuário.
 
-O front já usa a API para **login, cadastro, sessão, perfil (leitura) e configurações**: para entrar é preciso o backend rodando (veja [Executando](#executando)). O navegador guarda só o token JWT; nenhuma senha fica no `localStorage`. As demais telas (habilidades, conexões, mensagens, salvos) e as edições do perfil ainda ficam no `localStorage`, e trocar a senha e excluir a conta aparecem como "Disponível em breve" até existirem as rotas. O que falta está no [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md#3-integração-com-o-front).
+O front usa a API em **todas as telas**: login, cadastro, sessão, perfil (edição, foto, troca de senha e exclusão de conta), configurações, oportunidades (participar e salvar), habilidades publicadas, diretório de pessoas, conexões e mensagens. Para entrar é preciso o backend rodando (veja [Executando](#executando)). O navegador guarda só o token JWT e preferências de interface (página aberta, preferências de conteúdo, a animação de perfil completo e a opção demonstrativa de duas etapas); nenhuma senha ou dado de outras telas fica no `localStorage`, e as chaves do antigo modo demonstrativo são apagadas na primeira carga. As mensagens não são em tempo real: com uma conversa aberta, a tela consulta a API a cada 5 segundos. O que falta está no [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md#3-integração-com-o-front).
 
 <h2 id="funcionalidades">✨ Funcionalidades</h2>
 
@@ -89,7 +89,7 @@ cd Projeto-Integrador-Computacional
 
 O front só tem uma variável, documentada em `MarketPlace/.env.example`. O endereço do backend vem de `VITE_API_URL` (padrão `http://localhost:8080`, sem `/api` no final). No build, a origem dessa URL também entra no `connect-src` da CSP; para gerar a versão de produção apontando para outro servidor, defina a variável antes do build (ex.: `VITE_API_URL=https://api.exemplo.com npm run build`). O cliente HTTP fica em `MarketPlace/src/api/`.
 
-Se `VITE_API_URL` não estiver definida num build de produção, o build continua mas avisa no console que o site vai apontar para `http://localhost:8080`. O deploy do GitHub Pages (`.github/workflows/deploy.yml`) lê a variável do repositório `VITE_API_URL`: quando a API estiver publicada, crie-a em Settings > Secrets and variables > Actions > Variables com a URL pública da API (ex.: `https://api.exemplo.com`). Enquanto ela não existir, o site publicado aponta para `localhost` e o login não funciona fora da máquina de quem roda a API.
+Se `VITE_API_URL` não estiver definida num build de produção, o build continua mas avisa no console que o site vai apontar para `http://localhost:8080`. O deploy do GitHub Pages (`.github/workflows/deploy.yml`) lê a variável do repositório `VITE_API_URL`: quando a API estiver publicada, crie-a em Settings > Secrets and variables > Actions > Variables com a URL pública da API (ex.: `https://api.exemplo.com`). Enquanto ela não existir, o site publicado aponta para `localhost` e nada funciona fora da máquina de quem roda a API: desde a integração não há mais modo demonstrativo no navegador, então a demo do GitHub Pages depende de um backend hospedado e da variável `VITE_API_URL` apontando para ele (com a origem do Pages liberada em `CORS_ALLOWED_ORIGINS`).
 
 <h3 id="executando">Executando</h3>
 
@@ -186,6 +186,8 @@ Base em desenvolvimento: `http://localhost:8080/api`. As rotas de `/api/usuarios
 | GET | `/api/usuarios/me` | Bearer | | `200 {id, nome, email, curso, periodo, cidade, bio, fotoUrl, criadoEm}` |
 | GET | `/api/usuarios/me/configuracoes` | Bearer | | `200` com `tema` e os 9 booleanos |
 | PUT | `/api/usuarios/me/configuracoes` | Bearer | todos os campos de configuração | `200` com a configuração salva; `400` campo faltando ou tema diferente de `light`/`dark` |
+
+As demais rotas (perfil, senha, exclusão de conta, catálogos, oportunidades, habilidades publicadas, pessoas, conexões e conversas) e onde o front usa cada uma estão no [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md#2-contrato-da-api).
 
 Regras:
 
