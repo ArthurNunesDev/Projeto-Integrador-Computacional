@@ -10,6 +10,16 @@ export function criarOportunidade(oportunidade) {
   return requisicao('/api/oportunidades', { method: 'POST', body: oportunidade })
 }
 
+/** PUT /api/oportunidades/{id} (só o autor): mesmo corpo do POST; substitui as áreas. */
+export function atualizarOportunidade(id, oportunidade) {
+  return requisicao(`/api/oportunidades/${id}`, { method: 'PUT', body: oportunidade })
+}
+
+/** DELETE /api/oportunidades/{id} (só o autor). */
+export function excluirOportunidade(id) {
+  return requisicao(`/api/oportunidades/${id}`, { method: 'DELETE' })
+}
+
 /** POST/DELETE /api/oportunidades/{id}/participacao. */
 export function definirParticipacao(id, participar) {
   return requisicao(`/api/oportunidades/${id}/participacao`, { method: participar ? 'POST' : 'DELETE' })
