@@ -1,6 +1,6 @@
 # Próximos passos
 
-Roadmap para evoluir o backend e ligá-lo ao frontend. O backend já roda com Spring Boot 4.1 (Java 21+, Maven Wrapper), já conecta ao PostgreSQL (Neon) com migrations do Flyway e já tem os endpoints de health, cadastro, login (JWT), perfil e configurações (lista no [README](README.md#api)), e o front já os usa para login, cadastro, sessão, leitura do perfil e configurações. Falta a tela para publicar e editar oportunidades, hospedar o backend e definir o `VITE_API_URL` de produção.
+Roadmap para evoluir o backend e ligá-lo ao frontend. O backend já roda com Spring Boot 4.1 (Java 21+, Maven Wrapper), já conecta ao PostgreSQL (Neon) com migrations do Flyway e já tem os endpoints de health, cadastro, login (JWT), perfil e configurações (lista no [README](README.md#api)), e o front já os usa para login, cadastro, sessão, leitura do perfil e configurações. Falta hospedar o backend e definir o `VITE_API_URL` de produção.
 
 ---
 
@@ -39,6 +39,7 @@ Base: `http://localhost:8080/api` em desenvolvimento.
 | DELETE | `/api/usuarios/me` | "Excluir conta" em `Configs.jsx` (corpo `{senha}`), depois sai da sessão | `204`; `400` senha errada |
 | GET | `/api/cursos`, `/api/areas` | select de curso (perfil e configurações); filtros de área (início e oportunidades) | `200 [{id, nome}]` (públicas) |
 | GET | `/api/oportunidades` | início (destaques e contagem de abertas) e `Opportunities.jsx`; filtro e busca no front | `200` lista, mais novas primeiro |
+| POST/PUT/DELETE | `/api/oportunidades` | `Opportunities.jsx`: publicar, editar e excluir (só o autor) | `201`/`200`/`204`; `403` de outro autor |
 | POST/DELETE | `/api/oportunidades/{id}/participacao` | botão "Participar" | `204`; `400` na própria; `409` fechada ou repetida |
 | PUT/DELETE | `/api/oportunidades/{id}/salvo` | coração de salvar e remoção em `Saved.jsx` | `204` |
 | GET | `/api/usuarios/me/salvos`, `/api/usuarios/me/participacoes` | `Saved.jsx`; contagem de projetos no início e no perfil | `200` lista |
@@ -116,7 +117,7 @@ Todas as telas usam a API; não há mais dados de demonstração no front.
 - **Perfil** (`Profile.jsx`, aba Conta de `Configs.jsx`): edição de nome, curso (select de `/api/cursos`, envia `cursoId`), período (1 a 20, inteiro), cidade, bio e foto (data URL de até 1 MB) com `PUT /api/usuarios/me`; `src/perfil.js` monta o corpo completo a partir do perfil atual. Números de conexões, oportunidades e habilidades vêm das listas da API.
 - **Senha e conta**: troca de senha e exclusão de conta (com confirmação da senha) em `Configs.jsx`; o botão de excluir do perfil leva para lá.
 - **Configurações e tema**: carregados com `GET /api/usuarios/me/configuracoes` após o login e salvos com `PUT` (objeto completo) a cada alteração; se o `PUT` falhar, a tela recarrega o que está salvo e mostra o erro. Antes do login o tema é sempre o claro.
-- **Oportunidades** (início, `Opportunities.jsx`, `Saved.jsx`): lista, participar/sair e salvar/remover pela API; a busca e o filtro por área rodam no front sobre a lista. A própria oportunidade e as encerradas não mostram "Participar".
+- **Oportunidades** (início, `Opportunities.jsx`, `Saved.jsx`): lista, participar/sair e salvar/remover pela API; a busca e o filtro por área rodam no front sobre a lista. As encerradas não mostram "Participar". "+ Publicar oportunidade" abre o formulário (tipo, título, modalidade, descrição e áreas); na própria oportunidade, o card troca "Participar" por "Editar" (que também muda o status) e "Excluir", com confirmação.
 - **Habilidades publicadas** (`Skills.jsx`, `Publications.jsx`): criar, editar e excluir; os selects enviam os códigos (`INTERMEDIARIO`, `PROJETOS_FREELAS`...) e as telas mostram os rótulos (`src/rotulos.js`).
 - **Pessoas e conexões** (`PeopleSkills.jsx`, `Connections.jsx`): diretório de `/api/pessoas` e todas as ações de conexão; o card de uma conexão completa cidade e habilidades com os dados do diretório.
 - **Mensagens** (`Messages.jsx`): conversas e mensagens reais. Sem tempo real: com uma conversa aberta, mensagens e lista são recarregadas a cada 5 s (o intervalo para ao sair da tela).
@@ -126,7 +127,6 @@ Todas as telas usam a API; não há mais dados de demonstração no front.
 ### O que ainda fica no navegador (ou falta)
 
 - **No `localStorage`, por conta**: a página aberta, as preferências de conteúdo da aba Preferências (sem campo na API), o registro de que a animação de perfil completo já foi exibida e a **verificação em duas etapas**, que continua só demonstrativa (a API não tem 2FA).
-- **Criação de oportunidades**: a API tem `POST/PUT/DELETE /api/oportunidades`, mas o front ainda não tem tela para publicar ou editar oportunidades (`criarOportunidade` já existe em `src/api/oportunidades.js`).
 - **Notificações**: o painel do cabeçalho continua vazio; não há rota de notificações.
 - **Fotos nas listas**: a API não manda `fotoUrl` nas listas, então os cards usam as iniciais do nome; o ícone da oportunidade vem do tipo.
 
@@ -187,7 +187,7 @@ O GitHub Pages serve apenas arquivos estáticos: o frontend continua lá, mas o 
 - [x] Enviar as edições do perfil para `PUT /api/usuarios/me` e remover `marketfaesa-perfil:<id>`
 - [x] Troca de senha e exclusão de conta
 - [x] Oportunidades, salvos, habilidades publicadas, pessoas, conexões e mensagens pela API (sem `localStorage`)
-- [ ] Tela para publicar e editar oportunidades (`POST/PUT/DELETE /api/oportunidades`)
+- [x] Tela para publicar e editar oportunidades (`POST/PUT/DELETE /api/oportunidades`)
 
 ### Fase 4 — Configurações
 - [x] `GET/PUT /api/usuarios/me/configuracoes`

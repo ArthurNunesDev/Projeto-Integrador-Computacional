@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { atualizarHabilidade, excluirHabilidade, listarHabilidadesPublicadas } from "../api/habilidades.js";
 import { CATEGORIAS, DISPONIBILIDADES, NIVEIS } from "../rotulos.js";
 import { mensagemDoErro, useCarregar } from "../useCarregar.js";
+import { useDialogo } from "../useDialogo.js";
 
 function opcoes(rotulos) {
   return Object.entries(rotulos).map(([codigo, rotulo]) => <option key={codigo} value={codigo}>{rotulo}</option>);
@@ -18,51 +19,11 @@ function MinhasPublicacoes({ onNavigate, usuarioId }) {
   const modalRef = useRef(null);
   const modalAberto = Boolean(editando || confirmandoExclusao);
 
-  useEffect(() => {
-    if (!modalAberto || !modalRef.current) return undefined;
-
-    const modal = modalRef.current;
-    const elementoAnterior = document.activeElement;
-    const primeiroCampo = modal.querySelector("form input, form select, form textarea");
-    const controles = Array.from(
-      modal.querySelectorAll(
-        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      ),
-    );
-
-    (primeiroCampo || controles[0])?.focus();
-
-    function tratarTeclado(event) {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        setEditando(null);
-        setConfirmandoExclusao(null);
-        return;
-      }
-
-      if (event.key !== "Tab" || controles.length === 0) return;
-
-      const primeiro = controles[0];
-      const ultimo = controles[controles.length - 1];
-
-      if (event.shiftKey && (document.activeElement === primeiro || !modal.contains(document.activeElement))) {
-        event.preventDefault();
-        ultimo.focus();
-      } else if (!event.shiftKey && (document.activeElement === ultimo || !modal.contains(document.activeElement))) {
-        event.preventDefault();
-        primeiro.focus();
-      }
-    }
-
-    document.addEventListener("keydown", tratarTeclado);
-
-    return () => {
-      document.removeEventListener("keydown", tratarTeclado);
-      if (elementoAnterior instanceof HTMLElement && elementoAnterior.isConnected) {
-        elementoAnterior.focus();
-      }
-    };
-  }, [modalAberto]);
+  const fecharModal = useCallback(() => {
+    setEditando(null);
+    setConfirmandoExclusao(null);
+  }, []);
+  useDialogo(modalRef, modalAberto, fecharModal);
 
   const filtradas = useMemo(() => {
     const termo = busca.trim().toLowerCase();

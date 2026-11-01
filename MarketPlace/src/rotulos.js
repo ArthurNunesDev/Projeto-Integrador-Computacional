@@ -52,6 +52,10 @@ export function formatarOportunidade(api) {
     areas,
     area: areas.join(" + "),
     modalidade: MODALIDADES[api.modalidade] || api.modalidade,
+    // Códigos originais, para o formulário de edição.
+    tipoCodigo: api.tipo,
+    modalidadeCodigo: api.modalidade,
+    areaIds: (api.areas || []).map((area) => area.id),
     status: api.status,
     autorId: api.autor?.id,
     pessoa: api.autor?.nome || "",
