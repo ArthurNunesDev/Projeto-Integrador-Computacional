@@ -1,129 +1,109 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import Connections from "./Connections.jsx";
+import { chamadas, erroApi, mockarApi, pessoa, pessoaResumo } from "../test/apiFalsa.js";
 
-const ana = {
-  id: 1,
-  nome: "Ana Souza",
-  curso: "Ciência da Computação · 6º período",
-  cidade: "Vitória, ES",
-  inicial: "AS",
-  bio: "Desenvolvedora front-end interessada em interfaces acessíveis e projetos colaborativos.",
-  habilidades: ["React", "JavaScript", "UX/UI Design"],
-};
+const BRUNO = pessoa(2, "Bruno Lima", [{ id: 20, nome: "Figma", categoria: "Design", nivel: "AVANCADO", disponibilidade: "COLABORACOES" }]);
+const CARLA = pessoa(3, "Carla Dias");
 
-beforeEach(() => {
-  localStorage.clear();
-});
+function conexao(id, pessoaResposta, status, enviadaPorMim) {
+  return { id, status, enviadaPorMim, pessoa: pessoaResumo(pessoaResposta.id, pessoaResposta.nome), criadoEm: "", atualizadoEm: "" };
+}
+
+function rotas(extras = {}) {
+  return {
+    "GET /api/pessoas": [BRUNO, CARLA],
+    "GET /api/conexoes": [],
+    "GET /api/conexoes/recebidas": [],
+    "GET /api/conexoes/enviadas": [],
+    ...extras,
+  };
+}
 
 afterEach(() => {
   cleanup();
-  vi.restoreAllMocks();
 });
 
+async function abrirEncontrar(user) {
+  await user.click(within(screen.getByRole("navigation", { name: "Seções de conexões" })).getByRole("button", { name: /Encontrar pessoas/ }));
+}
+
 describe("Conexões", () => {
-  it("persiste uma conexão antes de atualizar a interface", async () => {
-    const user = userEvent.setup();
-    render(<Connections usuarioId="conta-a" />);
+  it("mostra as conexões aceitas completando os dados pelo diretório", async () => {
+    mockarApi(rotas({ "GET /api/conexoes": [conexao(7, BRUNO, "ACEITA", true)] }));
+    render(<Connections />);
 
-    await user.click(within(screen.getByRole("navigation", { name: "Seções de conexões" })).getByRole("button", { name: /Encontrar pessoas/ }));
-    const botoesConectar = screen.getAllByRole("button", { name: "+ Conectar" });
-    await user.click(botoesConectar[0]);
-
-    expect(JSON.parse(localStorage.getItem("marketfaesa-conexoes:conta-a"))).toEqual([1]);
-    expect(screen.getByRole("button", { name: "✓ Conectado" })).toBeInTheDocument();
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Bruno Lima" })).toBeInTheDocument();
+    expect(await screen.findByText("Figma")).toBeInTheDocument();
+    expect(screen.getByText("⌖ Serra")).toBeInTheDocument();
   });
 
-  it("mostra erro e não marca a conexão quando o armazenamento falha", async () => {
+  it("envia o pedido com POST e mostra como pendente sem abrir o perfil", async () => {
+    const fetchFalso = mockarApi(rotas({
+      "POST /api/conexoes": conexao(8, CARLA, "PENDENTE", true),
+    }));
     const user = userEvent.setup();
-    const setItemOriginal = Storage.prototype.setItem;
-    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (key, value) {
-      if (key === "marketfaesa-conexoes:conta-a") {
-        throw new Error("armazenamento indisponível");
-      }
-      return setItemOriginal.call(this, key, value);
-    });
+    render(<Connections />);
+    await abrirEncontrar(user);
+    await screen.findByRole("heading", { name: "Carla Dias" });
 
-    render(<Connections usuarioId="conta-a" />);
-    await user.click(within(screen.getByRole("navigation", { name: "Seções de conexões" })).getByRole("button", { name: /Encontrar pessoas/ }));
-    await user.click(screen.getAllByRole("button", { name: "+ Conectar" })[0]);
-
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "Não foi possível salvar as conexões neste navegador.",
-    );
-    expect(screen.queryByRole("button", { name: "✓ Conectado" })).not.toBeInTheDocument();
-  });
-
-  it("aceita solicitações e persiste conexões e lista atualizada", async () => {
-    localStorage.setItem("marketfaesa-solicitacoes-recebidas:conta-a", JSON.stringify([ana]));
-    const user = userEvent.setup();
-    render(<Connections usuarioId="conta-a" />);
-
-    await user.click(screen.getByRole("button", { name: /Solicitações/ }));
-    await user.click(screen.getByRole("button", { name: "Aceitar" }));
-
-    expect(JSON.parse(localStorage.getItem("marketfaesa-conexoes:conta-a"))).toEqual([1]);
-    expect(JSON.parse(localStorage.getItem("marketfaesa-solicitacoes-recebidas:conta-a"))).toEqual([]);
-    expect(screen.getByText("Nenhuma solicitação pendente")).toBeInTheDocument();
-  });
-
-
-  it("abre o perfil pelo teclado com Espaço", async () => {
-    const user = userEvent.setup();
-    render(<Connections usuarioId="conta-a" />);
-
-    await user.click(within(screen.getByRole("navigation", { name: "Seções de conexões" })).getByRole("button", { name: /Encontrar pessoas/ }));
-    const cartaoAna = screen.getByRole("button", { name: /Ana Souza/ });
-    cartaoAna.focus();
-    await user.keyboard(" ");
-
-    expect(screen.getByRole("heading", { level: 1, name: "Ana Souza" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "← Voltar para pessoas" })).toBeInTheDocument();
-  });
-
-  it("não abre o perfil ao usar Enter no botão Conectar do cartão", async () => {
-    const user = userEvent.setup();
-    render(<Connections usuarioId="conta-a" />);
-
-    await user.click(within(screen.getByRole("navigation", { name: "Seções de conexões" })).getByRole("button", { name: /Encontrar pessoas/ }));
-    const botaoConectar = screen.getAllByRole("button", { name: "+ Conectar" })[0];
-    botaoConectar.focus();
+    const cartao = screen.getByRole("heading", { name: "Carla Dias" }).closest("article");
+    within(cartao).getByRole("button", { name: "+ Conectar" }).focus();
     await user.keyboard("{Enter}");
 
-    expect(screen.queryByRole("heading", { level: 1, name: "Ana Souza" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "✓ Conectado" })).toBeInTheDocument();
+    expect(await within(cartao).findByRole("button", { name: "Pedido enviado" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { level: 1, name: "Carla Dias" })).not.toBeInTheDocument();
+    expect(chamadas(fetchFalso, "POST /api/conexoes")).toEqual([{ destinatarioId: 3 }]);
   });
 
-  it("ignora IDs e solicitações inválidos no armazenamento", async () => {
-    localStorage.setItem("marketfaesa-conexoes:conta-a", JSON.stringify([null, {}, 999, 2, "1"]));
-    localStorage.setItem(
-      "marketfaesa-solicitacoes-recebidas:conta-a",
-      JSON.stringify([null, 42, { id: 999 }, ana, { id: "2", habilidades: "inválido" }]),
-    );
+  it("aceita e recusa solicitações recebidas", async () => {
+    const fetchFalso = mockarApi(rotas({
+      "GET /api/conexoes/recebidas": [conexao(7, BRUNO, "PENDENTE", false), conexao(9, CARLA, "PENDENTE", false)],
+      "POST /api/conexoes/7/aceitar": conexao(7, BRUNO, "ACEITA", false),
+      "POST /api/conexoes/9/recusar": null,
+    }));
     const user = userEvent.setup();
-    render(<Connections usuarioId="conta-a" />);
+    render(<Connections />);
 
-    expect(screen.getByRole("heading", { name: "Lucas Martins" })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Ana Souza" })).not.toBeInTheDocument();
+    await user.click(await screen.findByRole("button", { name: /Solicitações/ }));
+    const pedidoBruno = (await screen.findByRole("heading", { name: "Bruno Lima" })).closest("article");
+    await user.click(within(pedidoBruno).getByRole("button", { name: "Aceitar" }));
+    const pedidoCarla = (await screen.findByRole("heading", { name: "Carla Dias" })).closest("article");
+    await user.click(within(pedidoCarla).getByRole("button", { name: "Recusar" }));
 
-    await user.click(screen.getByRole("button", { name: /Solicitações/ }));
-    expect(screen.getByRole("heading", { name: "Ana Souza" })).toBeInTheDocument();
-    expect(screen.getByText("1 pendente")).toBeInTheDocument();
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(await screen.findByText("Nenhuma solicitação pendente")).toBeInTheDocument();
+    expect(chamadas(fetchFalso, "POST /api/conexoes/7/aceitar")).toHaveLength(1);
+    expect(chamadas(fetchFalso, "POST /api/conexoes/9/recusar")).toHaveLength(1);
+    expect(screen.getByRole("button", { name: /Minhas conexões/ })).toHaveTextContent("1");
   });
 
-  it("mantém as conexões isoladas por conta", async () => {
-    localStorage.setItem("marketfaesa-conexoes:conta-a", JSON.stringify([2]));
+  it("abre o perfil pelo teclado e inicia uma conversa", async () => {
+    const onAbrirConversa = vi.fn();
+    mockarApi(rotas({ "POST /api/conversas": { id: 50, pessoa: pessoaResumo(2, "Bruno Lima"), ultimaMensagem: null, naoLidas: 0 } }));
     const user = userEvent.setup();
-    render(<Connections usuarioId="conta-b" />);
+    render(<Connections onAbrirConversa={onAbrirConversa} />);
+    await abrirEncontrar(user);
 
-    await user.click(within(screen.getByRole("navigation", { name: "Seções de conexões" })).getByRole("button", { name: /Encontrar pessoas/ }));
-    await user.click(screen.getAllByRole("button", { name: "+ Conectar" })[0]);
+    const cartao = await screen.findByRole("button", { name: /Bruno Lima/ });
+    cartao.focus();
+    await user.keyboard(" ");
+    expect(screen.getByRole("heading", { level: 1, name: "Bruno Lima" })).toBeInTheDocument();
 
-    expect(JSON.parse(localStorage.getItem("marketfaesa-conexoes:conta-a"))).toEqual([2]);
-    expect(JSON.parse(localStorage.getItem("marketfaesa-conexoes:conta-b"))).toEqual([1]);
+    await user.click(screen.getByRole("button", { name: "Mensagem" }));
+    await vi.waitFor(() => expect(onAbrirConversa).toHaveBeenCalledWith(50));
+  });
+
+  it("mostra o erro quando a pessoa não aceita mensagens", async () => {
+    mockarApi(rotas({ "POST /api/conversas": erroApi(403, "Esta pessoa não aceita mensagens") }));
+    const user = userEvent.setup();
+    render(<Connections onAbrirConversa={vi.fn()} />);
+    await abrirEncontrar(user);
+
+    await user.click(await screen.findByRole("button", { name: /Carla Dias/ }));
+    await user.click(screen.getByRole("button", { name: "Mensagem" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Esta pessoa não aceita mensagens");
   });
 });

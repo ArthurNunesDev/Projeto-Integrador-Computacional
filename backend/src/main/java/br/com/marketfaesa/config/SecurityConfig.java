@@ -46,7 +46,8 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.GET, "/api/health").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/health", "/api/cursos", "/api/areas", "/api/habilidades")
+                        .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
                         .anyRequest().authenticated())
                 // Bearer JWT (HS256, ver JwtConfig); token ausente ou invalido -> 401 no formato de erro da API
@@ -84,7 +85,7 @@ public class SecurityConfig {
 
     @Bean
     CorsConfigurationSource corsConfigurationSource(
-            @Value("${app.cors.allowed-origins:https://arthurnunesdev.github.io,http://localhost:5173}") String origens) {
+            @Value("${app.cors.allowed-origins:https://arthurnunesdev.github.io,http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173}") String origens) {
         CorsConfiguration cors = new CorsConfiguration();
         cors.setAllowedOrigins(separarOrigens(origens));
         cors.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));

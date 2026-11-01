@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -50,6 +51,17 @@ public class ApiExceptionHandler {
     @ExceptionHandler(UsuarioNaoEncontradoException.class)
     ResponseEntity<ErroResposta> usuarioNaoEncontrado(UsuarioNaoEncontradoException e) {
         return resposta(HttpStatus.UNAUTHORIZED, e.getMessage(), null);
+    }
+
+    // Ex.: /api/oportunidades/abc ou ?areaId=x (sem isto cairia no 500 do handler genérico).
+    @ExceptionHandler(TypeMismatchException.class)
+    ResponseEntity<ErroResposta> parametroInvalido(TypeMismatchException e) {
+        return resposta(HttpStatus.BAD_REQUEST, "Parâmetro inválido", null);
+    }
+
+    @ExceptionHandler(ErroApiException.class)
+    ResponseEntity<ErroResposta> erroApi(ErroApiException e) {
+        return resposta(e.getStatus(), e.getMessage(), e.getCampos());
     }
 
     // Ex.: corrida no cadastro em que o UNIQUE de e-mail do banco barra o segundo insert.

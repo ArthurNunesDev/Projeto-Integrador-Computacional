@@ -53,3 +53,24 @@ export function removerValorSeguro(chave) {
     return false;
   }
 }
+
+// Chaves do modo demonstrativo, antes da integração com a API: contas com senha em texto puro,
+// sessão local e dados de cada tela. Hoje esses dados vêm da API e as chaves só ocupam espaço.
+const CHAVES_ANTIGAS = ["marketfaesa-users", "marketfaesa-auth", "marketfaesa-config", "marketfaesa-theme"];
+const PREFIXOS_ANTIGOS = [
+  "marketfaesa-salvos:", "marketfaesa-participando:", "marketfaesa-habilidades:", "marketfaesa-conexoes:",
+  "marketfaesa-solicitacoes-recebidas:", "marketfaesa-mensagens:", "marketfaesa-configuracoes:",
+  "marketfaesa-theme:", "marketfaesa-perfil:", "marketfaesa-foto-perfil:", "marketfaesa-perfil-completo-pendente:",
+];
+
+/** Apaga do navegador os dados do modo demonstrativo. */
+export function limparDadosAntigos() {
+  try {
+    const chaves = Object.keys(localStorage).filter((chave) =>
+      CHAVES_ANTIGAS.includes(chave) || PREFIXOS_ANTIGOS.some((prefixo) => chave.startsWith(prefixo)),
+    );
+    chaves.forEach((chave) => localStorage.removeItem(chave));
+  } catch {
+    // sem storage não há o que limpar
+  }
+}

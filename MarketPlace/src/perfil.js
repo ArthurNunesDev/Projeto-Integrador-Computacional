@@ -1,112 +1,53 @@
-// Perfil exibido nas telas: vem da API (UsuarioResposta) e recebe por cima as
-// edições que o usuário fez neste navegador, guardadas por id do usuário.
-// TODO: enviar essas edições para PUT /api/usuarios/me quando a rota existir e
-// remover o armazenamento local.
+// Perfil exibido nas telas: vem da API (UsuarioResposta) e é salvo com PUT /api/usuarios/me.
 
 import { chaveUsuario } from "./storage.js";
-
-const CHAVE_PERFIL = "marketfaesa-perfil";
-const CHAVE_HABILIDADES = "marketfaesa-habilidades";
-
-// Campos do perfil que a tela permite editar (o e-mail é o login e não muda aqui).
-const CAMPOS_EDITAVEIS = ["nome", "curso", "periodo", "cidade", "bio"];
-
-function chavePerfil(id) {
-  return `${CHAVE_PERFIL}:${id}`;
-}
-
-function lerPerfilLocal(id) {
-  try {
-    const salvo = JSON.parse(localStorage.getItem(chavePerfil(id)) || "{}");
-    return salvo && typeof salvo === "object" ? salvo : {};
-  } catch {
-    return {};
-  }
-}
-
-// Versões anteriores guardavam as edições por e-mail (minúsculo); move para a chave por id.
-function migrarPerfilPorEmail(id, email) {
-  if (!email) return;
-  try {
-    const chaveEmail = chavePerfil(email.trim().toLowerCase());
-    const salvoPorEmail = localStorage.getItem(chaveEmail);
-    if (salvoPorEmail === null || localStorage.getItem(chavePerfil(id)) !== null) return;
-    localStorage.setItem(chavePerfil(id), salvoPorEmail);
-    localStorage.removeItem(chaveEmail);
-  } catch {
-    // sem storage não há o que migrar
-  }
-}
-
-/** Persiste as edições locais e informa se a gravação realmente foi concluída. */
-export function persistirPerfilLocal(id, dados) {
-  const aplicados = {};
-  for (const campo of CAMPOS_EDITAVEIS) {
-    if (typeof dados?.[campo] === "string") aplicados[campo] = dados[campo];
-  }
-
-  try {
-    localStorage.setItem(chavePerfil(id), JSON.stringify({ ...lerPerfilLocal(id), ...aplicados }));
-    return { sucesso: true, aplicados };
-  } catch {
-    return { sucesso: false, aplicados: {} };
-  }
-}
-
-/** Mantém a API anterior para chamadas que só precisam dos campos aplicados. */
-export function salvarPerfilLocal(id, dados) {
-  const resultado = persistirPerfilLocal(id, dados);
-  return resultado.aplicados;
-}
 
 export function formatarPeriodo(periodo) {
   return periodo ? `${periodo}º período` : "";
 }
 
-/** Converte o usuário da API para o formato das telas (textos) e aplica as edições locais. */
+/** Converte o usuário da API para o formato das telas (textos), guardando também os valores crus. */
 export function montarUsuario(api) {
-  const usuario = {
+  return {
     id: api.id,
     nome: api.nome || "",
     email: api.email || "",
     curso: api.curso?.nome || "",
+    cursoId: api.curso?.id ?? null,
     periodo: formatarPeriodo(api.periodo),
+    periodoNumero: api.periodo ?? null,
     cidade: api.cidade || "",
     bio: api.bio || "",
     fotoUrl: api.fotoUrl || null,
     criadoEm: api.criadoEm || null,
   };
-
-  migrarPerfilPorEmail(api.id, api.email);
-  const local = lerPerfilLocal(api.id);
-  for (const campo of CAMPOS_EDITAVEIS) {
-    if (typeof local[campo] === "string") usuario[campo] = local[campo];
-  }
-
-  return usuario;
 }
 
-export function calcularProgressoPerfil(usuario) {
-  if (!usuario?.email) return 0;
+/** Corpo completo do PUT /api/usuarios/me: o perfil atual com as alterações por cima. */
+export function corpoAtualizacao(usuario, alteracoes) {
+  return {
+    nome: usuario.nome,
+    cursoId: usuario.cursoId,
+    periodo: usuario.periodoNumero,
+    cidade: usuario.cidade,
+    bio: usuario.bio,
+    fotoUrl: usuario.fotoUrl,
+    ...alteracoes,
+  };
+}
 
-  let habilidades = [];
-  try {
-    habilidades = JSON.parse(localStorage.getItem(chaveUsuario(CHAVE_HABILIDADES, usuario?.id)) || "[]");
-  } catch {
-    // localStorage indisponível ou com JSON inválido: considera sem habilidades
-  }
+/** Percentual de preenchimento: campos do perfil + ter ao menos uma habilidade publicada. */
+export function calcularProgressoPerfil(usuario, quantidadeHabilidades = 0) {
+  if (!usuario?.email) return 0;
 
   const campos = [
     ...["nome", "email", "curso", "periodo", "cidade", "bio"].map((campo) =>
       Boolean(String(usuario[campo] || "").trim()),
     ),
-    Array.isArray(habilidades) && habilidades.some((item) =>
-      item && typeof item === "object" && typeof item.nome === "string" && item.nome.trim(),
-    ),
+    quantidadeHabilidades > 0,
   ];
   return Math.round((campos.filter(Boolean).length / campos.length) * 100);
 }
-
 
 const CHAVE_CONQUISTA_PERFIL = "marketfaesa-perfil-completo-conquista";
 

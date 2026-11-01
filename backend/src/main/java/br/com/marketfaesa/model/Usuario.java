@@ -42,7 +42,8 @@ public class Usuario {
     @Column(length = 1000)
     private String bio;
 
-    @Column(name = "foto_url", length = 500)
+    // text no banco (V4): guarda a data URL da foto; o limite fica na validação da API.
+    @Column(name = "foto_url")
     private String fotoUrl;
 
     @Column(name = "criado_em", nullable = false, updatable = false)

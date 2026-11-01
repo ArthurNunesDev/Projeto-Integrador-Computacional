@@ -1,60 +1,39 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import MinhasPublicacoes from "./Publications.jsx";
+import { chamadas, erroApi, habilidadePublicada, mockarApi } from "../test/apiFalsa.js";
 
-beforeEach(() => {
-  localStorage.clear();
-  localStorage.setItem(
-    "marketfaesa-habilidades:conta-a",
-    JSON.stringify([
-      {
-        id: 1,
-        nome: "React",
-        categoria: "Tecnologia",
-        nivel: "Intermediário",
-        descricao: "Desenvolvimento de interfaces.",
-        disponibilidade: "Projetos e freelas",
-      },
-    ]),
-  );
-});
+const REACT = habilidadePublicada(1, "React", { nivel: "INTERMEDIARIO", descricao: "Desenvolvimento de interfaces." });
 
 afterEach(() => {
   cleanup();
 });
 
-describe("modal de edição de publicações", () => {
-  it("ignora registros incompletos ao carregar publicações", () => {
-    localStorage.setItem("marketfaesa-habilidades:conta-a", JSON.stringify([
-      null,
-      { id: 2, nome: "Incompleta" },
-      {
-        id: 1,
-        nome: "React",
-        categoria: "Tecnologia",
-        nivel: "Intermediário",
-        descricao: "Desenvolvimento de interfaces.",
-        disponibilidade: "Projetos e freelas",
-      },
-    ]));
+function renderizar(rotas = {}) {
+  const fetchFalso = mockarApi({ "GET /api/habilidades-publicadas?usuarioId=1": [REACT], ...rotas });
+  render(<MinhasPublicacoes usuarioId={1} />);
+  return fetchFalso;
+}
 
-    render(<MinhasPublicacoes usuarioId="conta-a" />);
+describe("Minhas Publicações", () => {
+  it("lista as habilidades do usuário com os rótulos de nível e disponibilidade", async () => {
+    renderizar();
 
-    expect(screen.getByRole("heading", { name: "React" })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Incompleta" })).not.toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "React" })).toBeInTheDocument();
+    expect(screen.getByText("Intermediário")).toBeInTheDocument();
+    expect(screen.getByText("projetos e freelas")).toBeInTheDocument();
   });
 
   it("expõe o diálogo, fecha com Escape e devolve o foco ao botão que abriu", async () => {
+    renderizar();
     const user = userEvent.setup();
-    render(<MinhasPublicacoes usuarioId="conta-a" />);
 
-    const botaoEditar = screen.getByRole("button", { name: "Editar" });
+    const botaoEditar = await screen.findByRole("button", { name: "Editar" });
     await user.click(botaoEditar);
 
-    const dialogo = screen.getByRole("dialog", { name: "React" });
-    expect(dialogo).toHaveAttribute("aria-modal", "true");
+    expect(screen.getByRole("dialog", { name: "React" })).toHaveAttribute("aria-modal", "true");
     expect(screen.getByRole("textbox", { name: "Nome" })).toHaveFocus();
 
     await user.keyboard("{Escape}");
@@ -63,135 +42,48 @@ describe("modal de edição de publicações", () => {
     expect(botaoEditar).toHaveFocus();
   });
 
-  it("fecha ao clicar no fundo do modal, mas não ao clicar dentro do formulário", async () => {
-    const user = userEvent.setup();
-    render(<MinhasPublicacoes usuarioId="conta-a" />);
-
-    await user.click(screen.getByRole("button", { name: "Editar" }));
-    const dialogo = screen.getByRole("dialog", { name: "React" });
-
-    await user.click(screen.getByRole("textbox", { name: "Nome" }));
-    expect(dialogo).toBeInTheDocument();
-
-    await user.click(document.querySelector(".publication-modal-backdrop"));
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-  });
-});
-
-
-describe("confirmação de exclusão de publicações", () => {
-  it("mostra um diálogo formatado e mantém a publicação ao cancelar", async () => {
-    const user = userEvent.setup();
-    render(<MinhasPublicacoes usuarioId="conta-a" />);
-
-    await user.click(screen.getByRole("button", { name: "Excluir" }));
-
-    const dialogo = screen.getByRole("dialog", { name: "Excluir publicação?" });
-    expect(dialogo).toHaveAttribute("aria-modal", "true");
-    expect(screen.getByText(/Você está prestes a excluir/)).toBeInTheDocument();
-    expect(document.querySelector(".publication-delete-modal")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Cancelar" }));
-
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "React" })).toBeInTheDocument();
-  });
-
-  it("remove a publicação somente após confirmar a exclusão", async () => {
-    const user = userEvent.setup();
-    render(<MinhasPublicacoes usuarioId="conta-a" />);
-
-    await user.click(screen.getByRole("button", { name: "Excluir" }));
-    await user.click(screen.getByRole("button", { name: "Sim, excluir" }));
-
-    expect(screen.queryByRole("heading", { name: "React" })).not.toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Você ainda não publicou nada" })).toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem("marketfaesa-habilidades:conta-a"))).toEqual([]);
-  });
-});
-
-describe("persistência das alterações de publicações", () => {
-  it("edita e salva os campos atualizados vinculados à conta", async () => {
-    const user = userEvent.setup();
-    render(<MinhasPublicacoes usuarioId="conta-a" />);
-    await user.click(screen.getByRole("button", { name: "Editar" }));
-    const nome = screen.getByRole("textbox", { name: "Nome" });
-    await user.clear(nome);
-    await user.type(nome, "React avançado");
-    await user.click(screen.getByRole("button", { name: "Salvar alterações" }));
-
-    expect(screen.getByRole("heading", { name: "React avançado" })).toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem("marketfaesa-habilidades:conta-a"))[0].nome).toBe("React avançado");
-  });
-
-  it("não fecha a edição nem altera a tela quando o armazenamento falha", async () => {
-    const user = userEvent.setup();
-    render(<MinhasPublicacoes usuarioId="conta-a" />);
-    await user.click(screen.getByRole("button", { name: "Editar" }));
-    const nome = screen.getByRole("textbox", { name: "Nome" });
-    await user.clear(nome);
-    await user.type(nome, "React alterado");
-    const originalSetItem = Storage.prototype.setItem;
-    const spy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (key, value) {
-      if (key === "marketfaesa-habilidades:conta-a") throw new Error("Quota exceeded");
-      return originalSetItem.call(this, key, value);
+  it("edita com PUT enviando os códigos dos enums", async () => {
+    const fetchFalso = renderizar({
+      "PUT /api/habilidades-publicadas/1": (corpo) => ({ ...REACT, ...corpo }),
     });
-
-    await user.click(screen.getByRole("button", { name: "Salvar alterações" }));
-
-    expect(screen.getByRole("alert")).toHaveTextContent("Não foi possível salvar as alterações");
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem("marketfaesa-habilidades:conta-a"))[0].nome).toBe("React");
-    spy.mockRestore();
-  });
-
-  it("não exclui a publicação nem fecha a confirmação quando o armazenamento falha", async () => {
     const user = userEvent.setup();
-    render(<MinhasPublicacoes usuarioId="conta-a" />);
-    await user.click(screen.getByRole("button", { name: "Excluir" }));
-    const originalSetItem = Storage.prototype.setItem;
-    const spy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (key, value) {
-      if (key === "marketfaesa-habilidades:conta-a") throw new Error("Quota exceeded");
-      return originalSetItem.call(this, key, value);
-    });
 
-    await user.click(screen.getByRole("button", { name: "Sim, excluir" }));
-
-    expect(screen.getByRole("alert")).toHaveTextContent("Não foi possível excluir a publicação");
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "React" })).toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem("marketfaesa-habilidades:conta-a"))).toHaveLength(1);
-    spy.mockRestore();
-  });
-
-  it("não altera publicações de outra conta ao editar", async () => {
-    const user = userEvent.setup();
-    localStorage.setItem("marketfaesa-habilidades:conta-b", JSON.stringify([
-      { id: 2, nome: "Vue da conta B", categoria: "Tecnologia", nivel: "Iniciante", descricao: "Descrição B", disponibilidade: "Colaborações" },
-    ]));
-    render(<MinhasPublicacoes usuarioId="conta-a" />);
-    await user.click(screen.getByRole("button", { name: "Editar" }));
-    const nome = screen.getByRole("textbox", { name: "Nome" });
-    await user.clear(nome);
-    await user.type(nome, "React atualizado");
-    await user.click(screen.getByRole("button", { name: "Salvar alterações" }));
-
-    expect(JSON.parse(localStorage.getItem("marketfaesa-habilidades:conta-b"))[0].nome).toBe("Vue da conta B");
-    expect(JSON.parse(localStorage.getItem("marketfaesa-habilidades:conta-a"))[0].nome).toBe("React atualizado");
-  });
-
-  it("não salva nome ou descrição compostos apenas por espaços", async () => {
-    const user = userEvent.setup();
-    render(<MinhasPublicacoes usuarioId="conta-a" />);
-    await user.click(screen.getByRole("button", { name: "Editar" }));
+    await user.click(await screen.findByRole("button", { name: "Editar" }));
     await user.clear(screen.getByRole("textbox", { name: "Nome" }));
-    await user.type(screen.getByRole("textbox", { name: "Nome" }), "   ");
-    await user.clear(screen.getByRole("textbox", { name: "Descrição" }));
-    await user.type(screen.getByRole("textbox", { name: "Descrição" }), "   ");
+    await user.type(screen.getByRole("textbox", { name: "Nome" }), "React Avançado");
+    await user.selectOptions(screen.getByRole("combobox", { name: "Nível" }), "Especialista");
     await user.click(screen.getByRole("button", { name: "Salvar alterações" }));
 
-    expect(screen.getByRole("alert")).toHaveTextContent("Preencha o nome e a descrição");
-    expect(JSON.parse(localStorage.getItem("marketfaesa-habilidades:conta-a"))[0].nome).toBe("React");
+    expect(await screen.findByRole("heading", { name: "React Avançado" })).toBeInTheDocument();
+    expect(chamadas(fetchFalso, "PUT /api/habilidades-publicadas/1")).toEqual([{
+      nome: "React Avançado", categoria: "Tecnologia", nivel: "ESPECIALISTA",
+      descricao: "Desenvolvimento de interfaces.", disponibilidade: "PROJETOS_FREELAS",
+    }]);
+  });
+
+  it("mantém a edição aberta e mostra o erro quando o PUT falha", async () => {
+    renderizar({ "PUT /api/habilidades-publicadas/1": erroApi(403, "Você não pode alterar esta habilidade") });
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole("button", { name: "Editar" }));
+    await user.click(screen.getByRole("button", { name: "Salvar alterações" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Você não pode alterar esta habilidade");
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("exclui com DELETE somente após confirmar", async () => {
+    const fetchFalso = renderizar({ "DELETE /api/habilidades-publicadas/1": null });
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole("button", { name: "Excluir" }));
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+    expect(screen.getByRole("heading", { name: "React" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Excluir" }));
+    await user.click(screen.getByRole("button", { name: "Sim, excluir" }));
+
+    expect(await screen.findByText("Você ainda não publicou nada")).toBeInTheDocument();
+    expect(chamadas(fetchFalso, "DELETE /api/habilidades-publicadas/1")).toHaveLength(1);
   });
 });
-

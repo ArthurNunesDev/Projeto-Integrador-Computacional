@@ -1,81 +1,21 @@
 import { useMemo, useState } from "react";
-import { chaveUsuario, lerValorSeguro, salvarValorSeguro } from "../storage.js";
+import { listarPessoas } from "../api/pessoas.js";
+import { descreverCurso, iniciais, NIVEIS } from "../rotulos.js";
+import { useCarregar } from "../useCarregar.js";
+import { rotuloConexao, useConexoes } from "./useConexoes.js";
 
-const perfis = [
-  {
-    id: 1,
-    nome: "Ana Souza",
-    curso: "Ciência da Computação · 6º período",
-    cidade: "Vitória, ES",
-    inicial: "AS",
-    bio: "Gosto de transformar problemas em interfaces simples e experiências digitais úteis.",
-    habilidades: [
-      { nome: "React", nivel: "Avançado", categoria: "Tecnologia" },
-      { nome: "JavaScript", nivel: "Avançado", categoria: "Tecnologia" },
-      { nome: "UX/UI Design", nivel: "Intermediário", categoria: "Design" },
-    ],
-  },
-  {
-    id: 2,
-    nome: "Lucas Martins",
-    curso: "Design · 5º período",
-    cidade: "Vila Velha, ES",
-    inicial: "LM",
-    bio: "Designer focado em identidade visual, interfaces e comunicação para projetos universitários.",
-    habilidades: [
-      { nome: "Figma", nivel: "Avançado", categoria: "Design" },
-      { nome: "UI Design", nivel: "Avançado", categoria: "Design" },
-      { nome: "Branding", nivel: "Intermediário", categoria: "Comunicação" },
-    ],
-  },
-  {
-    id: 3,
-    nome: "Rafael Costa",
-    curso: "Direito · 7º período",
-    cidade: "Vitória, ES",
-    inicial: "RC",
-    bio: "Interesse em tecnologia, contratos digitais e pesquisa jurídica.",
-    habilidades: [
-      { nome: "Redação Jurídica", nivel: "Avançado", categoria: "Direito" },
-      { nome: "Contratos", nivel: "Avançado", categoria: "Direito" },
-      { nome: "Pesquisa", nivel: "Intermediário", categoria: "Acadêmico" },
-    ],
-  },
-  {
-    id: 4,
-    nome: "Marina Oliveira",
-    curso: "Administração · 4º período",
-    cidade: "Serra, ES",
-    inicial: "MO",
-    bio: "Apaixonada por organização, estratégia e análise de negócios.",
-    habilidades: [
-      { nome: "Excel", nivel: "Avançado", categoria: "Administração" },
-      { nome: "Marketing Digital", nivel: "Intermediário", categoria: "Marketing" },
-      { nome: "Análise de Dados", nivel: "Intermediário", categoria: "Tecnologia" },
-    ],
-  },
-];
-
-const categorias = ["Todas", "Tecnologia", "Design", "Direito", "Administração", "Comunicação"];
-
-function obterConexoes(chave) {
-  try {
-    const dados = JSON.parse(lerValorSeguro(chave));
-    if (!Array.isArray(dados)) return [];
-    const idsConhecidos = new Set(perfis.map((perfil) => perfil.id));
-    return [...new Set(dados.filter((id) => idsConhecidos.has(id)))];
-  } catch {
-    return [];
-  }
-}
-
-function Habilidades({ usuarioId }) {
-  const chaveConexoes = chaveUsuario("marketfaesa-conexoes", usuarioId);
+function Habilidades({ onAbrirConversa }) {
+  const { dados: perfis, carregando, erro: erroPerfis, recarregar } = useCarregar(listarPessoas, []);
+  const { mapa: conexoes, erro: erroPersistencia, alternar: alternarConexao, conversar } = useConexoes(onAbrirConversa);
   const [busca, setBusca] = useState("");
   const [categoria, setCategoria] = useState("Todas");
-  const [perfilSelecionado, setPerfilSelecionado] = useState(null);
-  const [conectados, setConectados] = useState(() => obterConexoes(chaveConexoes));
-  const [erroPersistencia, setErroPersistencia] = useState("");
+  const [perfilSelecionadoId, setPerfilSelecionadoId] = useState(null);
+  const perfilSelecionado = perfis.find((perfil) => perfil.id === perfilSelecionadoId);
+
+  const categorias = useMemo(
+    () => ["Todas", ...new Set(perfis.flatMap((perfil) => perfil.habilidades.map((habilidade) => habilidade.categoria)))],
+    [perfis],
+  );
 
   const perfisFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
@@ -84,7 +24,7 @@ function Habilidades({ usuarioId }) {
       const correspondeBusca =
         !termo ||
         perfil.nome.toLowerCase().includes(termo) ||
-        perfil.curso.toLowerCase().includes(termo) ||
+        descreverCurso(perfil).toLowerCase().includes(termo) ||
         perfil.habilidades.some((habilidade) =>
           habilidade.nome.toLowerCase().includes(termo),
         );
@@ -95,53 +35,42 @@ function Habilidades({ usuarioId }) {
 
       return correspondeBusca && correspondeCategoria;
     });
-  }, [busca, categoria]);
-
-  function alternarConexao(id) {
-    const atualizados = conectados.includes(id)
-      ? conectados.filter((item) => item !== id)
-      : [...conectados, id];
-
-    if (!salvarValorSeguro(chaveConexoes, JSON.stringify(atualizados))) {
-      setErroPersistencia("Não foi possível salvar esta conexão neste navegador. Verifique o armazenamento e tente novamente.");
-      return;
-    }
-
-    setErroPersistencia("");
-    setConectados(atualizados);
-  }
+  }, [perfis, busca, categoria]);
 
   if (perfilSelecionado) {
-    const conectado = conectados.includes(perfilSelecionado.id);
+    const conexao = conexoes.get(perfilSelecionado.id);
 
     return (
       <main className="people-skills-page">
         <div className="people-skills-container">
-          <button className="page-back-button people-back-button" type="button" onClick={() => setPerfilSelecionado(null)}>
+          <button className="page-back-button people-back-button" type="button" onClick={() => setPerfilSelecionadoId(null)}>
             ← Voltar para Habilidades
           </button>
 
           <section className="person-profile-header animate__animated animate__fadeInDown">
-            <div className="person-profile-avatar">{perfilSelecionado.inicial}</div>
+            <div className="person-profile-avatar">{iniciais(perfilSelecionado.nome)}</div>
             <div className="person-profile-main">
               <span className="people-eyebrow">PERFIL DO ESTUDANTE</span>
               <h1>{perfilSelecionado.nome}</h1>
-              <p>{perfilSelecionado.curso}</p>
-              <span className="person-location">⌖ {perfilSelecionado.cidade}</span>
+              <p>{descreverCurso(perfilSelecionado)}</p>
+              {perfilSelecionado.cidade && <span className="person-location">⌖ {perfilSelecionado.cidade}</span>}
             </div>
             {erroPersistencia && <p className="people-persistence-error" role="alert">{erroPersistencia}</p>}
+            <button className="connect-button" type="button" onClick={() => conversar(perfilSelecionado.id)}>
+              Mensagem
+            </button>
             <button
-              className={conectado ? "connect-button conectado" : "connect-button"}
+              className={conexao?.status === "ACEITA" ? "connect-button conectado" : "connect-button"}
               type="button"
               onClick={() => alternarConexao(perfilSelecionado.id)}
             >
-              {conectado ? "✓ Conectado" : "+ Conectar"}
+              {rotuloConexao(conexao)}
             </button>
           </section>
 
           <section className="person-about animate__animated animate__fadeInUp">
             <span className="people-section-label">SOBRE</span>
-            <p>{perfilSelecionado.bio}</p>
+            <p>{perfilSelecionado.bio || "Esta pessoa ainda não adicionou uma descrição."}</p>
           </section>
 
           <section className="person-skills-section animate__animated animate__fadeInUp">
@@ -155,12 +84,12 @@ function Habilidades({ usuarioId }) {
 
             <div className="person-skill-grid">
               {perfilSelecionado.habilidades.map((habilidade) => (
-                <article className="person-skill-card" key={habilidade.nome}>
+                <article className="person-skill-card" key={habilidade.id}>
                   <div className="person-skill-icon">✦</div>
                   <div>
                     <span>{habilidade.categoria}</span>
                     <h3>{habilidade.nome}</h3>
-                    <p>Nível {habilidade.nivel}</p>
+                    <p>Nível {NIVEIS[habilidade.nivel] || habilidade.nivel}</p>
                   </div>
                 </article>
               ))}
@@ -218,7 +147,15 @@ function Habilidades({ usuarioId }) {
           <span>{perfisFiltrados.length} resultado{perfisFiltrados.length === 1 ? "" : "s"}</span>
         </div>
 
-        {perfisFiltrados.length ? (
+        {carregando ? (
+          <div className="people-empty" role="status"><strong>Carregando perfis...</strong></div>
+        ) : erroPerfis ? (
+          <div className="people-empty" role="alert">
+            <strong>Não foi possível carregar os perfis</strong>
+            <span>{erroPerfis}</span>
+            <button type="button" className="people-filter" onClick={recarregar}>Tentar novamente</button>
+          </div>
+        ) : perfisFiltrados.length ? (
           <section className="people-grid">
             {perfisFiltrados.map((perfil, index) => (
               <button
@@ -226,13 +163,13 @@ function Habilidades({ usuarioId }) {
                 className="person-card animate__animated animate__fadeInUp"
                 style={{ animationDelay: `${index * 70}ms` }}
                 key={perfil.id}
-                onClick={() => setPerfilSelecionado(perfil)}
+                onClick={() => setPerfilSelecionadoId(perfil.id)}
               >
                 <div className="person-card-header">
-                  <div className="person-card-avatar">{perfil.inicial}</div>
+                  <div className="person-card-avatar">{iniciais(perfil.nome)}</div>
                   <div className="person-card-identity">
                     <h3>{perfil.nome}</h3>
-                    <p>{perfil.curso}</p>
+                    <p>{descreverCurso(perfil)}</p>
                   </div>
                   <span className="person-card-arrow">→</span>
                 </div>
@@ -241,12 +178,12 @@ function Habilidades({ usuarioId }) {
 
                 <div className="person-card-skills">
                   {perfil.habilidades.map((habilidade) => (
-                    <span key={habilidade.nome}>{habilidade.nome}</span>
+                    <span key={habilidade.id}>{habilidade.nome}</span>
                   ))}
                 </div>
 
                 <div className="person-card-footer">
-                  <span>⌖ {perfil.cidade}</span>
+                  <span>{perfil.cidade ? `⌖ ${perfil.cidade}` : ""}</span>
                   <strong>Ver perfil</strong>
                 </div>
               </button>

@@ -1,108 +1,18 @@
-import { ApiError } from './client'
+import { limparToken, requisicao, salvarToken } from './client'
 
-const CHAVE_USUARIOS = 'marketfaesa-users'
-const CHAVE_SESSAO = 'marketfaesa-auth'
-
-function lerUsuarios() {
-  try {
-    const usuarios = JSON.parse(localStorage.getItem(CHAVE_USUARIOS) || '[]')
-    if (!Array.isArray(usuarios)) return []
-    return usuarios.filter((usuario) =>
-      usuario &&
-      typeof usuario === 'object' &&
-      !Array.isArray(usuario) &&
-      (typeof usuario.id === 'string' || typeof usuario.id === 'number') &&
-      typeof usuario.email === 'string' &&
-      typeof usuario.senha === 'string',
-    )
-  } catch {
-    return []
-  }
+/** POST /api/auth/register. Devolve o usuário criado (sem token: chame login em seguida). */
+export function cadastrar({ nome, email, senha }) {
+  return requisicao('/api/auth/register', { method: 'POST', body: { nome, email, senha } })
 }
 
-function salvarUsuarios(usuarios) {
-  localStorage.setItem(CHAVE_USUARIOS, JSON.stringify(usuarios))
-}
-
-function normalizarEmail(email) {
-  return String(email || '').trim().toLowerCase()
-}
-
-/** Retorna a sessão local salva neste navegador, sem depender do backend. */
-export function obterSessaoLocal() {
-  try {
-    const usuario = JSON.parse(localStorage.getItem(CHAVE_SESSAO) || 'null')
-    if (
-      !usuario ||
-      typeof usuario !== 'object' ||
-      Array.isArray(usuario) ||
-      (typeof usuario.id !== 'string' && typeof usuario.id !== 'number') ||
-      typeof usuario.nome !== 'string' ||
-      typeof usuario.email !== 'string'
-    ) return null
-    return usuario
-  } catch {
-    return null
-  }
-}
-
-/** Cadastro demonstrativo local. As contas existem somente neste navegador. */
-export async function cadastrar({ nome, email, senha }) {
-  const usuarios = lerUsuarios()
-  const emailNormalizado = normalizarEmail(email)
-
-  if (usuarios.some((usuario) => normalizarEmail(usuario.email) === emailNormalizado)) {
-    throw new ApiError({ status: 409, mensagem: 'Este e-mail já está cadastrado.' })
-  }
-
-  const usuario = {
-    id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    nome: String(nome || '').trim(),
-    email: emailNormalizado,
-    senha,
-    curso: { nome: '' },
-    periodo: '',
-    cidade: '',
-    bio: '',
-    fotoUrl: null,
-    criadoEm: new Date().toISOString(),
-  }
-
-  try {
-    salvarUsuarios([...usuarios, usuario])
-  } catch {
-    throw new ApiError({ status: 0, mensagem: 'Não foi possível salvar a conta neste navegador.' })
-  }
-  return { usuario: { ...usuario, senha: undefined } }
-}
-
-/** Login demonstrativo local: valida a conta salva no localStorage. */
+/** POST /api/auth/login. Salva o token e devolve {token, usuario}. */
 export async function login({ email, senha }) {
-  const emailNormalizado = normalizarEmail(email)
-  const usuario = lerUsuarios().find(
-    (item) => normalizarEmail(item.email) === emailNormalizado && item.senha === senha,
-  )
-
-  if (!usuario) {
-    throw new ApiError({ status: 401, mensagem: 'E-mail ou senha inválidos.' })
-  }
-
-  const usuarioSemSenha = { ...usuario };
-  delete usuarioSemSenha.senha
-  try {
-    localStorage.setItem(CHAVE_SESSAO, JSON.stringify(usuarioSemSenha))
-  } catch {
-    throw new ApiError({ status: 0, mensagem: 'Não foi possível manter a sessão neste navegador.' })
-  }
-
-  return { token: null, usuario: usuarioSemSenha }
+  const resposta = await requisicao('/api/auth/login', { method: 'POST', body: { email, senha } })
+  salvarToken(resposta.token)
+  return resposta
 }
 
-/** Logout local: encerra a sessão salva neste navegador. */
+/** Logout local: a API não guarda sessão, basta descartar o token. */
 export function sair() {
-  try {
-    localStorage.removeItem(CHAVE_SESSAO)
-  } catch {
-    // sem storage não há sessão a limpar
-  }
+  limparToken()
 }
