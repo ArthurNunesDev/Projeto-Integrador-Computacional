@@ -64,7 +64,7 @@ O front usa a API em **todas as telas**: login, cadastro, sessão, perfil (ediç
 | 👤 Perfil com progresso de preenchimento | 🏆 Animação de conquista ao completar o perfil |
 | 🛠️ Publicação e gestão de habilidades | 👥 Busca de estudantes e conexões |
 | 💬 Mensagens entre usuários | 🔖 Itens salvos |
-| 📋 Minhas publicações | ⚙️ Configurações de conta e preferências |
+| 📋 Minhas publicações | ⚙️ Configurações de conta e privacidade |
 | 🌙 Tema claro e escuro | 📱 Layout responsivo para desktop e mobile |
 
 <h2 id="comecar">🚀 Como começar</h2>

@@ -50,6 +50,8 @@ describe("autenticação pela API", () => {
     localStorage.setItem("marketfaesa-users", JSON.stringify([{ email: "a@b.c", senha: "texto-puro" }]));
     localStorage.setItem("marketfaesa-auth", "{}");
     localStorage.setItem("marketfaesa-salvos:1", "[]");
+    localStorage.setItem("marketfaesa-2fa:1", "true");
+    localStorage.setItem("marketfaesa-preferencias:1", "{}");
     localStorage.setItem("marketfaesa-pagina:1", "perfil");
 
     render(<App />);
@@ -57,6 +59,8 @@ describe("autenticação pela API", () => {
     expect(localStorage.getItem("marketfaesa-users")).toBeNull();
     expect(localStorage.getItem("marketfaesa-auth")).toBeNull();
     expect(localStorage.getItem("marketfaesa-salvos:1")).toBeNull();
+    expect(localStorage.getItem("marketfaesa-2fa:1")).toBeNull();
+    expect(localStorage.getItem("marketfaesa-preferencias:1")).toBeNull();
     expect(localStorage.getItem("marketfaesa-pagina:1")).toBe("perfil");
   });
 
@@ -135,6 +139,28 @@ describe("autenticação pela API", () => {
     expect(await screen.findByRole("heading", { name: "Oportunidades" })).toBeInTheDocument();
     const [, opcoes] = fetchFalso.mock.calls.find(([url]) => url.endsWith("/api/usuarios/me"));
     expect(opcoes.headers.Authorization).toBe("Bearer jwt-salvo");
+  });
+
+  it("mantém no PUT de configurações os campos que a tela não mostra", async () => {
+    salvarToken("jwt-salvo");
+    localStorage.setItem("marketfaesa-pagina:1", "configuracoes");
+    const salvas = { ...CONFIGURACOES, novasOportunidades: false, mensagens: false, conexoes: false, publicacoes: false, resumoSemanal: true, reduzirAnimacoes: true };
+    const fetchFalso = mockarApi({
+      ...ROTAS_INICIO,
+      "GET /api/usuarios/me": USUARIO_API,
+      "GET /api/usuarios/me/configuracoes": salvas,
+      "PUT /api/usuarios/me/configuracoes": (corpo) => corpo,
+      "GET /api/cursos": [],
+    });
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(await screen.findByRole("button", { name: /Privacidade/ }));
+    const toggle = screen.getByRole("switch", { name: "Perfil público" });
+    await waitFor(() => expect(toggle).toBeEnabled());
+    await user.click(toggle);
+
+    await waitFor(() => expect(chamadas(fetchFalso, "PUT /api/usuarios/me/configuracoes")).toEqual([{ ...salvas, perfilPublico: false }]));
   });
 
   it("volta ao login com aviso quando o token salvo expirou", async () => {

@@ -47,7 +47,7 @@ function Habilidades({ onAbrirConversa }) {
             ← Voltar para Habilidades
           </button>
 
-          <section className="person-profile-header animate__animated animate__fadeInDown">
+          <section className="person-profile-header">
             <div className="person-profile-avatar">{iniciais(perfilSelecionado.nome)}</div>
             <div className="person-profile-main">
               <span className="people-eyebrow">PERFIL DO ESTUDANTE</span>
@@ -68,12 +68,12 @@ function Habilidades({ onAbrirConversa }) {
             </button>
           </section>
 
-          <section className="person-about animate__animated animate__fadeInUp">
+          <section className="person-about">
             <span className="people-section-label">SOBRE</span>
             <p>{perfilSelecionado.bio || "Esta pessoa ainda não adicionou uma descrição."}</p>
           </section>
 
-          <section className="person-skills-section animate__animated animate__fadeInUp">
+          <section className="person-skills-section">
             <div className="people-section-heading">
               <div>
                 <span className="people-section-label">COMPETÊNCIAS</span>
@@ -103,7 +103,7 @@ function Habilidades({ onAbrirConversa }) {
   return (
     <main className="people-skills-page">
       <div className="people-skills-container">
-        <section className="people-hero animate__animated animate__fadeInDown">
+        <section className="people-hero">
           <div>
             <span className="people-eyebrow">DESCUBRA TALENTOS</span>
             <h1>Habilidades</h1>
@@ -115,7 +115,7 @@ function Habilidades({ onAbrirConversa }) {
           </div>
         </section>
 
-        <section className="people-search-panel animate__animated animate__fadeInUp">
+        <section className="people-search-panel">
           <label className="people-search">
             <span>⌕</span>
             <input
@@ -157,11 +157,10 @@ function Habilidades({ onAbrirConversa }) {
           </div>
         ) : perfisFiltrados.length ? (
           <section className="people-grid">
-            {perfisFiltrados.map((perfil, index) => (
+            {perfisFiltrados.map((perfil) => (
               <button
                 type="button"
-                className="person-card animate__animated animate__fadeInUp"
-                style={{ animationDelay: `${index * 70}ms` }}
+                className="person-card"
                 key={perfil.id}
                 onClick={() => setPerfilSelecionadoId(perfil.id)}
               >

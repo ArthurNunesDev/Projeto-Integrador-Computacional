@@ -36,7 +36,7 @@ function Connections({ onAbrirConversa }) {
     return (
       <main className="connections-page">
         <div className="connections-container">
-          <section className="connections-profile animate__animated animate__fadeIn">
+          <section className="connections-profile">
             <button type="button" className="page-back-button connections-back" onClick={() => setPerfilAberto(null)}>← Voltar para pessoas</button>
 
             {erroPersistencia && <p className="connections-persistence-error" role="alert">{erroPersistencia}</p>}
@@ -85,7 +85,7 @@ function Connections({ onAbrirConversa }) {
   return (
     <main className="connections-page">
       <div className="connections-container">
-        <section className="connections-hero animate__animated animate__fadeInDown">
+        <section className="connections-hero">
           <div>
             <span className="connections-eyebrow">NETWORKING UNIVERSITÁRIO</span>
             <h1>Conexões</h1>
@@ -112,7 +112,7 @@ function Connections({ onAbrirConversa }) {
         {erroPersistencia && <p className="connections-persistence-error" role="alert">{erroPersistencia}</p>}
 
         {aba === "conexoes" && (
-          <section className="connections-section animate__animated animate__fadeInUp">
+          <section className="connections-section">
             <div className="connections-heading">
               <div>
                 <span className="connections-label">MINHA REDE</span>
@@ -153,7 +153,7 @@ function Connections({ onAbrirConversa }) {
         )}
 
         {aba === "solicitacoes" && (
-          <section className="connections-section animate__animated animate__fadeInUp">
+          <section className="connections-section">
             <div className="connections-heading">
               <div>
                 <span className="connections-label">AGUARDANDO SUA RESPOSTA</span>
@@ -190,7 +190,7 @@ function Connections({ onAbrirConversa }) {
         )}
 
         {aba === "encontrar" && (
-          <section className="connections-section animate__animated animate__fadeInUp">
+          <section className="connections-section">
             <div className="connections-heading">
               <div>
                 <span className="connections-label">AMPLIE SUA REDE</span>
