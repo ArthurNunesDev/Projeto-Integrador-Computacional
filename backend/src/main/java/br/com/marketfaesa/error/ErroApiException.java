@@ -45,6 +45,12 @@ public class ErroApiException extends RuntimeException {
         return new ErroApiException(HttpStatus.BAD_REQUEST, "Dados inválidos", Map.of(campo, mensagem));
     }
 
+    public static ErroApiException muitasTentativas(long minutos) {
+        String espera = minutos == 1 ? "1 minuto" : minutos + " minutos";
+        return new ErroApiException(HttpStatus.TOO_MANY_REQUESTS,
+                "Muitas tentativas. Tente novamente em " + espera + ".", null);
+    }
+
     public HttpStatus getStatus() {
         return status;
     }

@@ -29,8 +29,8 @@ Base: `http://localhost:8080/api` em desenvolvimento.
 | Método | Rota | Uso no front hoje | Resposta |
 |---|---|---|---|
 | GET | `/api/health` | teste de conexão | `200 {"status":"ok"}` |
-| POST | `/api/auth/register` | cadastro (`fazerCadastro` em `App.jsx`, chamado por `auth/Login.jsx`) | `201` usuário criado; `409` se o e-mail já existe; `400` se inválido |
-| POST | `/api/auth/login` | `fazerLogin` em `App.jsx` (também logo após o cadastro) | `200` token + usuário; `401` se inválido |
+| POST | `/api/auth/register` | cadastro (`fazerCadastro` em `App.jsx`, chamado por `auth/Login.jsx`) | `201` usuário criado; `409` se o e-mail já existe; `400` se inválido; `429` por excesso de tentativas |
+| POST | `/api/auth/login` | `fazerLogin` em `App.jsx` (também logo após o cadastro) | `200` token + usuário; `401` se inválido; `429` por excesso de tentativas |
 | GET | `/api/usuarios/me` | restaurar a sessão ao abrir o app; dados do perfil (`src/perfil.js`) | `200` usuário (sem senha); `401` sem token |
 | GET | `/api/usuarios/me/configuracoes` | carregar tema e configurações ao logar | `200` configurações |
 | PUT | `/api/usuarios/me/configuracoes` | salvar alterações em `Configs.jsx` | `200` configurações salvas; `400` se faltar campo |
@@ -152,6 +152,7 @@ O GitHub Pages serve apenas arquivos estáticos: o frontend continua lá, mas o 
 - Banco PostgreSQL gerenciado: o Neon já é usado; na hospedagem, basta definir as variáveis `DATABASE_*` (o pool da aplicação está limitado a 5 conexões, pensando no plano gratuito).
 - Segredos em variáveis de ambiente, nunca no repositório: `DATABASE_*` e `JWT_SECRET` (gere um próprio para produção com `openssl rand -base64 48`; trocar o valor invalida todos os tokens emitidos). Se o front tiver outra origem, defina `CORS_ALLOWED_ORIGINS`.
 - Front e back em domínios diferentes: configurar CORS e usar HTTPS nos dois.
+- Limite de tentativas: atrás do proxy do host, defina `SERVER_FORWARD_HEADERS_STRATEGY=native`; sem isso, todos os clientes parecem ter o IP do proxy e o limite vira global. Se o proxy não estiver numa faixa privada, ou houver uma CDN na frente, informe os IPs em `SERVER_TOMCAT_REMOTEIP_INTERNAL_PROXIES` ou `SERVER_TOMCAT_REMOTEIP_TRUSTED_PROXIES`. Para conferir, exceda o limite em uma rede e veja se outra rede continua liberada. Os contadores ficam em memória: com mais de uma instância, será preciso movê-los para um armazenamento compartilhado.
 - Planos gratuitos costumam "dormir"; a primeira requisição pode demorar, então o front deve mostrar carregamento.
 
 ---
@@ -196,7 +197,7 @@ O GitHub Pages serve apenas arquivos estáticos: o frontend continua lá, mas o 
 
 ### Fase 5 — Produção
 - [x] Usar PostgreSQL (Neon)
-- [ ] Hospedar o backend e configurar variáveis de ambiente (`DATABASE_*`, `JWT_SECRET`, `CORS_ALLOWED_ORIGINS`)
+- [ ] Hospedar o backend e configurar variáveis de ambiente (`DATABASE_*`, `JWT_SECRET`, `CORS_ALLOWED_ORIGINS`, `SERVER_FORWARD_HEADERS_STRATEGY`)
 - [ ] Definir `VITE_API_URL` de produção no workflow de deploy
 - [x] Liberar CORS para a origem do GitHub Pages
 
