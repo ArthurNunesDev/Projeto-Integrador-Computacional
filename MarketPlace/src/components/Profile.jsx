@@ -135,7 +135,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
   return (
     <main className="perfil-page">
       <div className="perfil-container">
-        <section className="perfil-page-header animate__animated animate__fadeInDown">
+        <section className="perfil-page-header">
           <div><span className="perfil-eyebrow">MINHA CONTA</span><h1>Meu Perfil</h1><p>Gerencie suas informações e apresente suas habilidades para outros estudantes.</p></div>
           <button className="page-back-button perfil-back-button" type="button" onClick={() => onNavigate("inicio")}>← Voltar ao início</button>
         </section>
@@ -155,7 +155,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
           </div>
         )}
 
-        <section className="perfil-main-card animate__animated animate__fadeInUp">
+        <section className="perfil-main-card">
           <div className="perfil-main-top">
             <div className="perfil-avatar-area">
               <div className="perfil-avatar-large">
@@ -228,7 +228,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
 
         <div className="perfil-grid">
           <div className="perfil-column-main">
-            <section className="perfil-section-card animate__animated animate__fadeInUp">
+            <section className="perfil-section-card">
               <div className="perfil-section-heading"><div><span>PERFIL</span><h3>Sobre mim</h3></div></div>
               {editando ? (
                 <label className="perfil-edit-field perfil-bio-edit-field">
@@ -239,14 +239,14 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
               ) : <p className="perfil-bio">{usuario.bio || "Você ainda não adicionou uma descrição."}</p>}
             </section>
 
-            <section className="perfil-section-card animate__animated animate__fadeInUp">
+            <section className="perfil-section-card">
               <div className="perfil-section-heading"><div><span>COMPETÊNCIAS</span><h3>Minhas habilidades</h3></div><button className="perfil-section-link" type="button" onClick={() => onNavigate("publicar-habilidade")}>+ Adicionar</button></div>
               <div className="perfil-skills">
                 {habilidades.length ? habilidades.map((habilidade) => <span className="perfil-skill" key={habilidade.id}>{habilidade.nome}</span>) : <p className="perfil-bio">Você ainda não publicou habilidades.</p>}
               </div>
             </section>
 
-            <section className="perfil-section-card animate__animated animate__fadeInUp">
+            <section className="perfil-section-card">
               <div className="perfil-section-heading"><div><span>INTERESSES</span><h3>Áreas de interesse</h3></div></div>
               <div className="perfil-interests">
                 {interesses.length ? interesses.map((interesse) => <div className="perfil-interest" key={interesse}><span className="perfil-interest-icon">✓</span><span>{interesse}</span></div>) : <p className="perfil-bio">Suas áreas de interesse aparecerão conforme você publicar habilidades.</p>}
@@ -255,7 +255,7 @@ function Perfil({ onNavigate, perfilPublico, mostrarEmail, usuario, onUpdateUsua
           </div>
 
           <aside className="perfil-column-side">
-            <section className="perfil-side-card animate__animated animate__fadeInRight">
+            <section className="perfil-side-card">
               <div className="perfil-side-title"><h3>Informações</h3></div>
               <div className="perfil-information">
                 <div className="perfil-information-item"><span>E-mail</span>{editando || mostrarEmail ? <strong>{usuario.email}</strong> : <strong className="perfil-info-oculto">Oculto · ative em Configurações</strong>}</div>
@@ -293,7 +293,7 @@ function PerfilConclusao({ usuario, quantidadeHabilidades, onNavigate }) {
   if (conquistaPerfilExibida(usuario) || progresso >= 100) return null;
 
   return (
-    <section className="perfil-completion-card animate__animated animate__fadeInRight">
+    <section className="perfil-completion-card">
       <div className="perfil-completion-icon">✨</div>
       <div>
         <strong>Perfil {progresso}% completo</strong>

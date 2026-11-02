@@ -18,7 +18,7 @@ import Login from "./auth/Login.jsx";
 import { cadastrar, login, sair } from "./api/auth.js";
 import { definirOnNaoAutenticado, obterToken } from "./api/client.js";
 import { atualizarMe, obterConfiguracoes, obterMe, salvarConfiguracoes } from "./api/usuarios.js";
-import { chaveUsuario, lerJsonUsuario, salvarJsonUsuario, lerValorSeguro, salvarValorSeguro, limparDadosAntigos } from "./storage.js";
+import { chaveUsuario, lerValorSeguro, salvarValorSeguro, limparDadosAntigos } from "./storage.js";
 import { corpoAtualizacao, montarUsuario } from "./perfil.js";
 import { mensagemDoErro } from "./useCarregar.js";
 
@@ -36,40 +36,11 @@ import "./components/Publications.scss";
 import "./components/Footer.scss";
 import "./ResponsiveAudit.scss";
 
-// Só preferências de interface ficam no navegador, por conta: a página aberta e as preferências
-// de conteúdo (sem campo na API). Perfil, tema e configurações vêm da API.
+// Só a página aberta fica no navegador, por conta. Perfil, tema e configurações vêm da API.
 const CHAVE_PAGINA = "marketfaesa-pagina";
-const CHAVE_PREFERENCIAS = "marketfaesa-preferencias";
-const PREFERENCIAS_PADRAO = { area: "tecnologia", modalidade: "todas", frequencia: "imediato" };
-
-// Mesmos campos de ConfiguracaoDto (menos o tema): o PUT exige todos.
-const CONFIG_PADRAO = {
-  perfilPublico: true,
-  mostrarEmail: false,
-  permitirMensagens: true,
-  novasOportunidades: true,
-  mensagens: true,
-  conexoes: true,
-  publicacoes: true,
-  resumoSemanal: false,
-  reduzirAnimacoes: false,
-};
-
-const VALORES_PREFERENCIAS = {
-  area: ["tecnologia", "design", "engenharia", "saude", "direito", "administracao"],
-  modalidade: ["todas", "remoto", "presencial", "hibrido"],
-  frequencia: ["imediato", "diario", "semanal"],
-};
-
-function normalizarPreferencias(dados) {
-  const origem = dados && typeof dados === "object" && !Array.isArray(dados) ? dados : {};
-  return Object.fromEntries(
-    Object.entries(PREFERENCIAS_PADRAO).map(([campo, padrao]) => [
-      campo,
-      VALORES_PREFERENCIAS[campo].includes(origem[campo]) ? origem[campo] : padrao,
-    ]),
-  );
-}
+// Padrões das opções usadas no front, até o GET terminar. O PUT exige todos os campos de
+// ConfiguracaoDto: os que o front não usa vêm no GET e voltam intactos em `configuracoes`.
+const CONFIG_PADRAO = { perfilPublico: true, mostrarEmail: false, permitirMensagens: true };
 
 const MENSAGEM_SESSAO_EXPIRADA = "Sua sessão expirou. Entre novamente.";
 
@@ -89,7 +60,6 @@ function App() {
   const [configuracoesCarregadas, setConfiguracoesCarregadas] = useState(false);
   const [erroCarregarConfiguracoes, setErroCarregarConfiguracoes] = useState("");
   const [erroConfiguracoes, setErroConfiguracoes] = useState("");
-  const [preferencias, setPreferencias] = useState(PREFERENCIAS_PADRAO);
   // Muda a cada login/logout: respostas de uma sessão anterior são ignoradas.
   const geracaoRef = useRef(0);
   // PUTs de configuração rodam em fila, um por vez, na ordem dos cliques.
@@ -123,7 +93,6 @@ function App() {
     setAvisoLogin(aviso);
     setPagina("inicio");
     setTema("light");
-    setPreferencias(PREFERENCIAS_PADRAO);
     setConversaInicial(null);
   }, [novaGeracao]);
 
@@ -176,7 +145,6 @@ function App() {
       const paginaInicial = (restaurarPagina && lerValorSeguro(chavePagina)) || "inicio";
       setPagina(paginaInicial);
       salvarValorSeguro(chavePagina, paginaInicial);
-      setPreferencias(normalizarPreferencias(lerJsonUsuario(CHAVE_PREFERENCIAS, usuarioApi.id, PREFERENCIAS_PADRAO)));
       carregarConfiguracoes(geracao);
     },
     [novaGeracao, carregarConfiguracoes],
@@ -267,14 +235,6 @@ function App() {
       tratarErroDaSessao(geracao, erro);
       return { sucesso: false, mensagem: mensagemDoErro(erro), campos: erro?.campos || null };
     }
-  }
-
-  function alterarPreferencia(campo, valor) {
-    if (!usuario?.id) return false;
-    const novasPreferencias = { ...preferencias, [campo]: valor };
-    if (!salvarJsonUsuario(CHAVE_PREFERENCIAS, usuario.id, novasPreferencias)) return false;
-    setPreferencias(novasPreferencias);
-    return true;
   }
 
   // Atualiza na hora e envia a configuração completa. Os PUTs vão em fila, então o
@@ -408,8 +368,6 @@ function App() {
             configuracoesCarregadas={configuracoesCarregadas}
             erroCarregarConfiguracoes={erroCarregarConfiguracoes}
             onRecarregarConfiguracoes={recarregarConfiguracoes}
-            preferencias={preferencias}
-            onAlterarPreferencia={alterarPreferencia}
             usuario={usuario}
             onLogout={fazerLogout}
             onUpdateUsuario={atualizarUsuario}

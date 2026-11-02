@@ -122,12 +122,12 @@ Todas as telas usam a API; não há mais dados de demonstração no front.
 - **Pessoas e conexões** (`PeopleSkills.jsx`, `Connections.jsx`): diretório de `/api/pessoas` e todas as ações de conexão; o card de uma conexão completa cidade e habilidades com os dados do diretório.
 - **Mensagens** (`Messages.jsx`): conversas e mensagens reais. Sem tempo real: com uma conversa aberta, mensagens e lista são recarregadas a cada 5 s (o intervalo para ao sair da tela).
 - **Início** (`Body.jsx`): números (estudantes, oportunidades abertas, habilidades), destaques e "Categorias com mais habilidades" calculados a partir das listas da API.
-- **Limpeza**: na primeira carga o front apaga as chaves do modo demonstrativo (`marketfaesa-users` com senhas em texto puro, `marketfaesa-auth`, salvos, participações, habilidades, conexões, mensagens, configurações, perfil e foto locais; ver `limparDadosAntigos` em `src/storage.js`).
+- **Limpeza**: na primeira carga o front apaga as chaves do modo demonstrativo (`marketfaesa-users` com senhas em texto puro, `marketfaesa-auth`, salvos, participações, habilidades, conexões, mensagens, configurações, perfil e foto locais, além das opções removidas de duas etapas e preferências de conteúdo; ver `limparDadosAntigos` em `src/storage.js`).
 
 ### O que ainda fica no navegador (ou falta)
 
-- **No `localStorage`, por conta**: a página aberta, as preferências de conteúdo da aba Preferências (sem campo na API), o registro de que a animação de perfil completo já foi exibida e a **verificação em duas etapas**, que continua só demonstrativa (a API não tem 2FA).
-- **Notificações**: o painel do cabeçalho continua vazio; não há rota de notificações.
+- **No `localStorage`, por conta**: a página aberta e o registro de que a animação de perfil completo já foi exibida.
+- **Notificações**: não há rota nem tela de notificações. Na configuração, `novasOportunidades`, `mensagens`, `conexoes`, `publicacoes` e `resumoSemanal`, além de `reduzirAnimacoes`, seguem na API sem uso: o front só os devolve no PUT, que exige todos.
 - **Fotos nas listas**: a API não manda `fotoUrl` nas listas, então os cards usam as iniciais do nome; o ícone da oportunidade vem do tipo.
 
 ### Cliente de API

@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import * as storage from "../storage.js";
 import Configs from "./Configs.jsx";
 import { chamadas, CURSO, erroApi, mockarApi, USUARIO } from "../test/apiFalsa.js";
 
@@ -10,12 +9,8 @@ const props = {
   onChangeTema: vi.fn(() => true),
   configuracoes: {
     perfilPublico: true, mostrarEmail: false, permitirMensagens: true,
-    novasOportunidades: true, mensagens: true, conexoes: true,
-    publicacoes: true, resumoSemanal: false, reduzirAnimacoes: false,
   },
   onAlterarConfiguracao: vi.fn(() => true),
-  preferencias: { area: "tecnologia", modalidade: "todas", frequencia: "imediato" },
-  onAlterarPreferencia: vi.fn(() => true),
   usuario: USUARIO,
   onUpdateUsuario: vi.fn(async () => ({ sucesso: true })),
   onContaExcluida: vi.fn(),
@@ -48,16 +43,18 @@ describe("Configurações", () => {
     expect(screen.queryByRole("status", { name: /Alterações salvas/ })).not.toBeInTheDocument();
   });
 
-  it("não confirma alteração de preferência quando a gravação falha", async () => {
+  it("só oferece as seções e opções que têm efeito", async () => {
     const user = userEvent.setup();
-    const onAlterarPreferencia = vi.fn(() => false);
-    render(<Configs {...props} onAlterarPreferencia={onAlterarPreferencia} />);
+    render(<Configs {...props} />);
 
-    await user.click(screen.getByRole("button", { name: /Preferências/ }));
-    await user.selectOptions(screen.getByLabelText("Área principal de interesse"), "design");
+    expect(screen.getByRole("button", { name: /Aparência/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Notificações/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Preferências/ })).not.toBeInTheDocument();
 
-    expect(onAlterarPreferencia).toHaveBeenCalledWith("area", "design");
-    expect(screen.getByRole("alert")).toHaveTextContent("Não foi possível salvar as alterações");
+    await user.click(screen.getByRole("button", { name: /Segurança/ }));
+
+    expect(screen.queryByRole("switch", { name: /duas etapas/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sair" })).toBeInTheDocument();
   });
 
   it("exige nome completo antes de salvar dados da conta", async () => {
@@ -93,30 +90,6 @@ describe("Configurações", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Dados inválidos");
     expect(screen.queryByRole("status", { name: /Alterações salvas/ })).not.toBeInTheDocument();
-  });
-
-  it("não altera visualmente a preferência de duas etapas se o armazenamento falhar", async () => {
-    const user = userEvent.setup();
-    vi.spyOn(storage, "salvarValorSeguro").mockReturnValue(false);
-    render(<Configs {...props} />);
-
-    await user.click(screen.getByRole("button", { name: /Segurança/ }));
-    const toggle = screen.getByRole("switch", { name: /Verificação em duas etapas/ });
-    expect(toggle).toHaveAttribute("aria-checked", "false");
-
-    await user.click(toggle);
-
-    expect(toggle).toHaveAttribute("aria-checked", "false");
-    expect(screen.getByRole("alert")).toHaveTextContent("Não foi possível salvar as alterações");
-  });
-
-  it("explica que a verificação em duas etapas ainda é demonstrativa", async () => {
-    const user = userEvent.setup();
-    render(<Configs {...props} />);
-
-    await user.click(screen.getByRole("button", { name: /Segurança/ }));
-
-    expect(screen.getByText(/Ainda não protege o login/)).toBeInTheDocument();
   });
 
   it("troca a senha com PUT /api/usuarios/me/senha e mostra senha atual incorreta", async () => {

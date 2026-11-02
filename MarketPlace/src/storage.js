@@ -7,24 +7,6 @@ export function chaveUsuario(chave, usuarioId) {
   return `${chave}:${encodeURIComponent(id)}`;
 }
 
-export function lerJsonUsuario(chave, usuarioId, fallback) {
-  try {
-    const salvo = localStorage.getItem(chaveUsuario(chave, usuarioId));
-    return salvo == null ? fallback : JSON.parse(salvo);
-  } catch {
-    return fallback;
-  }
-}
-
-export function salvarJsonUsuario(chave, usuarioId, valor) {
-  try {
-    localStorage.setItem(chaveUsuario(chave, usuarioId), JSON.stringify(valor));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 /** Lê um valor sem interromper a interface se o armazenamento estiver indisponível. */
 export function lerValorSeguro(chave, fallback = null) {
   try {
@@ -56,11 +38,13 @@ export function removerValorSeguro(chave) {
 
 // Chaves do modo demonstrativo, antes da integração com a API: contas com senha em texto puro,
 // sessão local e dados de cada tela. Hoje esses dados vêm da API e as chaves só ocupam espaço.
+// Inclui as opções removidas por não terem efeito (duas etapas e preferências de conteúdo).
 const CHAVES_ANTIGAS = ["marketfaesa-users", "marketfaesa-auth", "marketfaesa-config", "marketfaesa-theme"];
 const PREFIXOS_ANTIGOS = [
   "marketfaesa-salvos:", "marketfaesa-participando:", "marketfaesa-habilidades:", "marketfaesa-conexoes:",
   "marketfaesa-solicitacoes-recebidas:", "marketfaesa-mensagens:", "marketfaesa-configuracoes:",
   "marketfaesa-theme:", "marketfaesa-perfil:", "marketfaesa-foto-perfil:", "marketfaesa-perfil-completo-pendente:",
+  "marketfaesa-2fa:", "marketfaesa-preferencias:",
 ];
 
 /** Apaga do navegador os dados do modo demonstrativo. */

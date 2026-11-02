@@ -36,7 +36,7 @@ function Salvos({ onNavigate }) {
   return (
     <main className="saved-page">
       <div className="saved-container">
-        <section className="saved-header animate__animated animate__fadeInDown">
+        <section className="saved-header">
           <div>
             <span>MINHA ÁREA</span>
             <h1>Salvos</h1>
@@ -50,7 +50,7 @@ function Salvos({ onNavigate }) {
 
         {erroPersistencia && <p className="saved-persistence-error" role="alert">{erroPersistencia}</p>}
 
-        <section className="saved-toolbar animate__animated animate__fadeInUp">
+        <section className="saved-toolbar">
           <div className="saved-search">
             <span>⌕</span>
             <input type="search" value={busca} onChange={(event) => setBusca(event.target.value)} placeholder="Buscar nos salvos..." aria-label="Buscar nos salvos" />
@@ -69,8 +69,8 @@ function Salvos({ onNavigate }) {
           </section>
         ) : filtrados.length ? (
           <section className="saved-results">
-            {filtrados.map((item, index) => (
-              <article className="saved-card animate__animated animate__fadeInUp" style={{ animationDelay: `${index * 60}ms` }} key={item.id}>
+            {filtrados.map((item) => (
+              <article className="saved-card" key={item.id}>
                 <div className="saved-card-top">
                   <div className="saved-icon">{item.icon}</div>
                   <button type="button" className="saved-remove" onClick={() => remover(item.id)} aria-label={`Remover ${item.titulo} dos salvos`}>♥</button>
@@ -87,7 +87,7 @@ function Salvos({ onNavigate }) {
             ))}
           </section>
         ) : (
-          <section className="saved-empty animate__animated animate__fadeIn">
+          <section className="saved-empty">
             <div className="saved-empty-icon">♡</div>
             <h2>{salvos.length ? "Nenhum salvo encontrado" : "Você ainda não salvou nada"}</h2>
             <p>{salvos.length ? "Tente buscar por outro termo." : "Quando encontrar uma oportunidade interessante, toque no coração para guardá-la aqui."}</p>
