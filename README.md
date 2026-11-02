@@ -194,7 +194,7 @@ Base em desenvolvimento: `http://localhost:8080/api`. São públicas só `GET /a
 | POST / DELETE | `/api/oportunidades/{id}/participacao` | `204`; `400` na própria; `409` fechada ou repetida |
 | PUT / DELETE | `/api/oportunidades/{id}/salvo` | `204` |
 | GET | `/api/usuarios/me/participacoes`, `/api/usuarios/me/salvos` | `200` lista |
-| GET | `/api/habilidades-publicadas?usuarioId=&categoria=&busca=`, `/{id}` | `200` |
+| GET | `/api/habilidades-publicadas?usuarioId=&categoria=&busca=`, `/{id}` | `200` sem as de perfis privados de outras pessoas; `404` no detalhe delas |
 | POST | `/api/habilidades-publicadas` | `201`; `400` |
 | PUT / DELETE | `/api/habilidades-publicadas/{id}` | `200` / `204`; `403` se não for o dono |
 | GET | `/api/pessoas?busca=&categoria=`, `/api/pessoas/{id}` | `200` perfis públicos (sem o próprio usuário na lista); `404` perfil privado |

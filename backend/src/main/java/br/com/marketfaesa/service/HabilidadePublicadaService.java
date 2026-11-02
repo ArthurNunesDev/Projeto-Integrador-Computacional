@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 // Habilidades publicadas ("o que eu ofereço"). No banco o nome fica na coluna titulo.
+// Como em PessoaService: habilidade de perfil não público só é visível para o próprio autor.
 @Service
 public class HabilidadePublicadaService {
 
@@ -20,6 +21,8 @@ public class HabilidadePublicadaService {
             FROM habilidades_publicadas h
             JOIN usuarios u ON u.id = h.usuario_id
             LEFT JOIN cursos c ON c.id = u.curso_id
+            LEFT JOIN configuracoes_usuario cfg ON cfg.usuario_id = u.id
+            WHERE (COALESCE(cfg.perfil_publico, true) OR h.usuario_id = :eu)
             """.formatted(PessoaResumo.colunas("u", "c", "usuario"));
 
     private final JdbcClient jdbc;
@@ -31,13 +34,14 @@ public class HabilidadePublicadaService {
     // Filtros opcionais; categoria compara sem diferenciar maiúsculas; busca procura no nome e na descrição.
     // ponytail: sem paginação; acrescentar LIMIT/OFFSET quando o volume crescer.
     @Transactional(readOnly = true)
-    public List<HabilidadePublicadaResposta> listar(Long usuarioId, String categoria, String busca) {
+    public List<HabilidadePublicadaResposta> listar(Long eu, Long usuarioId, String categoria, String busca) {
         Map<String, Object> params = new HashMap<>();
+        params.put("eu", eu);
         params.put("usuarioId", usuarioId);
         params.put("categoria", categoria == null || categoria.isBlank() ? null : categoria.trim());
         params.put("busca", busca == null || busca.isBlank() ? null : "%" + busca.trim() + "%");
         return consultar("""
-                WHERE (CAST(:usuarioId AS bigint) IS NULL OR h.usuario_id = :usuarioId)
+                  AND (CAST(:usuarioId AS bigint) IS NULL OR h.usuario_id = :usuarioId)
                   AND (CAST(:categoria AS varchar) IS NULL OR lower(h.categoria) = lower(:categoria))
                   AND (CAST(:busca AS varchar) IS NULL OR h.titulo ILIKE :busca OR h.descricao ILIKE :busca)
                 ORDER BY h.criado_em DESC, h.id DESC
@@ -45,8 +49,8 @@ public class HabilidadePublicadaService {
     }
 
     @Transactional(readOnly = true)
-    public HabilidadePublicadaResposta buscar(Long id) {
-        return consultar("WHERE h.id = :id", Map.of("id", id)).stream().findFirst()
+    public HabilidadePublicadaResposta buscar(Long eu, Long id) {
+        return consultar("AND h.id = :id", Map.of("id", id, "eu", eu)).stream().findFirst()
                 .orElseThrow(ErroApiException::naoEncontrado);
     }
 
@@ -60,7 +64,7 @@ public class HabilidadePublicadaService {
                 .params(campos(requisicao))
                 .param("eu", eu)
                 .query(Long.class).single();
-        return buscar(id);
+        return buscar(eu, id);
     }
 
     @Transactional
@@ -74,7 +78,7 @@ public class HabilidadePublicadaService {
                 .params(campos(requisicao))
                 .param("id", id)
                 .update();
-        return buscar(id);
+        return buscar(eu, id);
     }
 
     @Transactional
