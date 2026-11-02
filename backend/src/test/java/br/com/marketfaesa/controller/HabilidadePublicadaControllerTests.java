@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import br.com.marketfaesa.repository.ConfiguracaoUsuarioRepository;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,9 @@ class HabilidadePublicadaControllerTests {
 
     @Autowired
     MockMvc mvc;
+
+    @Autowired
+    ConfiguracaoUsuarioRepository configuracoes;
 
     private Conta ana;
     private Conta lucas;
@@ -53,6 +57,76 @@ class HabilidadePublicadaControllerTests {
         String resposta = criar(conta, corpo(nome, categoria, "AVANCADO")).andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         return ((Number) JsonPath.read(resposta, "$.id")).longValue();
+    }
+
+    // As consultas de habilidades são SQL; o flush grava a configuração alterada pelo JPA.
+    private void configurarPerfil(Conta conta, boolean perfilPublico) throws Exception {
+        mvc.perform(put("/api/usuarios/me/configuracoes").header("Authorization", conta.bearer())
+                .contentType(MediaType.APPLICATION_JSON).content("""
+                        {"tema": "light", "perfilPublico": %s, "mostrarEmail": false, "permitirMensagens": true,
+                         "novasOportunidades": true, "mensagens": true, "conexoes": true, "publicacoes": true,
+                         "resumoSemanal": false, "reduzirAnimacoes": false}""".formatted(perfilPublico)))
+                .andExpect(status().isOk());
+        configuracoes.flush();
+    }
+
+    @Test
+    void perfilPrivadoEscondeHabilidadesDaListagemDeOutrasPessoas() throws Exception {
+        criarHabilidade(ana, "React", "Tecnologia");
+        Long figma = criarHabilidade(lucas, "Figma", "Design");
+        configurarPerfil(ana, false);
+
+        mvc.perform(get("/api/habilidades-publicadas").header("Authorization", lucas.bearer()))
+                .andExpect(jsonPath("$[*].id", contains(figma.intValue())));
+        mvc.perform(get("/api/habilidades-publicadas").param("usuarioId", ana.id().toString())
+                .header("Authorization", lucas.bearer()))
+                .andExpect(jsonPath("$", hasSize(0)));
+        mvc.perform(get("/api/habilidades-publicadas").param("categoria", "tecnologia")
+                .header("Authorization", lucas.bearer()))
+                .andExpect(jsonPath("$", hasSize(0)));
+        // A descrição de corpo() cita React, então a busca acha só a habilidade pública.
+        mvc.perform(get("/api/habilidades-publicadas").param("busca", "react")
+                .header("Authorization", lucas.bearer()))
+                .andExpect(jsonPath("$[*].id", contains(figma.intValue())));
+    }
+
+    @Test
+    void perfilPrivadoEscondeDetalheDaHabilidadeDeOutrasPessoas() throws Exception {
+        Long react = criarHabilidade(ana, "React", "Tecnologia");
+        configurarPerfil(ana, false);
+
+        mvc.perform(get("/api/habilidades-publicadas/" + react).header("Authorization", lucas.bearer()))
+                .andExpect(status().isNotFound());
+
+        configurarPerfil(ana, true);
+        mvc.perform(get("/api/habilidades-publicadas/" + react).header("Authorization", lucas.bearer()))
+                .andExpect(status().isOk());
+    }
+
+    // Publicar, editar, excluir e o início dependem de o autor continuar vendo o que publicou.
+    @Test
+    void autorComPerfilPrivadoContinuaVendoEGerenciandoSuasHabilidades() throws Exception {
+        Long figma = criarHabilidade(lucas, "Figma", "Design");
+        Long react = criarHabilidade(ana, "React", "Tecnologia");
+        configurarPerfil(ana, false);
+
+        mvc.perform(get("/api/habilidades-publicadas").header("Authorization", ana.bearer()))
+                .andExpect(jsonPath("$[*].id", contains(react.intValue(), figma.intValue())));
+        mvc.perform(get("/api/habilidades-publicadas").param("usuarioId", ana.id().toString())
+                .header("Authorization", ana.bearer()))
+                .andExpect(jsonPath("$[*].id", contains(react.intValue())));
+        mvc.perform(get("/api/habilidades-publicadas/" + react).header("Authorization", ana.bearer()))
+                .andExpect(status().isOk());
+
+        criar(ana, corpo("Vue", "Tecnologia", "INICIANTE"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.nome").value("Vue"));
+        mvc.perform(put("/api/habilidades-publicadas/" + react).header("Authorization", ana.bearer())
+                .contentType(MediaType.APPLICATION_JSON).content(corpo("Angular", "Tecnologia", "INICIANTE")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nome").value("Angular"));
+        mvc.perform(delete("/api/habilidades-publicadas/" + react).header("Authorization", ana.bearer()))
+                .andExpect(status().isNoContent());
     }
 
     @Test

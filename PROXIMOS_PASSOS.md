@@ -43,7 +43,7 @@ Base: `http://localhost:8080/api` em desenvolvimento.
 | POST/DELETE | `/api/oportunidades/{id}/participacao` | botão "Participar" | `204`; `400` na própria; `409` fechada ou repetida |
 | PUT/DELETE | `/api/oportunidades/{id}/salvo` | coração de salvar e remoção em `Saved.jsx` | `204` |
 | GET | `/api/usuarios/me/salvos`, `/api/usuarios/me/participacoes` | `Saved.jsx`; contagem de projetos no início e no perfil | `200` lista |
-| GET/POST/PUT/DELETE | `/api/habilidades-publicadas` | `Skills.jsx` (publicar), `Publications.jsx` (editar/excluir, `?usuarioId=` do usuário), números do início | `200`/`201`/`204` |
+| GET/POST/PUT/DELETE | `/api/habilidades-publicadas` | `Skills.jsx` (publicar), `Publications.jsx` (editar/excluir, `?usuarioId=` do usuário), números do início | `200`/`201`/`204`; perfis privados só aparecem para o próprio autor |
 | GET | `/api/pessoas` | `PeopleSkills.jsx` e aba "Encontrar pessoas" de `Connections.jsx` | `200` perfis públicos (sem o usuário) |
 | GET | `/api/conexoes`, `/recebidas`, `/enviadas` | estado de cada pessoa (`useConexoes.js`): conectado, pedido enviado ou recebido | `200` lista |
 | POST | `/api/conexoes`, `/{id}/aceitar`, `/{id}/recusar`; DELETE `/{id}` | conectar, aceitar, recusar, desconectar ou cancelar pedido | `201`/`200`/`204` |

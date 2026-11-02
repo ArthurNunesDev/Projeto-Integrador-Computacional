@@ -23,8 +23,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-// Habilidades publicadas. Listar e ver: qualquer usuário logado; alterar e excluir: só o dono.
-// "Minhas publicações" = GET ?usuarioId=<meu id>.
+// Habilidades publicadas. Listar e ver: qualquer usuário logado, sem as de perfis não públicos de
+// outras pessoas; alterar e excluir: só o dono. "Minhas publicações" = GET ?usuarioId=<meu id>.
 @RestController
 @RequestMapping("/api/habilidades-publicadas")
 public class HabilidadePublicadaController {
@@ -36,14 +36,15 @@ public class HabilidadePublicadaController {
     }
 
     @GetMapping
-    public List<HabilidadePublicadaResposta> listar(@RequestParam(required = false) Long usuarioId,
-            @RequestParam(required = false) String categoria, @RequestParam(required = false) String busca) {
-        return habilidadePublicadaService.listar(usuarioId, categoria, busca);
+    public List<HabilidadePublicadaResposta> listar(@AuthenticationPrincipal Jwt jwt,
+            @RequestParam(required = false) Long usuarioId, @RequestParam(required = false) String categoria,
+            @RequestParam(required = false) String busca) {
+        return habilidadePublicadaService.listar(usuarioId(jwt), usuarioId, categoria, busca);
     }
 
     @GetMapping("/{id}")
-    public HabilidadePublicadaResposta buscar(@PathVariable Long id) {
-        return habilidadePublicadaService.buscar(id);
+    public HabilidadePublicadaResposta buscar(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id) {
+        return habilidadePublicadaService.buscar(usuarioId(jwt), id);
     }
 
     @PostMapping
