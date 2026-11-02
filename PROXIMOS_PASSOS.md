@@ -1,19 +1,19 @@
 # Próximos passos
 
-Roadmap para evoluir o backend e ligá-lo ao frontend. O backend já roda com Spring Boot 4.1 (Java 21+, Maven Wrapper), já conecta ao PostgreSQL (Neon) com migrations do Flyway e já tem os endpoints de health, cadastro, login (JWT), perfil e configurações (lista no [README](README.md#api)), e o front já os usa para login, cadastro, sessão, leitura do perfil e configurações. Falta hospedar o backend e definir o `VITE_API_URL` de produção.
+Roadmap do backend e da integração com o frontend. O backend já roda com Spring Boot 4.1 (Java 21+, Maven Wrapper), já conecta ao PostgreSQL (Neon) com migrations do Flyway e já tem os endpoints de health, cadastro, login (JWT), perfil, configurações, catálogos, oportunidades, habilidades publicadas, pessoas, conexões e mensagens (lista no [README](README.md#api)), e todas as telas do front já os usam. Falta hospedar o backend e definir o `VITE_API_URL` de produção.
 
 ---
 
 ## 1. Evoluir o backend
 
 1. **Ferramenta de build** (feito): Maven com Maven Wrapper (`backend/mvnw`), então ninguém precisa instalar o Maven. As dependências ficam em `backend/pom.xml`.
-2. **Framework** (base feita): Spring Boot 4.1 com Spring Web MVC, que já resolve servidor HTTP, JSON, injeção de dependência e CORS, e Spring Security em `config/SecurityConfig.java` (API stateless: `/api/health`, `/api/auth/register` e `/api/auth/login` são públicas, o resto exige `Bearer` e responde `401` no formato de erro; CORS configurável por `CORS_ALLOWED_ORIGINS`, com padrão `http://localhost:5173` e o GitHub Pages; BCrypt para senhas). Starters:
+2. **Framework** (base feita): Spring Boot 4.1 com Spring Web MVC, que já resolve servidor HTTP, JSON, injeção de dependência e CORS, e Spring Security em `config/SecurityConfig.java` (API stateless: `/api/health`, os catálogos, `/api/auth/register` e `/api/auth/login` são públicos, o resto exige `Bearer` e responde `401` no formato de erro; CORS configurável por `CORS_ALLOWED_ORIGINS`, com padrão `http://localhost:5173` e o GitHub Pages; BCrypt para senhas). Starters:
    - `spring-boot-starter-data-jpa`, Flyway e o driver do PostgreSQL já estão no `pom.xml` (banco no Neon, ver item 4);
    - `spring-boot-starter-validation`, usado com `@Valid` nos DTOs de `dto/`;
    - `spring-boot-starter-security-oauth2-resource-server`, que valida o JWT (HS256, `config/JwtConfig.java`).
 3. **Camadas** (as pastas já existem em `backend/src/main/java/br/com/marketfaesa/`):
    - `model`: entidades (`Usuario`, `ConfiguracaoUsuario`).
-   - `repository`: acesso ao banco (interfaces `JpaRepository`).
+   - `repository`: acesso ao banco das entidades (interfaces `JpaRepository`); os demais domínios consultam com `JdbcClient` nos próprios services.
    - `service`: regras de negócio (cadastro, login, validações).
    - `controller`: endpoints REST, sem regra de negócio.
 4. **Banco de dados** (feito): PostgreSQL no Neon em desenvolvimento e produção, configurado por variáveis de ambiente (`DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD` e, opcional, `DATABASE_DIRECT_URL` para o Flyway) ou pelo perfil `local` (`backend/application-local.properties`). O schema vem só das migrations do Flyway (`db/migration/`) e o Hibernate roda com `ddl-auto=validate`. Os testes usam um Postgres embutido (zonky) ou o banco de `TEST_DATABASE_URL`. Detalhes no [README](README.md#banco).
@@ -201,10 +201,10 @@ O GitHub Pages serve apenas arquivos estáticos: o frontend continua lá, mas o 
 - [x] Liberar CORS para a origem do GitHub Pages
 
 ### Opcional — Limpeza do frontend
-- [ ] Renomear o `name` do `package.json` (ainda `meu-projeto-react`)
-- [ ] Configurar o Tailwind CSS (instalado, mas não configurado) ou removê-lo
-- [ ] Definir o favicon em `index.html` (hoje vazio)
-- [ ] Remover os SVGs não usados de `public/Imagens/` (`Conta.svg`, `Menu.svg`, `icons.svg`)
+- [x] Renomear o `name` do `package.json` para `marketfaesa`
+- [x] Remover o Tailwind CSS, que estava instalado mas não era usado
+- [x] Definir o favicon em `index.html` (`marketfaesa-symbol.svg`)
+- [x] Remover os SVGs não usados de `public/` (`Imagens/Conta.svg`, `Imagens/Menu.svg`, `icons.svg`, `favicon.svg`)
 
 ---
 
