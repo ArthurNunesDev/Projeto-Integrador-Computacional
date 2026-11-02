@@ -98,6 +98,13 @@ class AuthControllerTests {
     }
 
     @Test
+    void loginComEmailAcimaDe254Devolve400() throws Exception {
+        login("a".repeat(255), "senhaforte1")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.campos.email").exists());
+    }
+
+    @Test
     void cadastroComEmailRepetidoDevolve409MesmoComMaiusculas() throws Exception {
         cadastrar("Ana", "ana@faesa.br", "senhaforte1").andExpect(status().isCreated());
 

@@ -130,6 +130,10 @@ A conexão vem de variáveis de ambiente, lidas em `application.properties`:
 | `JWT_SECRET` | **obrigatória**: segredo que assina o JWT (HS256), com pelo menos 32 bytes. Sem ela a aplicação não sobe. Gere com `openssl rand -base64 48` (o texto gerado é usado como está, sem decodificar) |
 | `JWT_EXPIRACAO` | opcional: validade do token, no formato de `Duration` do Spring (`24h`, `30m`); padrão `24h` |
 | `CORS_ALLOWED_ORIGINS` | opcional: origens liberadas no CORS, separadas por vírgula; padrão `https://arthurnunesdev.github.io,http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173` |
+| `SERVER_FORWARD_HEADERS_STRATEGY` | padrão `none` (usa o IP da conexão e ignora o `X-Forwarded-For`). **Atrás do proxy de um host, defina `native`**; sem isso, todos os clientes parecem ter o IP do proxy e o limite de tentativas vira global. Nunca use `framework`, que aceita um IP forjado pelo cliente |
+| `APP_LIMITE_LOGIN_MAXIMO`, `APP_LIMITE_LOGIN_JANELA` | opcionais: erros de login por par IP e e-mail; padrão `5` em `15m` |
+| `APP_LIMITE_CADASTRO_MAXIMO`, `APP_LIMITE_CADASTRO_JANELA` | opcionais: tentativas de cadastro por IP; padrão `30` em `1h` |
+| `APP_LIMITE_MAXIMO_ENTRADAS` | opcional: teto de contadores em memória, por limite; padrão `50000` |
 
 O Neon mostra a conexão como URI (`postgresql://usuario:senha@host/neondb?sslmode=require`). O JDBC não aceita esse formato: troque o prefixo por `jdbc:postgresql://`, tire `usuario:senha@` da URL e passe usuário e senha nas variáveis separadas. Exemplo:
 
@@ -181,8 +185,8 @@ Base em desenvolvimento: `http://localhost:8080/api`. São públicas só `GET /a
 | Método | Rota | Respostas |
 |---|---|---|
 | GET | `/api/health` | `200 {"status":"ok"}` |
-| POST | `/api/auth/register` | `201` usuário (sem token); `400`; `409` e-mail já cadastrado |
-| POST | `/api/auth/login` | `200 {token, usuario}`; `400`; `401` e-mail ou senha inválidos |
+| POST | `/api/auth/register` | `201` usuário (sem token); `400`; `409` e-mail já cadastrado; `429` excesso de tentativas |
+| POST | `/api/auth/login` | `200 {token, usuario}`; `400`; `401` e-mail ou senha inválidos; `429` excesso de tentativas |
 | GET / PUT | `/api/usuarios/me` | `200` usuário; `400` no PUT inválido (ex.: `fotoUrl` que não é data URL de imagem nem `https`) |
 | PUT | `/api/usuarios/me/senha` | `204`; `400` senha atual errada ou nova inválida |
 | DELETE | `/api/usuarios/me` (corpo `{senha}`) | `204`; `400` senha errada |
@@ -212,7 +216,7 @@ Regras:
 - **Login**: e-mail inexistente e senha errada devolvem o mesmo `401`, com o mesmo corpo.
 - **Cadastro**: devolve `201` sem token; para entrar, o front chama `/api/auth/login` em seguida. O cadastro cria também a linha de configurações com os valores padrão.
 - **Erros**: sempre `{status, erro, campos}`, com `campos` só nos erros de validação (`{"campo": "mensagem"}`). Sem token, token inválido ou expirado, ou token de um usuário que não existe mais: `401 {"status":401,"erro":"Não autenticado"}`. As mensagens de validação seguem o idioma do `Accept-Language` da requisição.
-- **Segurança**: API stateless, CORS liberado para o Vite local (`localhost:5173`, `127.0.0.1:5173`, preview em `localhost:4173`) e para o GitHub Pages (configurável por `CORS_ALLOWED_ORIGINS`).
+- **Segurança**: API stateless, CORS liberado para o Vite local (`localhost:5173`, `127.0.0.1:5173`, preview em `localhost:4173`) e para o GitHub Pages (configurável por `CORS_ALLOWED_ORIGINS`). Login e cadastro têm limite de tentativas em memória, válido para uma única instância.
 
 <h3 id="curl">Testando com curl</h3>
 
