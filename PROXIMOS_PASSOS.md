@@ -147,9 +147,11 @@ Fica em `MarketPlace/src/api/`:
 
 ## 4. Deploy
 
-O GitHub Pages serve apenas arquivos estáticos: o frontend continua lá, mas o backend precisa de outra hospedagem (ex.: Render, Railway, Fly.io ou uma VM). Pontos de atenção:
+O GitHub Pages serve apenas arquivos estáticos: o frontend continua lá, mas o backend precisa de outra hospedagem (ex.: Render, Railway, Fly.io ou uma VM), ainda não escolhida. Pontos de atenção:
 
-- Banco PostgreSQL gerenciado: o Neon já é usado; na hospedagem, basta definir as variáveis `DATABASE_*` (o pool da aplicação está limitado a 5 conexões, pensando no plano gratuito).
+- Imagem: `backend/Dockerfile`, com contexto de build `backend/`. A aplicação escuta na porta de `PORT` (padrão `8080`) e o health check é `GET /api/health`.
+
+- Banco PostgreSQL gerenciado: o Neon já é usado; na hospedagem, basta definir as variáveis `DATABASE_*` (o pool da aplicação está limitado a 5 conexões, pensando no plano gratuito). `DATABASE_URL` precisa estar no formato `jdbc:postgresql://...?sslmode=require`: uma URL `postgresql://usuario:senha@...` injetada pelo host não funciona.
 - Segredos em variáveis de ambiente, nunca no repositório: `DATABASE_*` e `JWT_SECRET` (gere um próprio para produção com `openssl rand -base64 48`; trocar o valor invalida todos os tokens emitidos). Se o front tiver outra origem, defina `CORS_ALLOWED_ORIGINS`.
 - Front e back em domínios diferentes: configurar CORS e usar HTTPS nos dois.
 - Limite de tentativas: atrás do proxy do host, defina `SERVER_FORWARD_HEADERS_STRATEGY=native`; sem isso, todos os clientes parecem ter o IP do proxy e o limite vira global. Se o proxy não estiver numa faixa privada, ou houver uma CDN na frente, informe os IPs em `SERVER_TOMCAT_REMOTEIP_INTERNAL_PROXIES` ou `SERVER_TOMCAT_REMOTEIP_TRUSTED_PROXIES`. Para conferir, exceda o limite em uma rede e veja se outra rede continua liberada. Os contadores ficam em memória: com mais de uma instância, será preciso movê-los para um armazenamento compartilhado.
@@ -197,6 +199,7 @@ O GitHub Pages serve apenas arquivos estáticos: o frontend continua lá, mas o 
 
 ### Fase 5 — Produção
 - [x] Usar PostgreSQL (Neon)
+- [x] Criar o `backend/Dockerfile` e ler a porta de `PORT`
 - [ ] Hospedar o backend e configurar variáveis de ambiente (`DATABASE_*`, `JWT_SECRET`, `CORS_ALLOWED_ORIGINS`, `SERVER_FORWARD_HEADERS_STRATEGY`)
 - [ ] Definir `VITE_API_URL` de produção no workflow de deploy
 - [x] Liberar CORS para a origem do GitHub Pages

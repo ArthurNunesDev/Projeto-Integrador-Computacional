@@ -52,7 +52,7 @@
 
 <h2 id="situacao">📌 Situação atual</h2>
 
-O **frontend em React** tem interface funcional e responsiva, publicada no GitHub Pages. O **backend em Java com Spring Boot** sobe com Spring Security configurado e se conecta a um **PostgreSQL** (hospedado no [Neon](https://neon.tech)), com o schema criado por migrations do Flyway. A [API](#api) cobre cadastro, login com JWT, perfil, configurações, catálogos, oportunidades, habilidades publicadas, pessoas, conexões e mensagens. O backend ainda não tem hospedagem de produção, então por enquanto ele só roda localmente.
+O **frontend em React** tem interface funcional e responsiva, publicada no GitHub Pages. O **backend em Java com Spring Boot** sobe com Spring Security configurado e se conecta a um **PostgreSQL** (hospedado no [Neon](https://neon.tech)), com o schema criado por migrations do Flyway. A [API](#api) cobre cadastro, login com JWT, perfil, configurações, catálogos, oportunidades, habilidades publicadas, pessoas, conexões e mensagens. O backend ainda não tem hospedagem de produção: a imagem já pode ser construída com `backend/Dockerfile`, mas o serviço ainda não foi criado em nenhum host.
 
 O front usa a API em **todas as telas**: login, cadastro, sessão, perfil (edição, foto, troca de senha e exclusão de conta), configurações, oportunidades (publicar, editar, participar e salvar), habilidades publicadas, diretório de pessoas, conexões e mensagens. Para entrar é preciso o backend rodando (veja [Executando](#executando)). O navegador guarda só o token JWT e preferências de interface (página aberta, preferências de conteúdo, a animação de perfil completo e a opção demonstrativa de duas etapas); nenhuma senha ou dado de outras telas fica no `localStorage`, e as chaves do antigo modo demonstrativo são apagadas na primeira carga. As mensagens não são em tempo real: com uma conversa aberta, a tela consulta a API a cada 5 segundos. O que falta está no [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md#3-integração-com-o-front).
 
@@ -115,7 +115,7 @@ No Windows (PowerShell ou CMD), use `.\mvnw.cmd` no lugar de `./mvnw` (no PowerS
 
 <h3 id="banco">Banco de dados</h3>
 
-O backend usa PostgreSQL hospedado no [Neon](https://neon.tech). Não há banco em memória nem Docker: tanto o desenvolvimento quanto a produção falam com um Postgres de verdade.
+O backend usa PostgreSQL hospedado no [Neon](https://neon.tech). Não há banco em memória nem Docker no desenvolvimento: tanto o desenvolvimento quanto a produção falam com um Postgres de verdade. O `backend/Dockerfile` só empacota a aplicação para a hospedagem e não inclui banco.
 
 O schema é criado só pelas migrations do Flyway em `backend/src/main/resources/db/migration/`, aplicadas automaticamente ao subir a aplicação. O Hibernate roda com `ddl-auto=validate`: ele só confere se as entidades batem com as tabelas e nunca altera o banco. Para mudar o schema, crie uma nova migration (`V<n>__descricao.sql`); nunca edite uma que já foi aplicada.
 
@@ -130,6 +130,7 @@ A conexão vem de variáveis de ambiente, lidas em `application.properties`:
 | `JWT_SECRET` | **obrigatória**: segredo que assina o JWT (HS256), com pelo menos 32 bytes. Sem ela a aplicação não sobe. Gere com `openssl rand -base64 48` (o texto gerado é usado como está, sem decodificar) |
 | `JWT_EXPIRACAO` | opcional: validade do token, no formato de `Duration` do Spring (`24h`, `30m`); padrão `24h` |
 | `CORS_ALLOWED_ORIGINS` | opcional: origens liberadas no CORS, separadas por vírgula; padrão `https://arthurnunesdev.github.io,http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173` |
+| `PORT` | opcional: porta do servidor, normalmente definida pelo host; padrão `8080` |
 | `SERVER_FORWARD_HEADERS_STRATEGY` | padrão `none` (usa o IP da conexão e ignora o `X-Forwarded-For`). **Atrás do proxy de um host, defina `native`**; sem isso, todos os clientes parecem ter o IP do proxy e o limite de tentativas vira global. Nunca use `framework`, que aceita um IP forjado pelo cliente |
 | `APP_LIMITE_LOGIN_MAXIMO`, `APP_LIMITE_LOGIN_JANELA` | opcionais: erros de login por par IP e e-mail; padrão `5` em `15m` |
 | `APP_LIMITE_CADASTRO_MAXIMO`, `APP_LIMITE_CADASTRO_JANELA` | opcionais: tentativas de cadastro por IP; padrão `30` em `1h` |
@@ -259,6 +260,7 @@ Projeto-Integrador-Computacional/
 │       └── index.scss
 ├── backend/                        # API Java + Spring Boot
 │   ├── application-local.properties.example  # modelo da config local do banco
+│   ├── Dockerfile                  # imagem para a hospedagem (contexto de build: backend/)
 │   └── src/
 │       ├── main/java/br/com/marketfaesa/
 │       │   ├── config/             # SecurityConfig (rotas, CORS, BCrypt) e JwtConfig (chave HS256)
@@ -293,7 +295,7 @@ O símbolo representa um mural com quatro cards, um deles sendo fixado. Os arqui
 
 O frontend é publicado automaticamente no **GitHub Pages** pelo GitHub Actions a cada push na `main`. Os testes do backend rodam em outro workflow (veja [CI](#ci)).
 
-O GitHub Pages serve apenas arquivos estáticos, então o backend precisa de outra hospedagem, que ainda não foi configurada. Os detalhes estão no [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md#4-deploy).
+O GitHub Pages serve apenas arquivos estáticos, então o backend precisa de outra hospedagem, que ainda não foi configurada. O `backend/Dockerfile` gera a imagem (`docker build -t marketfaesa-backend backend`); a aplicação escuta na porta de `PORT` e responde o health check em `/api/health`. Os detalhes estão no [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md#4-deploy).
 
 <h2 id="colaboradores">🤝 Colaboradores</h2>
 
