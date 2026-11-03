@@ -78,7 +78,7 @@ function MinhasPublicacoes({ onNavigate, usuarioId }) {
   return (
     <main className="publications-page">
       <div className="publications-container">
-        <section className="publications-header animate__animated animate__fadeInDown">
+        <section className="publications-header">
           <div>
             <span>MINHA ÁREA</span>
             <h1>Minhas Publicações</h1>
@@ -93,7 +93,7 @@ function MinhasPublicacoes({ onNavigate, usuarioId }) {
           </div>
         </section>
 
-        <section className="publications-toolbar animate__animated animate__fadeInUp">
+        <section className="publications-toolbar">
           <div className="publications-search">
             <span>⌕</span>
             <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar minhas publicações..." />
@@ -111,8 +111,8 @@ function MinhasPublicacoes({ onNavigate, usuarioId }) {
           </section>
         ) : filtradas.length ? (
           <section className="publications-grid">
-            {filtradas.map((item, index) => (
-              <article className="publication-card animate__animated animate__fadeInUp" style={{ animationDelay: `${index * 60}ms` }} key={item.id}>
+            {filtradas.map((item) => (
+              <article className="publication-card" key={item.id}>
                 <div className="publication-top">
                   <div className="publication-icon">✦</div>
                   <span>{NIVEIS[item.nivel] || item.nivel}</span>
@@ -129,7 +129,7 @@ function MinhasPublicacoes({ onNavigate, usuarioId }) {
             ))}
           </section>
         ) : (
-          <section className="publications-empty animate__animated animate__fadeIn">
+          <section className="publications-empty">
             <div>▤</div>
             <h2>{publicacoes.length ? "Nenhuma publicação encontrada" : "Você ainda não publicou nada"}</h2>
             <p>{publicacoes.length ? "Tente buscar por outro termo." : "Publique uma habilidade para começar a montar seu portfólio no Market FAESA."}</p>
@@ -146,7 +146,7 @@ function MinhasPublicacoes({ onNavigate, usuarioId }) {
           >
             <section
               ref={modalRef}
-              className="publication-delete-modal animate__animated animate__zoomIn"
+              className="publication-delete-modal"
               role="dialog"
               aria-modal="true"
               aria-labelledby="publication-delete-title"
@@ -178,7 +178,7 @@ function MinhasPublicacoes({ onNavigate, usuarioId }) {
           >
             <section
               ref={modalRef}
-              className="publication-modal animate__animated animate__zoomIn"
+              className="publication-modal"
               role="dialog"
               aria-modal="true"
               aria-labelledby="publication-modal-title"

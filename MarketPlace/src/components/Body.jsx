@@ -61,7 +61,7 @@ function Body({ onNavigate, usuario }) {
       <div className="dashboard-container">
         <section className="dashboard-main">
           {/* HERO */}
-          <section className="welcome-card animate__animated animate__fadeInDown">
+          <section className="welcome-card">
             <div className="welcome-content">
               <span className="welcome-small">MARKETFAESA</span>
 
@@ -87,7 +87,7 @@ function Body({ onNavigate, usuario }) {
 
           {/* ESTATÍSTICAS */}
           <section className="stats-grid">
-            <div className="stat-card animate__animated animate__zoomIn">
+            <div className="stat-card">
               <strong>{painel ? painel.pessoas + 1 : "–"}</strong>
 
               <span>Estudantes ativos</span>
@@ -95,7 +95,7 @@ function Body({ onNavigate, usuario }) {
               <small>com perfil público</small>
             </div>
 
-            <div className="stat-card animate__animated animate__zoomIn">
+            <div className="stat-card">
               <strong>{carregandoOportunidades ? "–" : abertas}</strong>
 
               <span>Oportunidades abertas</span>
@@ -103,7 +103,7 @@ function Body({ onNavigate, usuario }) {
               <small>de {oportunidades.length} publicadas</small>
             </div>
 
-            <div className="stat-card animate__animated animate__zoomIn">
+            <div className="stat-card">
               <strong>{painel ? painel.habilidades.length : "–"}</strong>
 
               <span>Habilidades disponíveis</span>
@@ -158,7 +158,7 @@ function Body({ onNavigate, usuario }) {
               <div className="opportunities-grid">
                 {oportunidadesFiltradas.map((item) => {
                   return (
-                    <article className="opportunity-card animate__animated animate__fadeInUp" key={item.id}>
+                    <article className="opportunity-card" key={item.id}>
                       <button
                         className={item.salva ? "save-button save-button-home salvo" : "save-button save-button-home"}
                         type="button"
@@ -205,7 +205,7 @@ function Body({ onNavigate, usuario }) {
 
         <aside className="dashboard-sidebar">
           {/* PERFIL */}
-          <section className="profile-card animate__animated animate__fadeInRight">
+          <section className="profile-card">
             <div className="profile-avatar">{iniciaisUsuario}</div>
 
             <h3>{nomeUsuario}</h3>
@@ -267,7 +267,7 @@ function Body({ onNavigate, usuario }) {
         <div className="opportunity-modal-backdrop" role="presentation" onClick={(event) => {
           if (event.target === event.currentTarget) setDetalheId(null);
         }}>
-          <section className="opportunity-modal animate__animated animate__fadeInUp" role="dialog" aria-modal="true">
+          <section className="opportunity-modal" role="dialog" aria-modal="true">
             <button className="opportunity-modal-close" type="button" onClick={() => setDetalheId(null)} aria-label="Fechar detalhes">×</button>
             <div className="opportunity-modal-icon">{detalheAberto.icon}</div>
             <span className="opportunity-type">{detalheAberto.tipo}</span>

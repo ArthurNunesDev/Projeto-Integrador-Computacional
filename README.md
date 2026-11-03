@@ -52,9 +52,9 @@
 
 <h2 id="situacao">📌 Situação atual</h2>
 
-O **frontend em React** tem interface funcional e responsiva, publicada no GitHub Pages. O **backend em Java com Spring Boot** já sobe com Spring Security configurado e se conecta a um **PostgreSQL** (hospedado no [Neon](https://neon.tech)): o schema é criado por migrations do Flyway e as entidades `Usuario` e `ConfiguracaoUsuario` já estão mapeadas, com seus repositórios. A [API](#api) já tem cadastro, login com JWT, perfil e configurações do usuário.
+O **frontend em React** tem interface funcional e responsiva, publicada no GitHub Pages. O **backend em Java com Spring Boot** sobe com Spring Security configurado e se conecta a um **PostgreSQL** (hospedado no [Neon](https://neon.tech)), com o schema criado por migrations do Flyway. A [API](#api) cobre cadastro, login com JWT, perfil, configurações, catálogos, oportunidades, habilidades publicadas, pessoas, conexões e mensagens. O backend ainda não tem hospedagem de produção: a imagem já pode ser construída com `backend/Dockerfile`, mas o serviço ainda não foi criado em nenhum host.
 
-O front usa a API em **todas as telas**: login, cadastro, sessão, perfil (edição, foto, troca de senha e exclusão de conta), configurações, oportunidades (participar e salvar), habilidades publicadas, diretório de pessoas, conexões e mensagens. Para entrar é preciso o backend rodando (veja [Executando](#executando)). O navegador guarda só o token JWT e preferências de interface (página aberta, preferências de conteúdo, a animação de perfil completo e a opção demonstrativa de duas etapas); nenhuma senha ou dado de outras telas fica no `localStorage`, e as chaves do antigo modo demonstrativo são apagadas na primeira carga. As mensagens não são em tempo real: com uma conversa aberta, a tela consulta a API a cada 5 segundos. O que falta está no [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md#3-integração-com-o-front).
+O front usa a API em **todas as telas**: login, cadastro, sessão, perfil (edição, foto, troca de senha e exclusão de conta), configurações, oportunidades (publicar, editar, participar e salvar), habilidades publicadas, diretório de pessoas, conexões e mensagens. Para entrar é preciso o backend rodando (veja [Executando](#executando)). O navegador guarda só o token JWT e preferências de interface (página aberta, preferências de conteúdo, a animação de perfil completo e a opção demonstrativa de duas etapas); nenhuma senha ou dado de outras telas fica no `localStorage`, e as chaves do antigo modo demonstrativo são apagadas na primeira carga. As mensagens não são em tempo real: com uma conversa aberta, a tela consulta a API a cada 5 segundos. O que falta está no [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md#3-integração-com-o-front).
 
 <h2 id="funcionalidades">✨ Funcionalidades</h2>
 
@@ -62,9 +62,9 @@ O front usa a API em **todas as telas**: login, cadastro, sessão, perfil (ediç
 |---|---|
 | 🔐 Login e cadastro pela API (JWT) | 🏠 Dashboard com estatísticas e oportunidades |
 | 👤 Perfil com progresso de preenchimento | 🏆 Animação de conquista ao completar o perfil |
-| 🛠️ Publicação e gestão de habilidades | 👥 Busca de estudantes e conexões |
+| 🛠️ Publicação e gestão de oportunidades e habilidades | 👥 Busca de estudantes e conexões |
 | 💬 Mensagens entre usuários | 🔖 Itens salvos |
-| 📋 Minhas publicações | ⚙️ Configurações de conta e preferências |
+| 📋 Minhas publicações | ⚙️ Configurações de conta e privacidade |
 | 🌙 Tema claro e escuro | 📱 Layout responsivo para desktop e mobile |
 
 <h2 id="comecar">🚀 Como começar</h2>
@@ -115,7 +115,7 @@ No Windows (PowerShell ou CMD), use `.\mvnw.cmd` no lugar de `./mvnw` (no PowerS
 
 <h3 id="banco">Banco de dados</h3>
 
-O backend usa PostgreSQL hospedado no [Neon](https://neon.tech). Não há banco em memória nem Docker: tanto o desenvolvimento quanto a produção falam com um Postgres de verdade.
+O backend usa PostgreSQL hospedado no [Neon](https://neon.tech). Não há banco em memória nem Docker no desenvolvimento: tanto o desenvolvimento quanto a produção falam com um Postgres de verdade. O `backend/Dockerfile` só empacota a aplicação para a hospedagem e não inclui banco.
 
 O schema é criado só pelas migrations do Flyway em `backend/src/main/resources/db/migration/`, aplicadas automaticamente ao subir a aplicação. O Hibernate roda com `ddl-auto=validate`: ele só confere se as entidades batem com as tabelas e nunca altera o banco. Para mudar o schema, crie uma nova migration (`V<n>__descricao.sql`); nunca edite uma que já foi aplicada.
 
@@ -130,6 +130,11 @@ A conexão vem de variáveis de ambiente, lidas em `application.properties`:
 | `JWT_SECRET` | **obrigatória**: segredo que assina o JWT (HS256), com pelo menos 32 bytes. Sem ela a aplicação não sobe. Gere com `openssl rand -base64 48` (o texto gerado é usado como está, sem decodificar) |
 | `JWT_EXPIRACAO` | opcional: validade do token, no formato de `Duration` do Spring (`24h`, `30m`); padrão `24h` |
 | `CORS_ALLOWED_ORIGINS` | opcional: origens liberadas no CORS, separadas por vírgula; padrão `https://arthurnunesdev.github.io,http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173` |
+| `PORT` | opcional: porta do servidor, normalmente definida pelo host; padrão `8080` |
+| `SERVER_FORWARD_HEADERS_STRATEGY` | padrão `none` (usa o IP da conexão e ignora o `X-Forwarded-For`). **Atrás do proxy de um host, defina `native`**; sem isso, todos os clientes parecem ter o IP do proxy e o limite de tentativas vira global. Nunca use `framework`, que aceita um IP forjado pelo cliente |
+| `APP_LIMITE_LOGIN_MAXIMO`, `APP_LIMITE_LOGIN_JANELA` | opcionais: erros de login por par IP e e-mail; padrão `5` em `15m` |
+| `APP_LIMITE_CADASTRO_MAXIMO`, `APP_LIMITE_CADASTRO_JANELA` | opcionais: tentativas de cadastro por IP; padrão `30` em `1h` |
+| `APP_LIMITE_MAXIMO_ENTRADAS` | opcional: teto de contadores em memória, por limite; padrão `50000` |
 
 O Neon mostra a conexão como URI (`postgresql://usuario:senha@host/neondb?sslmode=require`). O JDBC não aceita esse formato: troque o prefixo por `jdbc:postgresql://`, tire `usuario:senha@` da URL e passe usuário e senha nas variáveis separadas. Exemplo:
 
@@ -181,8 +186,8 @@ Base em desenvolvimento: `http://localhost:8080/api`. São públicas só `GET /a
 | Método | Rota | Respostas |
 |---|---|---|
 | GET | `/api/health` | `200 {"status":"ok"}` |
-| POST | `/api/auth/register` | `201` usuário (sem token); `400`; `409` e-mail já cadastrado |
-| POST | `/api/auth/login` | `200 {token, usuario}`; `400`; `401` e-mail ou senha inválidos |
+| POST | `/api/auth/register` | `201` usuário (sem token); `400`; `409` e-mail já cadastrado; `429` excesso de tentativas |
+| POST | `/api/auth/login` | `200 {token, usuario}`; `400`; `401` e-mail ou senha inválidos; `429` excesso de tentativas |
 | GET / PUT | `/api/usuarios/me` | `200` usuário; `400` no PUT inválido (ex.: `fotoUrl` que não é data URL de imagem nem `https`) |
 | PUT | `/api/usuarios/me/senha` | `204`; `400` senha atual errada ou nova inválida |
 | DELETE | `/api/usuarios/me` (corpo `{senha}`) | `204`; `400` senha errada |
@@ -194,7 +199,7 @@ Base em desenvolvimento: `http://localhost:8080/api`. São públicas só `GET /a
 | POST / DELETE | `/api/oportunidades/{id}/participacao` | `204`; `400` na própria; `409` fechada ou repetida |
 | PUT / DELETE | `/api/oportunidades/{id}/salvo` | `204` |
 | GET | `/api/usuarios/me/participacoes`, `/api/usuarios/me/salvos` | `200` lista |
-| GET | `/api/habilidades-publicadas?usuarioId=&categoria=&busca=`, `/{id}` | `200` |
+| GET | `/api/habilidades-publicadas?usuarioId=&categoria=&busca=`, `/{id}` | `200` sem as de perfis privados de outras pessoas; `404` no detalhe delas |
 | POST | `/api/habilidades-publicadas` | `201`; `400` |
 | PUT / DELETE | `/api/habilidades-publicadas/{id}` | `200` / `204`; `403` se não for o dono |
 | GET | `/api/pessoas?busca=&categoria=`, `/api/pessoas/{id}` | `200` perfis públicos (sem o próprio usuário na lista); `404` perfil privado |
@@ -212,7 +217,7 @@ Regras:
 - **Login**: e-mail inexistente e senha errada devolvem o mesmo `401`, com o mesmo corpo.
 - **Cadastro**: devolve `201` sem token; para entrar, o front chama `/api/auth/login` em seguida. O cadastro cria também a linha de configurações com os valores padrão.
 - **Erros**: sempre `{status, erro, campos}`, com `campos` só nos erros de validação (`{"campo": "mensagem"}`). Sem token, token inválido ou expirado, ou token de um usuário que não existe mais: `401 {"status":401,"erro":"Não autenticado"}`. As mensagens de validação seguem o idioma do `Accept-Language` da requisição.
-- **Segurança**: API stateless, CORS liberado para o Vite local (`localhost:5173`, `127.0.0.1:5173`, preview em `localhost:4173`) e para o GitHub Pages (configurável por `CORS_ALLOWED_ORIGINS`).
+- **Segurança**: API stateless, CORS liberado para o Vite local (`localhost:5173`, `127.0.0.1:5173`, preview em `localhost:4173`) e para o GitHub Pages (configurável por `CORS_ALLOWED_ORIGINS`). Login e cadastro têm limite de tentativas em memória, válido para uma única instância.
 
 <h3 id="curl">Testando com curl</h3>
 
@@ -246,23 +251,25 @@ Projeto-Integrador-Computacional/
 │   ├── workflows/backend.yml       # testes do backend em cada PR e push que mexe em backend/
 │   └── pull_request_template.md
 ├── MarketPlace/                    # frontend React + Vite
-│   ├── public/                     # símbolo, favicon e imagens
+│   ├── public/                     # símbolo (também usado como favicon) e imagens
 │   └── src/
+│       ├── api/                    # cliente HTTP e funções de cada rota da API
 │       ├── auth/                   # tela de login e cadastro
 │       ├── components/             # telas e componentes
 │       ├── App.jsx
-│       └── index.css
+│       └── index.scss
 ├── backend/                        # API Java + Spring Boot
 │   ├── application-local.properties.example  # modelo da config local do banco
+│   ├── Dockerfile                  # imagem para a hospedagem (contexto de build: backend/)
 │   └── src/
 │       ├── main/java/br/com/marketfaesa/
 │       │   ├── config/             # SecurityConfig (rotas, CORS, BCrypt) e JwtConfig (chave HS256)
-│       │   ├── controller/         # HealthController, AuthController, UsuarioController
+│       │   ├── controller/         # endpoints REST: health, auth, usuários, catálogos, oportunidades, habilidades, pessoas, conexões e mensagens
 │       │   ├── dto/                # records de requisição e resposta (nenhuma entidade sai da API)
 │       │   ├── error/              # ApiExceptionHandler e exceções -> {status, erro, campos}
 │       │   ├── model/              # entidades JPA: Usuario, ConfiguracaoUsuario, Tema
 │       │   ├── repository/         # UsuarioRepository, ConfiguracaoUsuarioRepository
-│       │   └── service/            # AuthService, UsuarioService, TokenService (emite o JWT)
+│       │   └── service/            # regras de negócio de cada domínio; TokenService emite o JWT
 │       ├── main/resources/db/migration/  # migrations do Flyway (V1__..., V2__...)
 │       └── test/java/br/com/marketfaesa/ # testes; PostgresDeTeste fornece o banco
 ├── CONTRIBUTING.md
@@ -288,7 +295,7 @@ O símbolo representa um mural com quatro cards, um deles sendo fixado. Os arqui
 
 O frontend é publicado automaticamente no **GitHub Pages** pelo GitHub Actions a cada push na `main`. Os testes do backend rodam em outro workflow (veja [CI](#ci)).
 
-O GitHub Pages serve apenas arquivos estáticos, então o backend precisará de outra hospedagem quando estiver pronto. Os detalhes estão no [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md#4-deploy).
+O GitHub Pages serve apenas arquivos estáticos, então o backend precisa de outra hospedagem, que ainda não foi configurada. O `backend/Dockerfile` gera a imagem (`docker build -t marketfaesa-backend backend`); a aplicação escuta na porta de `PORT` e responde o health check em `/api/health`. Os detalhes estão no [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md#4-deploy).
 
 <h2 id="colaboradores">🤝 Colaboradores</h2>
 

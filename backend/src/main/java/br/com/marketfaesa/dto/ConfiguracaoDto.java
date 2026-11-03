@@ -5,7 +5,7 @@ import br.com.marketfaesa.model.Tema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
-// Configurações do usuário: o tema e os 9 booleanos do CONFIG_PADRAO (App.jsx).
+// Configurações do usuário: o tema e 9 booleanos. O front só usa 3 (CONFIG_PADRAO, em App.jsx) e devolve os outros no PUT.
 // No PUT todos os campos são obrigatórios, porque o PUT substitui a configuração inteira.
 public record ConfiguracaoDto(
         @NotNull @Pattern(regexp = "light|dark", message = "deve ser 'light' ou 'dark'") String tema,

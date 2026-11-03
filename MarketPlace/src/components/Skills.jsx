@@ -66,7 +66,7 @@ function Habilidades({ onNavigate, usuario }) {
   return (
     <main className="skills-page">
       <div className="skills-container">
-        <section className="skills-header animate__animated animate__fadeInDown">
+        <section className="skills-header">
           <div>
             <span className="skills-eyebrow">MINHAS COMPETÊNCIAS</span>
             <h1>Habilidades</h1>
@@ -78,7 +78,7 @@ function Habilidades({ onNavigate, usuario }) {
         </section>
 
         {salva && (
-          <div className="skills-success animate__animated animate__fadeIn" role="status">
+          <div className="skills-success" role="status">
             ✓ Habilidade publicada com sucesso.
           </div>
         )}
@@ -96,7 +96,7 @@ function Habilidades({ onNavigate, usuario }) {
         )}
 
         {criando && (
-          <section className="skill-form-card animate__animated animate__fadeInUp">
+          <section className="skill-form-card">
             <div className="skill-form-heading">
               <div>
                 <span>NOVA PUBLICAÇÃO</span>
@@ -149,7 +149,7 @@ function Habilidades({ onNavigate, usuario }) {
           </section>
         )}
 
-        <section className="skills-list-heading animate__animated animate__fadeInUp">
+        <section className="skills-list-heading">
           <div>
             <span>PUBLICADAS</span>
             <h2>Minhas habilidades <b>{habilidades.length}</b></h2>
@@ -166,8 +166,8 @@ function Habilidades({ onNavigate, usuario }) {
           </section>
         ) : habilidades.length > 0 ? (
           <section className="skills-grid" aria-label="Habilidades publicadas">
-            {habilidades.map((habilidade, index) => (
-              <article className="skill-card animate__animated animate__fadeInUp" style={{ animationDelay: `${index * 70}ms` }} key={habilidade.id}>
+            {habilidades.map((habilidade) => (
+              <article className="skill-card" key={habilidade.id}>
                 <div className="skill-card-top">
                   <div className="skill-icon">✦</div>
                   <span>{NIVEIS[habilidade.nivel] || habilidade.nivel}</span>

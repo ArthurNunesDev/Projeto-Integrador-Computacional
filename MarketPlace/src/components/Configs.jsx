@@ -3,7 +3,6 @@ import { listarCursos } from "../api/catalogos.js";
 import { alterarSenha, excluirConta } from "../api/usuarios.js";
 import { formatarPeriodo } from "../perfil.js";
 import { PERIODOS } from "../rotulos.js";
-import { chaveUsuario, lerValorSeguro, salvarValorSeguro } from "../storage.js";
 import { mensagemDoErro, useCarregar } from "../useCarregar.js";
 
 const SENHA_VAZIA = { senhaAtual: "", novaSenha: "", confirmar: "" };
@@ -12,15 +11,13 @@ const CONFIG_SECTIONS = [
   { id:"conta", label:"Conta", description:"Informações pessoais", icon:"👤" },
   { id:"seguranca", label:"Segurança", description:"Senha e acesso", icon:"🔒" },
   { id:"privacidade", label:"Privacidade", description:"Controle sua visibilidade", icon:"◉" },
-  { id:"notificacoes", label:"Notificações", description:"Alertas e mensagens", icon:"🔔" },
   { id:"aparencia", label:"Aparência", description:"Visual do aplicativo", icon:"◐" },
-  { id:"preferencias", label:"Preferências", description:"Personalize sua experiência", icon:"⚙" },
 ];
 
 function Configs({
   onNavigate, tema, onChangeTema, configuracoes, onAlterarConfiguracao,
   erroConfiguracoes, configuracoesCarregadas = true, erroCarregarConfiguracoes = "", onRecarregarConfiguracoes,
-  preferencias, onAlterarPreferencia, usuario, onLogout, onUpdateUsuario, onContaExcluida,
+  usuario, onLogout, onUpdateUsuario, onContaExcluida,
 }) {
   // Opções salvas na API ficam travadas até o GET de configurações terminar.
   const bloqueado = !configuracoesCarregadas;
@@ -39,7 +36,6 @@ function Configs({
   const [senhaExclusao, setSenhaExclusao] = useState("");
   const [erroExclusao, setErroExclusao] = useState("");
   const [enviando, setEnviando] = useState(false);
-  const [doisFatores, setDoisFatores] = useState(() => lerValorSeguro(chaveUsuario("marketfaesa-2fa", usuario?.id)) === "true");
 
   function mostrarSalvo() {
     setErroAcao("");
@@ -126,21 +122,6 @@ function Configs({
     registrarResultado(onAlterarConfiguracao(campo));
   }
 
-  function alterarPreferencia(campo, valor) {
-    registrarResultado(onAlterarPreferencia(campo, valor));
-  }
-
-  function alternarDoisFatores() {
-    const novoValor = !doisFatores;
-    const sucesso = salvarValorSeguro(chaveUsuario("marketfaesa-2fa", usuario?.id), String(novoValor));
-    if (!sucesso) {
-      registrarResultado(false);
-      return;
-    }
-    setDoisFatores(novoValor);
-    registrarResultado(true);
-  }
-
   const avisoCarregamento = erroCarregarConfiguracoes ? (
     <div className="configs-load-status" role="alert">
       <span className="configs-action-message">{erroCarregarConfiguracoes}</span>
@@ -153,7 +134,7 @@ function Configs({
   function renderizarConteudo() {
     switch (secaoAtiva) {
       case "conta":
-        return <section className="configs-content-card animate__animated animate__fadeIn">
+        return <section className="configs-content-card">
           <ConfigHeader eyebrow="CONTA" title="Informações da conta" description="Gerencie suas informações pessoais do MarketFaesa." />
           <div className="configs-form-grid">
             <ConfigField label="Nome completo" value={conta.nome} onChange={(v)=>alterarCampoConta("nome",v)} />
@@ -172,7 +153,7 @@ function Configs({
         </section>;
 
       case "seguranca":
-        return <section className="configs-content-card animate__animated animate__fadeIn">
+        return <section className="configs-content-card">
           <ConfigHeader eyebrow="SEGURANÇA" title="Segurança e acesso" description="Mantenha sua conta protegida." />
           <div className="configs-password-box">
             <h3>Alterar senha</h3>
@@ -187,13 +168,12 @@ function Configs({
           </div>
           <ConfigDivider />
           <div className="configs-security-list">
-            <ConfigToggle title="Verificação em duas etapas (demonstrativa)" description="Ainda não protege o login: a API não oferece autenticação em duas etapas. Esta opção apenas registra uma preferência neste dispositivo." checked={doisFatores} onChange={alternarDoisFatores} />
             <div className="configs-action-row"><div className="configs-action-icon">📱</div><div className="configs-action-info"><strong>Sessão atual</strong><p>Esta é a sessão ativa neste navegador.</p></div><button type="button" onClick={onLogout}>Sair</button></div>
           </div>
         </section>;
 
       case "privacidade":
-        return <section className="configs-content-card animate__animated animate__fadeIn">
+        return <section className="configs-content-card">
           <ConfigHeader eyebrow="PRIVACIDADE" title="Privacidade" description="Escolha o que outros estudantes podem visualizar." />
           {avisoCarregamento}
           <div className="configs-options">
@@ -203,36 +183,13 @@ function Configs({
           </div>
         </section>;
 
-      case "notificacoes":
-        return <section className="configs-content-card animate__animated animate__fadeIn">
-          <ConfigHeader eyebrow="NOTIFICAÇÕES" title="Notificações" description="Escolha quais atualizações deseja receber." />
-          {avisoCarregamento}
-          <div className="configs-options">
-            <ConfigToggle title="Novas oportunidades" description="Receba avisos sobre oportunidades compatíveis com você." checked={configuracoes.novasOportunidades} onChange={()=>alterarConfiguracao("novasOportunidades")} disabled={bloqueado} />
-            <ConfigToggle title="Mensagens" description="Seja avisado quando receber uma nova mensagem." checked={configuracoes.mensagens} onChange={()=>alterarConfiguracao("mensagens")} disabled={bloqueado} />
-            <ConfigToggle title="Novas conexões" description="Receba avisos sobre solicitações e conexões." checked={configuracoes.conexoes} onChange={()=>alterarConfiguracao("conexoes")} disabled={bloqueado} />
-            <ConfigToggle title="Publicações" description="Receba atualizações relacionadas às suas publicações." checked={configuracoes.publicacoes} onChange={()=>alterarConfiguracao("publicacoes")} disabled={bloqueado} />
-            <ConfigToggle title="Resumo semanal" description="Receba um resumo semanal das atividades relevantes." checked={configuracoes.resumoSemanal} onChange={()=>alterarConfiguracao("resumoSemanal")} disabled={bloqueado} />
-          </div>
-        </section>;
-
       case "aparencia":
-        return <section className="configs-content-card animate__animated animate__fadeIn">
+        return <section className="configs-content-card">
           <ConfigHeader eyebrow="APARÊNCIA" title="Aparência" description="Personalize a forma como o MarketFaesa é exibido." />
           {avisoCarregamento}
           <div className="configs-theme-grid">
             <button className={"configs-theme-option "+(tema==="light"?"ativo":"")} type="button" onClick={()=>alterarTema("light")} aria-pressed={tema==="light"} disabled={bloqueado}><span className="configs-theme-preview light">Aa</span><span>Claro</span><small>{tema==="light"?"Tema atual":"Tema claro"}</small></button>
             <button className={"configs-theme-option "+(tema==="dark"?"ativo":"")} type="button" onClick={()=>alterarTema("dark")} aria-pressed={tema==="dark"} disabled={bloqueado}><span className="configs-theme-preview dark">Aa</span><span>Escuro</span><small>{tema==="dark"?"Tema atual":"Tema escuro"}</small></button>
-          </div>
-        </section>;
-
-      case "preferencias":
-        return <section className="configs-content-card animate__animated animate__fadeIn">
-          <ConfigHeader eyebrow="PREFERÊNCIAS" title="Preferências" description="Personalize o conteúdo que aparece para você." />
-          <div className="configs-select-list">
-            <ConfigSelect label="Área principal de interesse" value={preferencias.area} onChange={(v)=>alterarPreferencia("area",v)} options={[["tecnologia","Tecnologia"],["design","Design"],["engenharia","Engenharia"],["saude","Saúde"],["direito","Direito"],["administracao","Administração"]]} />
-            <ConfigSelect label="Modalidade preferida" value={preferencias.modalidade} onChange={(v)=>alterarPreferencia("modalidade",v)} options={[["todas","Todas"],["remoto","Remoto"],["presencial","Presencial"],["hibrido","Híbrido"]]} />
-            <ConfigSelect label="Frequência dos avisos" value={preferencias.frequencia} onChange={(v)=>alterarPreferencia("frequencia",v)} options={[["imediato","Imediatamente"],["diario","Resumo diário"],["semanal","Resumo semanal"]]} />
           </div>
         </section>;
 
@@ -242,12 +199,12 @@ function Configs({
 
   return <main className="configs-page">
     <div className="configs-container">
-      <header className="configs-page-header animate__animated animate__fadeInDown">
-        <div><span>PREFERÊNCIAS DA CONTA</span><h1>Configurações</h1><p>Gerencie sua conta, privacidade, notificações e preferências do MarketFaesa.</p></div>
+      <header className="configs-page-header">
+        <div><span>PREFERÊNCIAS DA CONTA</span><h1>Configurações</h1><p>Gerencie sua conta, segurança, privacidade e aparência do MarketFaesa.</p></div>
         <button type="button" className="page-back-button configs-back-button" onClick={()=>onNavigate("inicio")}>← Voltar ao início</button>
       </header>
       <div className="configs-layout">
-        <aside className="configs-sidebar animate__animated animate__fadeInLeft">
+        <aside className="configs-sidebar">
           <span className="configs-sidebar-title">CONFIGURAÇÕES</span>
           <nav>{CONFIG_SECTIONS.map(section=><button type="button" key={section.id} className={"configs-nav-item "+(secaoAtiva===section.id?"ativo":"")} onClick={()=>setSecaoAtiva(section.id)}><span className="configs-nav-icon">{section.icon}</span><span className="configs-nav-text"><strong>{section.label}</strong><small>{section.description}</small></span><span className="configs-nav-arrow">→</span></button>)}</nav>
           <div className="configs-sidebar-help"><span>?</span><div><strong>Precisa de ajuda?</strong><p>Entre em contato com nosso suporte.</p></div></div>

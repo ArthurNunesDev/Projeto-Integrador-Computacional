@@ -1,19 +1,19 @@
 # Próximos passos
 
-Roadmap para evoluir o backend e ligá-lo ao frontend. O backend já roda com Spring Boot 4.1 (Java 21+, Maven Wrapper), já conecta ao PostgreSQL (Neon) com migrations do Flyway e já tem os endpoints de health, cadastro, login (JWT), perfil e configurações (lista no [README](README.md#api)), e o front já os usa para login, cadastro, sessão, leitura do perfil e configurações. Falta hospedar o backend e definir o `VITE_API_URL` de produção.
+Roadmap do backend e da integração com o frontend. O backend já roda com Spring Boot 4.1 (Java 21+, Maven Wrapper), já conecta ao PostgreSQL (Neon) com migrations do Flyway e já tem os endpoints de health, cadastro, login (JWT), perfil, configurações, catálogos, oportunidades, habilidades publicadas, pessoas, conexões e mensagens (lista no [README](README.md#api)), e todas as telas do front já os usam. Falta hospedar o backend e definir o `VITE_API_URL` de produção.
 
 ---
 
 ## 1. Evoluir o backend
 
 1. **Ferramenta de build** (feito): Maven com Maven Wrapper (`backend/mvnw`), então ninguém precisa instalar o Maven. As dependências ficam em `backend/pom.xml`.
-2. **Framework** (base feita): Spring Boot 4.1 com Spring Web MVC, que já resolve servidor HTTP, JSON, injeção de dependência e CORS, e Spring Security em `config/SecurityConfig.java` (API stateless: `/api/health`, `/api/auth/register` e `/api/auth/login` são públicas, o resto exige `Bearer` e responde `401` no formato de erro; CORS configurável por `CORS_ALLOWED_ORIGINS`, com padrão `http://localhost:5173` e o GitHub Pages; BCrypt para senhas). Starters:
+2. **Framework** (base feita): Spring Boot 4.1 com Spring Web MVC, que já resolve servidor HTTP, JSON, injeção de dependência e CORS, e Spring Security em `config/SecurityConfig.java` (API stateless: `/api/health`, os catálogos, `/api/auth/register` e `/api/auth/login` são públicos, o resto exige `Bearer` e responde `401` no formato de erro; CORS configurável por `CORS_ALLOWED_ORIGINS`, com padrão `http://localhost:5173` e o GitHub Pages; BCrypt para senhas). Starters:
    - `spring-boot-starter-data-jpa`, Flyway e o driver do PostgreSQL já estão no `pom.xml` (banco no Neon, ver item 4);
    - `spring-boot-starter-validation`, usado com `@Valid` nos DTOs de `dto/`;
    - `spring-boot-starter-security-oauth2-resource-server`, que valida o JWT (HS256, `config/JwtConfig.java`).
 3. **Camadas** (as pastas já existem em `backend/src/main/java/br/com/marketfaesa/`):
    - `model`: entidades (`Usuario`, `ConfiguracaoUsuario`).
-   - `repository`: acesso ao banco (interfaces `JpaRepository`).
+   - `repository`: acesso ao banco das entidades (interfaces `JpaRepository`); os demais domínios consultam com `JdbcClient` nos próprios services.
    - `service`: regras de negócio (cadastro, login, validações).
    - `controller`: endpoints REST, sem regra de negócio.
 4. **Banco de dados** (feito): PostgreSQL no Neon em desenvolvimento e produção, configurado por variáveis de ambiente (`DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD` e, opcional, `DATABASE_DIRECT_URL` para o Flyway) ou pelo perfil `local` (`backend/application-local.properties`). O schema vem só das migrations do Flyway (`db/migration/`) e o Hibernate roda com `ddl-auto=validate`. Os testes usam um Postgres embutido (zonky) ou o banco de `TEST_DATABASE_URL`. Detalhes no [README](README.md#banco).
@@ -29,8 +29,8 @@ Base: `http://localhost:8080/api` em desenvolvimento.
 | Método | Rota | Uso no front hoje | Resposta |
 |---|---|---|---|
 | GET | `/api/health` | teste de conexão | `200 {"status":"ok"}` |
-| POST | `/api/auth/register` | cadastro (`fazerCadastro` em `App.jsx`, chamado por `auth/Login.jsx`) | `201` usuário criado; `409` se o e-mail já existe; `400` se inválido |
-| POST | `/api/auth/login` | `fazerLogin` em `App.jsx` (também logo após o cadastro) | `200` token + usuário; `401` se inválido |
+| POST | `/api/auth/register` | cadastro (`fazerCadastro` em `App.jsx`, chamado por `auth/Login.jsx`) | `201` usuário criado; `409` se o e-mail já existe; `400` se inválido; `429` por excesso de tentativas |
+| POST | `/api/auth/login` | `fazerLogin` em `App.jsx` (também logo após o cadastro) | `200` token + usuário; `401` se inválido; `429` por excesso de tentativas |
 | GET | `/api/usuarios/me` | restaurar a sessão ao abrir o app; dados do perfil (`src/perfil.js`) | `200` usuário (sem senha); `401` sem token |
 | GET | `/api/usuarios/me/configuracoes` | carregar tema e configurações ao logar | `200` configurações |
 | PUT | `/api/usuarios/me/configuracoes` | salvar alterações em `Configs.jsx` | `200` configurações salvas; `400` se faltar campo |
@@ -43,7 +43,7 @@ Base: `http://localhost:8080/api` em desenvolvimento.
 | POST/DELETE | `/api/oportunidades/{id}/participacao` | botão "Participar" | `204`; `400` na própria; `409` fechada ou repetida |
 | PUT/DELETE | `/api/oportunidades/{id}/salvo` | coração de salvar e remoção em `Saved.jsx` | `204` |
 | GET | `/api/usuarios/me/salvos`, `/api/usuarios/me/participacoes` | `Saved.jsx`; contagem de projetos no início e no perfil | `200` lista |
-| GET/POST/PUT/DELETE | `/api/habilidades-publicadas` | `Skills.jsx` (publicar), `Publications.jsx` (editar/excluir, `?usuarioId=` do usuário), números do início | `200`/`201`/`204` |
+| GET/POST/PUT/DELETE | `/api/habilidades-publicadas` | `Skills.jsx` (publicar), `Publications.jsx` (editar/excluir, `?usuarioId=` do usuário), números do início | `200`/`201`/`204`; perfis privados só aparecem para o próprio autor |
 | GET | `/api/pessoas` | `PeopleSkills.jsx` e aba "Encontrar pessoas" de `Connections.jsx` | `200` perfis públicos (sem o usuário) |
 | GET | `/api/conexoes`, `/recebidas`, `/enviadas` | estado de cada pessoa (`useConexoes.js`): conectado, pedido enviado ou recebido | `200` lista |
 | POST | `/api/conexoes`, `/{id}/aceitar`, `/{id}/recusar`; DELETE `/{id}` | conectar, aceitar, recusar, desconectar ou cancelar pedido | `201`/`200`/`204` |
@@ -122,12 +122,12 @@ Todas as telas usam a API; não há mais dados de demonstração no front.
 - **Pessoas e conexões** (`PeopleSkills.jsx`, `Connections.jsx`): diretório de `/api/pessoas` e todas as ações de conexão; o card de uma conexão completa cidade e habilidades com os dados do diretório.
 - **Mensagens** (`Messages.jsx`): conversas e mensagens reais. Sem tempo real: com uma conversa aberta, mensagens e lista são recarregadas a cada 5 s (o intervalo para ao sair da tela).
 - **Início** (`Body.jsx`): números (estudantes, oportunidades abertas, habilidades), destaques e "Categorias com mais habilidades" calculados a partir das listas da API.
-- **Limpeza**: na primeira carga o front apaga as chaves do modo demonstrativo (`marketfaesa-users` com senhas em texto puro, `marketfaesa-auth`, salvos, participações, habilidades, conexões, mensagens, configurações, perfil e foto locais; ver `limparDadosAntigos` em `src/storage.js`).
+- **Limpeza**: na primeira carga o front apaga as chaves do modo demonstrativo (`marketfaesa-users` com senhas em texto puro, `marketfaesa-auth`, salvos, participações, habilidades, conexões, mensagens, configurações, perfil e foto locais, além das opções removidas de duas etapas e preferências de conteúdo; ver `limparDadosAntigos` em `src/storage.js`).
 
 ### O que ainda fica no navegador (ou falta)
 
-- **No `localStorage`, por conta**: a página aberta, as preferências de conteúdo da aba Preferências (sem campo na API), o registro de que a animação de perfil completo já foi exibida e a **verificação em duas etapas**, que continua só demonstrativa (a API não tem 2FA).
-- **Notificações**: o painel do cabeçalho continua vazio; não há rota de notificações.
+- **No `localStorage`, por conta**: a página aberta e o registro de que a animação de perfil completo já foi exibida.
+- **Notificações**: não há rota nem tela de notificações. Na configuração, `novasOportunidades`, `mensagens`, `conexoes`, `publicacoes` e `resumoSemanal`, além de `reduzirAnimacoes`, seguem na API sem uso: o front só os devolve no PUT, que exige todos.
 - **Fotos nas listas**: a API não manda `fotoUrl` nas listas, então os cards usam as iniciais do nome; o ícone da oportunidade vem do tipo.
 
 ### Cliente de API
@@ -147,11 +147,14 @@ Fica em `MarketPlace/src/api/`:
 
 ## 4. Deploy
 
-O GitHub Pages serve apenas arquivos estáticos: o frontend continua lá, mas o backend precisa de outra hospedagem (ex.: Render, Railway, Fly.io ou uma VM). Pontos de atenção:
+O GitHub Pages serve apenas arquivos estáticos: o frontend continua lá, mas o backend precisa de outra hospedagem (ex.: Render, Railway, Fly.io ou uma VM), ainda não escolhida. Pontos de atenção:
 
-- Banco PostgreSQL gerenciado: o Neon já é usado; na hospedagem, basta definir as variáveis `DATABASE_*` (o pool da aplicação está limitado a 5 conexões, pensando no plano gratuito).
+- Imagem: `backend/Dockerfile`, com contexto de build `backend/`. A aplicação escuta na porta de `PORT` (padrão `8080`) e o health check é `GET /api/health`.
+
+- Banco PostgreSQL gerenciado: o Neon já é usado; na hospedagem, basta definir as variáveis `DATABASE_*` (o pool da aplicação está limitado a 5 conexões, pensando no plano gratuito). `DATABASE_URL` precisa estar no formato `jdbc:postgresql://...?sslmode=require`: uma URL `postgresql://usuario:senha@...` injetada pelo host não funciona.
 - Segredos em variáveis de ambiente, nunca no repositório: `DATABASE_*` e `JWT_SECRET` (gere um próprio para produção com `openssl rand -base64 48`; trocar o valor invalida todos os tokens emitidos). Se o front tiver outra origem, defina `CORS_ALLOWED_ORIGINS`.
 - Front e back em domínios diferentes: configurar CORS e usar HTTPS nos dois.
+- Limite de tentativas: atrás do proxy do host, defina `SERVER_FORWARD_HEADERS_STRATEGY=native`; sem isso, todos os clientes parecem ter o IP do proxy e o limite vira global. Se o proxy não estiver numa faixa privada, ou houver uma CDN na frente, informe os IPs em `SERVER_TOMCAT_REMOTEIP_INTERNAL_PROXIES` ou `SERVER_TOMCAT_REMOTEIP_TRUSTED_PROXIES`. Para conferir, exceda o limite em uma rede e veja se outra rede continua liberada. Os contadores ficam em memória: com mais de uma instância, será preciso movê-los para um armazenamento compartilhado.
 - Planos gratuitos costumam "dormir"; a primeira requisição pode demorar, então o front deve mostrar carregamento.
 
 ---
@@ -196,15 +199,16 @@ O GitHub Pages serve apenas arquivos estáticos: o frontend continua lá, mas o 
 
 ### Fase 5 — Produção
 - [x] Usar PostgreSQL (Neon)
-- [ ] Hospedar o backend e configurar variáveis de ambiente (`DATABASE_*`, `JWT_SECRET`, `CORS_ALLOWED_ORIGINS`)
+- [x] Criar o `backend/Dockerfile` e ler a porta de `PORT`
+- [ ] Hospedar o backend e configurar variáveis de ambiente (`DATABASE_*`, `JWT_SECRET`, `CORS_ALLOWED_ORIGINS`, `SERVER_FORWARD_HEADERS_STRATEGY`)
 - [ ] Definir `VITE_API_URL` de produção no workflow de deploy
 - [x] Liberar CORS para a origem do GitHub Pages
 
 ### Opcional — Limpeza do frontend
-- [ ] Renomear o `name` do `package.json` (ainda `meu-projeto-react`)
-- [ ] Configurar o Tailwind CSS (instalado, mas não configurado) ou removê-lo
-- [ ] Definir o favicon em `index.html` (hoje vazio)
-- [ ] Remover os SVGs não usados de `public/Imagens/` (`Conta.svg`, `Menu.svg`, `icons.svg`)
+- [x] Renomear o `name` do `package.json` para `marketfaesa`
+- [x] Remover o Tailwind CSS, que estava instalado mas não era usado
+- [x] Definir o favicon em `index.html` (`marketfaesa-symbol.svg`)
+- [x] Remover os SVGs não usados de `public/` (`Imagens/Conta.svg`, `Imagens/Menu.svg`, `icons.svg`, `favicon.svg`)
 
 ---
 
