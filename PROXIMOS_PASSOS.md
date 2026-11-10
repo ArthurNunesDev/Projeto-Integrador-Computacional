@@ -1,6 +1,6 @@
 # Próximos passos
 
-Roadmap do backend e da integração com o frontend. O backend já roda com Spring Boot 4.1 (Java 21+, Maven Wrapper), já conecta ao PostgreSQL (Neon) com migrations do Flyway e já tem os endpoints de health, cadastro, login (JWT), perfil, configurações, catálogos, oportunidades, habilidades publicadas, pessoas, conexões e mensagens (lista no [README](README.md#api)), e todas as telas do front já os usam. Falta hospedar o backend e definir o `VITE_API_URL` de produção.
+Roadmap do backend e da integração com o frontend. O backend já roda com Spring Boot 4.1 (Java 21+, Maven Wrapper), já conecta ao PostgreSQL (Neon) com migrations do Flyway e já tem os endpoints de health, cadastro, login (JWT), perfil, configurações, catálogos, oportunidades, habilidades publicadas, pessoas, conexões e mensagens (lista no [README](README.md#api)), e todas as telas do front já os usam. O deploy no Render (API em Docker + front estático, banco no Neon) já está descrito no Blueprint `render.yaml`; falta criar os serviços no painel do Render.
 
 ---
 
@@ -147,15 +147,17 @@ Fica em `MarketPlace/src/api/`:
 
 ## 4. Deploy
 
-O GitHub Pages serve apenas arquivos estáticos: o frontend continua lá, mas o backend precisa de outra hospedagem (ex.: Render, Railway, Fly.io ou uma VM), ainda não escolhida. Pontos de atenção:
+O GitHub Pages serve apenas arquivos estáticos: ele continua publicando o frontend pelo `deploy.yml`. A hospedagem escolhida para a API é o **Render**, com o Blueprint `render.yaml` na raiz (API como Web Service Docker, front como Static Site com rewrite de `/api/*` para a API; passo a passo no [README](README.md#deploy-render)). Pontos de atenção:
 
 - Imagem: `backend/Dockerfile`, com contexto de build `backend/`. A aplicação escuta na porta de `PORT` (padrão `8080`) e o health check é `GET /api/health`.
 
 - Banco PostgreSQL gerenciado: o Neon já é usado; na hospedagem, basta definir as variáveis `DATABASE_*` (o pool da aplicação está limitado a 5 conexões, pensando no plano gratuito). `DATABASE_URL` precisa estar no formato `jdbc:postgresql://...?sslmode=require`: uma URL `postgresql://usuario:senha@...` injetada pelo host não funciona.
-- Segredos em variáveis de ambiente, nunca no repositório: `DATABASE_*` e `JWT_SECRET` (gere um próprio para produção com `openssl rand -base64 48`; trocar o valor invalida todos os tokens emitidos). Se o front tiver outra origem, defina `CORS_ALLOWED_ORIGINS`.
+- Segredos em variáveis de ambiente, nunca no repositório: `DATABASE_*` e `JWT_SECRET` (no Render, o Blueprint gera o `JWT_SECRET` com `generateValue` e pede as `DATABASE_*` na criação, com `sync: false`; trocar o `JWT_SECRET` invalida todos os tokens emitidos). Se o front tiver outra origem, defina `CORS_ALLOWED_ORIGINS` (o Blueprint já libera `https://marketfaesa-web.onrender.com`).
 - Front e back em domínios diferentes: configurar CORS e usar HTTPS nos dois.
-- Limite de tentativas: atrás do proxy do host, defina `SERVER_FORWARD_HEADERS_STRATEGY=native`; sem isso, todos os clientes parecem ter o IP do proxy e o limite vira global. Se o proxy não estiver numa faixa privada, ou houver uma CDN na frente, informe os IPs em `SERVER_TOMCAT_REMOTEIP_INTERNAL_PROXIES` ou `SERVER_TOMCAT_REMOTEIP_TRUSTED_PROXIES`. Para conferir, exceda o limite em uma rede e veja se outra rede continua liberada. Os contadores ficam em memória: com mais de uma instância, será preciso movê-los para um armazenamento compartilhado.
-- Planos gratuitos costumam "dormir"; a primeira requisição pode demorar, então o front deve mostrar carregamento.
+- Limite de tentativas: atrás do proxy do host, defina `SERVER_FORWARD_HEADERS_STRATEGY=native` (o `render.yaml` já define); sem isso, todos os clientes parecem ter o IP do proxy e o limite vira global. Se o proxy não estiver numa faixa privada, ou houver uma CDN na frente, informe os IPs em `SERVER_TOMCAT_REMOTEIP_INTERNAL_PROXIES` ou `SERVER_TOMCAT_REMOTEIP_TRUSTED_PROXIES`. Para conferir, exceda o limite em uma rede e veja se outra rede continua liberada. Os contadores ficam em memória: com mais de uma instância, será preciso movê-los para um armazenamento compartilhado.
+- Memória: o plano gratuito do Render tem 512 MB; o `JAVA_TOOL_OPTIONS` do Blueprint limita o heap a 256 MB (o `-Xmx` prevalece sobre o `-XX:MaxRAMPercentage=75` do Dockerfile). Medido localmente com `-m 512m`: cerca de 210 MB parado e 220 MB sob carga leve.
+- Planos gratuitos costumam "dormir" (no Render, após uns 15 minutos sem uso); a primeira requisição pode levar perto de um minuto, então o front deve mostrar carregamento.
+- Nomes: se o Render der outro subdomínio (nome ocupado), ajuste no `render.yaml` as URLs de `CORS_ALLOWED_ORIGINS`, `VITE_API_URL` e do rewrite `/api/*`.
 
 ---
 
@@ -200,8 +202,10 @@ O GitHub Pages serve apenas arquivos estáticos: o frontend continua lá, mas o 
 ### Fase 5 — Produção
 - [x] Usar PostgreSQL (Neon)
 - [x] Criar o `backend/Dockerfile` e ler a porta de `PORT`
-- [ ] Hospedar o backend e configurar variáveis de ambiente (`DATABASE_*`, `JWT_SECRET`, `CORS_ALLOWED_ORIGINS`, `SERVER_FORWARD_HEADERS_STRATEGY`)
-- [ ] Definir `VITE_API_URL` de produção no workflow de deploy
+- [x] Escolher a hospedagem (Render) e preparar o Blueprint `render.yaml` (API, front e variáveis `JWT_SECRET`, `CORS_ALLOWED_ORIGINS`, `SERVER_FORWARD_HEADERS_STRATEGY` e `VITE_API_URL`)
+- [ ] Criar o Blueprint no Render e preencher as variáveis `DATABASE_*` do Neon
+- [ ] Conferir em produção que o limite de tentativas separa os clientes (exceder numa rede e testar de outra)
+- [ ] Definir `VITE_API_URL` de produção no workflow do GitHub Pages (no Render, já vem do `render.yaml`)
 - [x] Liberar CORS para a origem do GitHub Pages
 
 ### Opcional — Limpeza do frontend
