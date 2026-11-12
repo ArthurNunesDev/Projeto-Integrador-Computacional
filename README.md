@@ -27,9 +27,6 @@
 </p>
 
 <p align="center">
-  🌐 <a href="https://arthurnunesdev.github.io/Projeto-Integrador-Computacional/">Acessar o site</a>
-</p>
-<p align="center">
   🌐 <a href="https://marketfaesa-web.onrender.com/">Acessar o site</a>
 </p>
 
