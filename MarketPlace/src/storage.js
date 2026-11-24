@@ -1,6 +1,6 @@
 /**
  * Namespaces all user-owned browser data by the authenticated account.
- * This is isolation for a GitHub Pages demo, not server-side security.
+ * This is client-side isolation only, not server-side security.
  */
 export function chaveUsuario(chave, usuarioId) {
   const id = usuarioId == null || usuarioId === "" ? "sem-conta" : String(usuarioId);
