@@ -53,7 +53,7 @@
 
 <h2 id="situacao">📌 Situação atual</h2>
 
-O **frontend em React** tem interface funcional e responsiva, publicada no GitHub Pages. O **backend em Java com Spring Boot** sobe com Spring Security configurado e se conecta a um **PostgreSQL** (hospedado no [Neon](https://neon.tech)), com o schema criado por migrations do Flyway. A [API](#api) cobre cadastro, login com JWT, perfil, configurações, catálogos, oportunidades, habilidades publicadas, pessoas, conexões e mensagens. O backend ainda não está no ar: o deploy no [Render](#deploy-render) já está descrito no Blueprint `render.yaml` (API com o `backend/Dockerfile` e front como site estático), mas os serviços ainda não foram criados no painel.
+O **frontend em React** tem interface funcional e responsiva, publicada no GitHub Pages. O **backend em Java com Spring Boot** sobe com Spring Security configurado e se conecta a um **PostgreSQL** (hospedado no [Neon](https://neon.tech)), com o schema criado por migrations do Flyway. A [API](#api) cobre cadastro, login com JWT, perfil, configurações, catálogos, oportunidades, habilidades publicadas, pessoas, conexões, mensagens e notificações. O backend ainda não está no ar: o deploy no [Render](#deploy-render) já está descrito no Blueprint `render.yaml` (API com o `backend/Dockerfile` e front como site estático), mas os serviços ainda não foram criados no painel.
 
 O front usa a API em **todas as telas**: login, cadastro, sessão, perfil (edição, foto, troca de senha e exclusão de conta), configurações, oportunidades (publicar, editar, participar, salvar e aceitar ou recusar candidatos), habilidades publicadas, diretório de pessoas, conexões e mensagens. Para entrar é preciso o backend rodando (veja [Executando](#executando)). O navegador guarda só o token JWT e preferências de interface (página aberta, preferências de conteúdo, a animação de perfil completo e a opção demonstrativa de duas etapas); nenhuma senha ou dado de outras telas fica no `localStorage`, e as chaves do antigo modo demonstrativo são apagadas na primeira carga. As mensagens não são em tempo real: com uma conversa aberta, a tela consulta a API a cada 5 segundos. O que falta está no [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md#3-integração-com-o-front).
 
@@ -212,6 +212,10 @@ Base em desenvolvimento: `http://localhost:8080/api`. São públicas só `GET /a
 | DELETE | `/api/conexoes/{id}` | `204` desconecta ou cancela o pedido |
 | GET / POST | `/api/conversas` (POST com `{usuarioId}`) | `200` lista com `naoLidas` / `200` conversa nova ou existente |
 | GET / POST | `/api/conversas/{id}/mensagens` | `200` (marca como lidas) / `201`; `403` fora da conversa ou se a pessoa não aceita mensagens |
+| GET | `/api/notificacoes?limite=20&antesDeId=&naoLidas=false` | `200 [{id, tipo, texto, ator, alvoId, lida, criadoEm}]`, mais novas primeiro (por `id`); próxima página com `antesDeId` = último `id`; `400` se `limite` fora de 1..50 |
+| GET | `/api/notificacoes/contagem` | `200 {naoLidas, mensagensNaoLidas}` |
+| PUT | `/api/notificacoes/{id}/lida` | `204` (também se já estava lida); `403` de outro usuário; `404` |
+| PUT | `/api/notificacoes/lidas` (corpo opcional `{ateId}`) | `204`; marca as de `id <= ateId` ou, sem `ateId`, todas |
 
 Regras:
 
@@ -220,6 +224,7 @@ Regras:
 - **Login**: e-mail inexistente e senha errada devolvem o mesmo `401`, com o mesmo corpo.
 - **Cadastro**: devolve `201` sem token; para entrar, o front chama `/api/auth/login` em seguida. O cadastro cria também a linha de configurações com os valores padrão.
 - **Erros**: sempre `{status, erro, campos}`, com `campos` só nos erros de validação (`{"campo": "mensagem"}`). Sem token, token inválido ou expirado, ou token de um usuário que não existe mais: `401 {"status":401,"erro":"Não autenticado"}`. As mensagens de validação seguem o idioma do `Accept-Language` da requisição.
+- **Notificações**: geradas na mesma transação da ação. Pedido de conexão (`CONEXAO_SOLICITADA`, para o destinatário) e aceite (`CONEXAO_ACEITA`, para quem pediu); pedido de participação (`PARTICIPACAO_NOVA`, para o autor, uma por candidato); aceite ou recusa da participação (`PARTICIPACAO_ACEITA` / `PARTICIPACAO_RECUSADA`, para o candidato, só quando o status muda); oportunidade fechada (`OPORTUNIDADE_FECHADA`, só na passagem de `ABERTA` para `FECHADA`) ou excluída (`OPORTUNIDADE_REMOVIDA`), para os participantes pendentes e aceitos. `alvoId` é o id da conexão (`CONEXAO_*`) ou da oportunidade (os demais) e pode já não existir; `ator` é a pessoa que causou (`PessoaResumo` ou `null`). As preferências `conexoes` e `publicacoes` de `/api/usuarios/me/configuracoes` desligam os tipos `CONEXAO_*` e `PARTICIPACAO_*`; os de oportunidade sempre chegam. Recusar, cancelar ou desfazer apaga o aviso que ainda não foi lido (a recusa de conexão não é avisada), e repetir a mesma ação com o aviso ainda não lido só o atualiza. Mensagens não viram notificação: `mensagensNaoLidas` conta as mensagens recebidas não lidas. Lidas somem depois de 30 dias e qualquer uma depois de 90 (limpeza ao subir e a cada 12 h).
 - **Segurança**: API stateless, CORS liberado para o Vite local (`localhost:5173`, `127.0.0.1:5173`, preview em `localhost:4173`) e para o GitHub Pages (configurável por `CORS_ALLOWED_ORIGINS`). Login e cadastro têm limite de tentativas em memória, válido para uma única instância.
 
 <h3 id="curl">Testando com curl</h3>

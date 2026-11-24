@@ -51,8 +51,13 @@ Base: `http://localhost:8080/api` em desenvolvimento.
 | POST | `/api/conexoes`, `/{id}/aceitar`, `/{id}/recusar`; DELETE `/{id}` | conectar, aceitar, recusar, desconectar ou cancelar pedido | `201`/`200`/`204` |
 | GET/POST | `/api/conversas` | lista de `Messages.jsx`; botão "Mensagem" no perfil de uma pessoa abre (ou cria) a conversa | `200`; `403` se a pessoa não aceita mensagens |
 | GET/POST | `/api/conversas/{id}/mensagens` | conversa aberta (recarregada a cada 5 s) e envio | `200`/`201` |
+| GET | `/api/notificacoes?limite=&antesDeId=&naoLidas=` | lista do sino de notificações, paginada por cursor (`antesDeId`) | `200 [{id, tipo, texto, ator, alvoId, lida, criadoEm}]`; `400` limite fora de 1..50 |
+| GET | `/api/notificacoes/contagem` | contadores do sino e de mensagens | `200 {naoLidas, mensagensNaoLidas}` |
+| PUT | `/api/notificacoes/{id}/lida`, `/api/notificacoes/lidas` (corpo opcional `{ateId}`) | marcar uma ou todas (até `ateId`) como lidas | `204`; `403`/`404` na individual |
 
-Todas as rotas acima já existem. A proposta anterior usava `/api/users/{id}`; a API usa `/api/usuarios/me`, com o id tirado do token.
+Todas as rotas acima já existem. Tipos, gatilhos e retenção das notificações estão nas regras da API no [README](README.md#api).
+
+**Ordem de merge**: a tabela de notificações é a migration `V8__cria_notificacoes.sql`. A `V7` é da branch `remove-contratacoes-e-pages`, que precisa entrar na `main` antes da branch de notificações (`cria-notificacoes-api`); com a ordem invertida, o Flyway acusa a `V7` como fora de ordem num banco que já aplicou a `V8`. A proposta anterior usava `/api/users/{id}`; a API usa `/api/usuarios/me`, com o id tirado do token.
 
 Erros seguem um formato único:
 
