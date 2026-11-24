@@ -25,6 +25,7 @@ import { useNotificacoes } from "./useNotificacoes.js";
 
 import "./index.scss";
 import "./components/Header.scss";
+import "./components/NotificationBell.scss";
 import "./components/Body.scss";
 import "./components/Profile.scss";
 import "./components/Configs.scss";
@@ -437,6 +438,9 @@ function App() {
         onSearch={buscarOportunidades}
         usuario={usuario}
         onLogout={fazerLogout}
+        naoLidas={notificacoes.naoLidas}
+        mensagensNaoLidas={notificacoes.mensagensNaoLidas}
+        onAtualizarNotificacoes={notificacoes.recarregar}
       />
 
       {renderizarPagina()}

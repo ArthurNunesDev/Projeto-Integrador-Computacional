@@ -1,0 +1,93 @@
+.notificacoes-sino { position: relative; }
+
+.notificacoes-sino__botao {
+  position: relative;
+  width: 44px; height: 44px;
+  display: grid; place-items: center;
+  border: 1px solid var(--mf-border); border-radius: 50%;
+  background: var(--mf-surface); color: var(--mf-navy);
+}
+.notificacoes-sino__botao svg { width: 22px; height: 22px; }
+.notificacoes-sino__botao:hover,
+.notificacoes-sino__botao.ativo { background: var(--mf-light); }
+
+.notificacoes-sino__badge {
+  position: absolute; top: -4px; right: -6px;
+  min-width: 20px; height: 20px; padding: 0 5px;
+  display: grid; place-items: center;
+  border: 2px solid var(--mf-surface); border-radius: 20px;
+  background: var(--mf-orange); color: #fff;
+  font-size: 10px; font-weight: 800; line-height: 1;
+}
+
+.notificacoes-sino__painel {
+  position: absolute; top: calc(100% + 12px); right: 0; z-index: 1200;
+  width: 340px; max-height: min(520px, calc(100vh - 120px));
+  display: flex; flex-direction: column;
+  background: var(--mf-surface); border: 1px solid var(--mf-border);
+  border-radius: 18px; box-shadow: 0 18px 48px rgba(30,39,97,.16);
+  overflow: hidden;
+}
+
+.notificacoes-sino__topo,
+.notificacoes-sino__rodape {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 12px 16px;
+}
+.notificacoes-sino__topo { border-bottom: 1px solid var(--mf-border); }
+.notificacoes-sino__topo h2 { margin: 0; color: var(--mf-text); font-size: 14px; }
+.notificacoes-sino__rodape { justify-content: center; border-top: 1px solid var(--mf-border); }
+
+.notificacoes-sino__link {
+  border: 0; background: transparent; padding: 4px;
+  color: var(--mf-navy); font-size: 12px; font-weight: 700;
+}
+.notificacoes-sino__link:hover:not(:disabled) { color: var(--mf-orange); }
+.notificacoes-sino__link:disabled { opacity: .5; cursor: default; }
+
+.notificacoes-sino__estado,
+.notificacoes-sino__erro { margin: 0; padding: 18px 16px; color: var(--mf-muted); font-size: 12px; text-align: center; }
+.notificacoes-sino__estado p { margin: 0 0 6px; }
+.notificacoes-sino__erro { padding: 10px 16px 0; color: #B3261E; text-align: left; }
+
+.notificacoes-sino__lista { list-style: none; margin: 0; padding: 6px; overflow-y: auto; }
+
+// Item de notificação: usado também pela página de notificações.
+.notificacao-item {
+  width: 100%; display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px; border: 0; border-radius: 12px;
+  background: transparent; color: var(--mf-muted); text-align: left; font-size: 12px;
+}
+.notificacao-item:hover { background: rgba(202,220,252,.35); }
+.notificacao-item.nao-lida { color: var(--mf-text); font-weight: 650; }
+.notificacao-item__icone {
+  flex: 0 0 30px; width: 30px; height: 30px; display: grid; place-items: center;
+  border-radius: 9px; background: #F1F5FA; color: var(--mf-navy);
+}
+.notificacao-item__texto { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; overflow-wrap: anywhere; }
+.notificacao-item__texto small { color: var(--mf-muted); font-size: 10px; font-weight: 500; }
+.notificacao-item__ponto { flex: 0 0 8px; width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: var(--mf-orange); }
+
+[data-theme="dark"] .notificacoes-sino__botao { color: #FFFFFF; }
+[data-theme="dark"] .notificacoes-sino__botao:hover,
+[data-theme="dark"] .notificacoes-sino__botao.ativo { background: #303B83; }
+[data-theme="dark"] .notificacoes-sino__link { color: var(--mf-light); }
+[data-theme="dark"] .notificacao-item:hover { background: rgba(202,220,252,.14); }
+[data-theme="dark"] .notificacao-item__icone { background: #252D5B; color: #FFFFFF; }
+[data-theme="dark"] .notificacoes-sino__erro { color: #FFB4AB; }
+
+@media (max-width: 620px) {
+  .notificacoes-sino__botao { width: 38px; height: 38px; }
+  .notificacoes-sino__painel { position: fixed; top: 72px; right: 10px; width: min(340px, calc(100vw - 20px)); }
+}
+
+@media (max-width: 600px) {
+  .notificacoes-sino__botao { width: 32px; height: 32px; }
+  .notificacoes-sino__botao svg { width: 18px; height: 18px; }
+  .notificacoes-sino__badge { min-width: 17px; height: 17px; font-size: 8px; right: -5px; }
+  .notificacoes-sino__painel { top: 61px; right: 7px; width: calc(100vw - 14px); }
+}
+
+@media (max-width: 600px) {
+  .div-icons { gap: 6px; }
+}
