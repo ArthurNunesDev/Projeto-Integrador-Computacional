@@ -4,7 +4,9 @@ import userEvent from "@testing-library/user-event";
 
 import App from "./App.jsx";
 import { obterToken, salvarToken } from "./api/client.js";
-import { chamadas, CONFIGURACOES, erroApi, mockarApi, oportunidade, USUARIO_API } from "./test/apiFalsa.js";
+import {
+  chamadas, CONFIGURACOES, erroApi, mockarApi, oportunidade, ROTAS_NOTIFICACOES, USUARIO_API,
+} from "./test/apiFalsa.js";
 
 // Rotas que a página inicial consulta depois de entrar.
 const ROTAS_INICIO = {
@@ -18,6 +20,7 @@ const ROTAS_INICIO = {
   "GET /api/pessoas": [],
   "GET /api/conexoes": [],
   "GET /api/usuarios/me/participacoes": [],
+  ...ROTAS_NOTIFICACOES,
 };
 
 beforeEach(() => {

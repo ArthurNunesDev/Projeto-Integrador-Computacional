@@ -21,6 +21,7 @@ import { atualizarMe, obterConfiguracoes, obterMe, salvarConfiguracoes } from ".
 import { chaveUsuario, lerValorSeguro, salvarValorSeguro, limparDadosAntigos } from "./storage.js";
 import { corpoAtualizacao, montarUsuario } from "./perfil.js";
 import { mensagemDoErro } from "./useCarregar.js";
+import { useNotificacoes } from "./useNotificacoes.js";
 
 import "./index.scss";
 import "./components/Header.scss";
@@ -66,6 +67,8 @@ function App() {
   const filaSalvarRef = useRef(Promise.resolve());
   const salvamentosPendentesRef = useRef(0);
   const falhaAoSalvarRef = useRef(false);
+  // Contagem de não lidas (notificações e mensagens), consultada enquanto há usuário logado.
+  const notificacoes = useNotificacoes(usuario?.id ?? null);
 
   useEffect(() => {
     limparDadosAntigos();
@@ -337,7 +340,7 @@ function App() {
         return <Connections onNavigate={navegarPara} onAbrirConversa={abrirConversaNaTela} />;
 
       case "mensagens":
-        return <Messages conversaInicial={conversaInicial} />;
+        return <Messages conversaInicial={conversaInicial} onNaoLidasMudou={notificacoes.recarregar} />;
 
       case "salvos":
         return <Salvos onNavigate={navegarPara} />;
