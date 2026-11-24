@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 
 import Mensagens from "./Messages.jsx";
 import { chamadas, erroApi, mockarApi, pessoaResumo } from "../test/apiFalsa.js";
+import { definirAbaOculta, restaurarVisibilidade } from "../test/visibilidade.js";
 
 function mensagem(id, texto, minha) {
   return { id, autorId: minha ? 1 : 2, minha, texto, lida: true, criadoEm: "2026-10-30T09:15:00Z" };
@@ -26,6 +27,7 @@ function rotas(extras = {}) {
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+  restaurarVisibilidade();
 });
 
 describe("Mensagens", () => {
@@ -89,6 +91,34 @@ describe("Mensagens", () => {
     unmount();
     await vi.advanceTimersByTimeAsync(10000);
     expect(chamadas(fetchFalso, "GET /api/conversas/10/mensagens")).toHaveLength(2);
+  });
+
+  it("não recarrega com a aba oculta e atualiza na hora ao voltar", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const fetchFalso = mockarApi(rotas());
+    render(<Mensagens />);
+    await screen.findByText("Oi, Bruno!");
+    const buscas = () => chamadas(fetchFalso, "GET /api/conversas/10/mensagens").length;
+
+    definirAbaOculta(true);
+    await vi.advanceTimersByTimeAsync(20000);
+    expect(buscas()).toBe(1);
+
+    definirAbaOculta(false);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(buscas()).toBe(2);
+
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(buscas()).toBe(3);
+  });
+
+  it("avisa quando o total de não lidas muda", async () => {
+    mockarApi(rotas());
+    const onNaoLidasMudou = vi.fn();
+    render(<Mensagens onNaoLidasMudou={onNaoLidasMudou} />);
+    await screen.findByText("Oi, Bruno!");
+
+    await vi.waitFor(() => expect(onNaoLidasMudou).toHaveBeenCalledTimes(1));
   });
 
   it("explica como começar quando não há conversas", async () => {
