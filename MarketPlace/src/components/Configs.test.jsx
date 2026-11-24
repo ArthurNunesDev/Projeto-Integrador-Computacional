@@ -65,17 +65,18 @@ describe("Configurações", () => {
     await user.click(screen.getByRole("button", { name: /Notificações/ }));
 
     expect(screen.getByRole("switch", { name: "Conexões" })).toHaveAttribute("aria-checked", "true");
-    expect(screen.getByRole("switch", { name: "Candidaturas nas suas oportunidades" })).toHaveAttribute("aria-checked", "false");
-    expect(screen.getByRole("switch", { name: "Oportunidades em que você participa" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("switch", { name: "Candidaturas" })).toHaveAttribute("aria-checked", "false");
     expect(screen.getByRole("switch", { name: "Mensagens não lidas" })).toHaveAttribute("aria-checked", "true");
     expect(screen.queryByRole("switch", { name: /Resumo semanal/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("switch", { name: /Oportunidades em que você participa/ })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("switch")).toHaveLength(3);
+    expect(screen.getByText(/oportunidade encerrada ou removida, quando você participa, sempre chegam/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("switch", { name: "Conexões" }));
-    await user.click(screen.getByRole("switch", { name: "Candidaturas nas suas oportunidades" }));
-    await user.click(screen.getByRole("switch", { name: "Oportunidades em que você participa" }));
+    await user.click(screen.getByRole("switch", { name: "Candidaturas" }));
     await user.click(screen.getByRole("switch", { name: "Mensagens não lidas" }));
 
-    expect(onAlterarConfiguracao.mock.calls.map(([campo]) => campo)).toEqual(["conexoes", "publicacoes", "novasOportunidades", "mensagens"]);
+    expect(onAlterarConfiguracao.mock.calls.map(([campo]) => campo)).toEqual(["conexoes", "publicacoes", "mensagens"]);
     expect(screen.getByRole("status")).toHaveTextContent("Alterações salvas");
   });
 

@@ -134,14 +134,14 @@ Todas as telas usam a API; não há mais dados de demonstração no front.
   - **Ao clicar numa notificação**: marca como lida (`PUT /api/notificacoes/{id}/lida`) e navega: `CONEXAO_*` para Conexões; `PARTICIPACAO_*` e `OPORTUNIDADE_*` para Oportunidades. Depois de marcar, a contagem é consultada de novo.
   - **Página "Notificações"** (aberta por "Ver todas"): lista de 20 em 20 com "Carregar mais" (`antesDeId` = id da última exibida; acaba quando vem menos que 20), filtro "Só não lidas" (`naoLidas=true`), estados de carregando, vazio e erro.
   - **Mensagens no menu**: o item "Mensagens" mostra `mensagensNaoLidas` da mesma contagem; a tela de mensagens pede uma nova contagem quando o total de não lidas muda.
-  - **Configurações > Notificações**: liga e desliga `conexoes` (pedidos e aceites de conexão), `publicacoes` (candidaturas nas oportunidades que você publicou), `novasOportunidades` (respostas às suas candidaturas e oportunidades em que você participa encerradas ou removidas) e `mensagens` (o badge do menu; o front esconde o número quando desligado). Quais tipos cada opção suprime é decidido pela API ao gerar a notificação. `resumoSemanal` fica fora da tela porque não há envio de e-mail.
+  - **Configurações > Notificações**: liga e desliga `conexoes` (`CONEXAO_SOLICITADA` e `CONEXAO_ACEITA`), `publicacoes` (as candidaturas: `PARTICIPACAO_NOVA` nas oportunidades que você publicou e `PARTICIPACAO_ACEITA` / `PARTICIPACAO_RECUSADA` nos seus pedidos) e `mensagens` (o badge do menu; o front esconde o número quando desligado). Quais tipos cada opção suprime é decidido pela API ao gerar a notificação; `OPORTUNIDADE_FECHADA` e `OPORTUNIDADE_REMOVIDA` sempre chegam, e a tela avisa isso. `novasOportunidades` e `resumoSemanal` ficam fora da tela porque não têm efeito: nenhum tipo de notificação usa `novasOportunidades` e não há envio de e-mail.
 - **Início** (`Body.jsx`): números (estudantes, oportunidades abertas, habilidades), destaques e "Categorias com mais habilidades" calculados a partir das listas da API.
 - **Limpeza**: na primeira carga o front apaga as chaves do modo demonstrativo (`marketfaesa-users` com senhas em texto puro, `marketfaesa-auth`, salvos, participações, habilidades, conexões, mensagens, configurações, perfil e foto locais, além das opções removidas de duas etapas e preferências de conteúdo; ver `limparDadosAntigos` em `src/storage.js`).
 
 ### O que ainda fica no navegador (ou falta)
 
 - **No `localStorage`, por conta**: a página aberta e o registro de que a animação de perfil completo já foi exibida.
-- **Notificações**: não são em tempo real (consulta a cada 30 s; WebSocket ou SSE fica para depois). Na configuração, `resumoSemanal` e `reduzirAnimacoes` seguem na API sem uso: o front só os devolve no PUT, que exige todos.
+- **Notificações**: não são em tempo real (consulta a cada 30 s; WebSocket ou SSE fica para depois). Na configuração, `novasOportunidades`, `resumoSemanal` e `reduzirAnimacoes` seguem na API sem uso: o front só os devolve no PUT, que exige todos.
 - **Fotos nas listas**: a API não manda `fotoUrl` nas listas, então os cards usam as iniciais do nome; o ícone da oportunidade vem do tipo.
 
 ### Cliente de API
@@ -214,7 +214,7 @@ O GitHub Pages serve apenas arquivos estáticos: ele continua publicando o front
 - [x] `GET/PUT /api/usuarios/me/configuracoes`
 - [x] Carregar configurações após o login e salvar ao alterar em `Configs.jsx`
 - [x] Tema só da API (sem cópia no `localStorage`)
-- [x] Seção "Notificações" em `Configs.jsx` (`conexoes`, `publicacoes`, `novasOportunidades`, `mensagens`)
+- [x] Seção "Notificações" em `Configs.jsx` (`conexoes`, `publicacoes`, `mensagens`)
 
 ### Fase 5 — Produção
 - [x] Usar PostgreSQL (Neon)

@@ -184,15 +184,15 @@ function Configs({
           </div>
         </section>;
 
-      // O resumo semanal (resumoSemanal) fica de fora: a API ainda não envia e-mails, então a opção não teria efeito.
+      // resumoSemanal e novasOportunidades ficam de fora: a API não envia e-mails e nenhum tipo de notificação
+      // depende de novasOportunidades, então as opções não teriam efeito. Encerramento e remoção de oportunidade sempre chegam.
       case "notificacoes":
         return <section className="configs-content-card">
-          <ConfigHeader eyebrow="NOTIFICAÇÕES" title="Notificações" description="Escolha sobre o que você quer ser avisado. As mudanças valem para as próximas notificações." />
+          <ConfigHeader eyebrow="NOTIFICAÇÕES" title="Notificações" description="Escolha sobre o que você quer ser avisado. As mudanças valem para as próximas notificações. Avisos de oportunidade encerrada ou removida, quando você participa, sempre chegam." />
           {avisoCarregamento}
           <div className="configs-options">
             <ConfigToggle title="Conexões" description="Quando alguém pede para se conectar com você ou aceita o seu pedido." checked={configuracoes.conexoes} onChange={()=>alterarConfiguracao("conexoes")} disabled={bloqueado} />
-            <ConfigToggle title="Candidaturas nas suas oportunidades" description="Quando alguém pede para participar de uma oportunidade que você publicou." checked={configuracoes.publicacoes} onChange={()=>alterarConfiguracao("publicacoes")} disabled={bloqueado} />
-            <ConfigToggle title="Oportunidades em que você participa" description="Quando seu pedido é aceito ou recusado e quando a oportunidade é encerrada ou removida." checked={configuracoes.novasOportunidades} onChange={()=>alterarConfiguracao("novasOportunidades")} disabled={bloqueado} />
+            <ConfigToggle title="Candidaturas" description="Quando alguém pede para participar de uma oportunidade que você publicou e quando o seu pedido para participar é aceito ou recusado." checked={configuracoes.publicacoes} onChange={()=>alterarConfiguracao("publicacoes")} disabled={bloqueado} />
             <ConfigToggle title="Mensagens não lidas" description="Mostra no menu, ao lado de Mensagens, quantas você ainda não leu." checked={configuracoes.mensagens} onChange={()=>alterarConfiguracao("mensagens")} disabled={bloqueado} />
           </div>
         </section>;
