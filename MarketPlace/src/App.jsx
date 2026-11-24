@@ -44,7 +44,10 @@ import "./ResponsiveAudit.scss";
 const CHAVE_PAGINA = "marketfaesa-pagina";
 // Padrões das opções usadas no front, até o GET terminar. O PUT exige todos os campos de
 // ConfiguracaoDto: os que o front não usa vêm no GET e voltam intactos em `configuracoes`.
-const CONFIG_PADRAO = { perfilPublico: true, mostrarEmail: false, permitirMensagens: true };
+const CONFIG_PADRAO = {
+  perfilPublico: true, mostrarEmail: false, permitirMensagens: true,
+  conexoes: true, publicacoes: true, novasOportunidades: true, mensagens: true,
+};
 
 const MENSAGEM_SESSAO_EXPIRADA = "Sua sessão expirou. Entre novamente.";
 
@@ -444,7 +447,7 @@ function App() {
         usuario={usuario}
         onLogout={fazerLogout}
         naoLidas={notificacoes.naoLidas}
-        mensagensNaoLidas={notificacoes.mensagensNaoLidas}
+        mensagensNaoLidas={configuracoes.mensagens === false ? 0 : notificacoes.mensagensNaoLidas}
         onAtualizarNotificacoes={notificacoes.recarregar}
       />
 

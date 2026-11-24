@@ -11,6 +11,7 @@ const CONFIG_SECTIONS = [
   { id:"conta", label:"Conta", description:"Informações pessoais", icon:"👤" },
   { id:"seguranca", label:"Segurança", description:"Senha e acesso", icon:"🔒" },
   { id:"privacidade", label:"Privacidade", description:"Controle sua visibilidade", icon:"◉" },
+  { id:"notificacoes", label:"Notificações", description:"O que aparece no sino", icon:"🔔" },
   { id:"aparencia", label:"Aparência", description:"Visual do aplicativo", icon:"◐" },
 ];
 
@@ -183,6 +184,19 @@ function Configs({
           </div>
         </section>;
 
+      // O resumo semanal (resumoSemanal) fica de fora: a API ainda não envia e-mails, então a opção não teria efeito.
+      case "notificacoes":
+        return <section className="configs-content-card">
+          <ConfigHeader eyebrow="NOTIFICAÇÕES" title="Notificações" description="Escolha sobre o que você quer ser avisado. As mudanças valem para as próximas notificações." />
+          {avisoCarregamento}
+          <div className="configs-options">
+            <ConfigToggle title="Conexões" description="Quando alguém pede para se conectar com você ou aceita o seu pedido." checked={configuracoes.conexoes} onChange={()=>alterarConfiguracao("conexoes")} disabled={bloqueado} />
+            <ConfigToggle title="Candidaturas nas suas oportunidades" description="Quando alguém pede para participar de uma oportunidade que você publicou." checked={configuracoes.publicacoes} onChange={()=>alterarConfiguracao("publicacoes")} disabled={bloqueado} />
+            <ConfigToggle title="Oportunidades em que você participa" description="Quando seu pedido é aceito ou recusado e quando a oportunidade é encerrada ou removida." checked={configuracoes.novasOportunidades} onChange={()=>alterarConfiguracao("novasOportunidades")} disabled={bloqueado} />
+            <ConfigToggle title="Mensagens não lidas" description="Mostra no menu, ao lado de Mensagens, quantas você ainda não leu." checked={configuracoes.mensagens} onChange={()=>alterarConfiguracao("mensagens")} disabled={bloqueado} />
+          </div>
+        </section>;
+
       case "aparencia":
         return <section className="configs-content-card">
           <ConfigHeader eyebrow="APARÊNCIA" title="Aparência" description="Personalize a forma como o MarketFaesa é exibido." />
@@ -200,7 +214,7 @@ function Configs({
   return <main className="configs-page">
     <div className="configs-container">
       <header className="configs-page-header">
-        <div><span>PREFERÊNCIAS DA CONTA</span><h1>Configurações</h1><p>Gerencie sua conta, segurança, privacidade e aparência do MarketFaesa.</p></div>
+        <div><span>PREFERÊNCIAS DA CONTA</span><h1>Configurações</h1><p>Gerencie sua conta, segurança, privacidade, notificações e aparência do MarketFaesa.</p></div>
         <button type="button" className="page-back-button configs-back-button" onClick={()=>onNavigate("inicio")}>← Voltar ao início</button>
       </header>
       <div className="configs-layout">

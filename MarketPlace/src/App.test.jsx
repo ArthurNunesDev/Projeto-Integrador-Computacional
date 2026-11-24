@@ -166,6 +166,29 @@ describe("autenticação pela API", () => {
     await waitFor(() => expect(chamadas(fetchFalso, "PUT /api/usuarios/me/configuracoes")).toEqual([{ ...salvas, perfilPublico: false }]));
   });
 
+  it("salva as opções de notificação no PUT e esconde o badge de mensagens quando desligado", async () => {
+    salvarToken("jwt-salvo");
+    localStorage.setItem("marketfaesa-pagina:1", "configuracoes");
+    const fetchFalso = mockarApi({
+      ...ROTAS_INICIO,
+      "GET /api/usuarios/me": USUARIO_API,
+      "PUT /api/usuarios/me/configuracoes": (corpo) => corpo,
+      "GET /api/cursos": [],
+      "GET /api/notificacoes/contagem": { naoLidas: 0, mensagensNaoLidas: 4 },
+    });
+    const user = userEvent.setup();
+    render(<App />);
+    expect(await screen.findByRole("button", { name: /Mensagens, 4 não lidas$/, hidden: true })).toBeInTheDocument();
+
+    await user.click(await screen.findByRole("button", { name: /NotificaçõesO que aparece/ }));
+    const toggle = screen.getByRole("switch", { name: "Mensagens não lidas" });
+    await waitFor(() => expect(toggle).toBeEnabled());
+    await user.click(toggle);
+
+    await waitFor(() => expect(chamadas(fetchFalso, "PUT /api/usuarios/me/configuracoes")).toEqual([{ ...CONFIGURACOES, mensagens: false }]));
+    expect(screen.getByRole("button", { name: /Mensagens$/, hidden: true })).not.toHaveTextContent("4");
+  });
+
   it("volta ao login com aviso quando o token salvo expirou", async () => {
     salvarToken("jwt-vencido");
     mockarApi({ "GET /api/usuarios/me": erroApi(401, "Não autenticado") });

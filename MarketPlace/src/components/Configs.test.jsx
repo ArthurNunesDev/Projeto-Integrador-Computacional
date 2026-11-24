@@ -9,6 +9,7 @@ const props = {
   onChangeTema: vi.fn(() => true),
   configuracoes: {
     perfilPublico: true, mostrarEmail: false, permitirMensagens: true,
+    conexoes: true, publicacoes: false, novasOportunidades: true, mensagens: true,
   },
   onAlterarConfiguracao: vi.fn(() => true),
   usuario: USUARIO,
@@ -48,13 +49,44 @@ describe("Configurações", () => {
     render(<Configs {...props} />);
 
     expect(screen.getByRole("button", { name: /Aparência/ })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Notificações/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Preferências/ })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /Segurança/ }));
 
     expect(screen.queryByRole("switch", { name: /duas etapas/ })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sair" })).toBeInTheDocument();
+  });
+
+  it("mostra as opções de notificação com o estado salvo e alterna cada uma", async () => {
+    const user = userEvent.setup();
+    const onAlterarConfiguracao = vi.fn(() => true);
+    render(<Configs {...props} onAlterarConfiguracao={onAlterarConfiguracao} />);
+
+    await user.click(screen.getByRole("button", { name: /Notificações/ }));
+
+    expect(screen.getByRole("switch", { name: "Conexões" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("switch", { name: "Candidaturas nas suas oportunidades" })).toHaveAttribute("aria-checked", "false");
+    expect(screen.getByRole("switch", { name: "Oportunidades em que você participa" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("switch", { name: "Mensagens não lidas" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.queryByRole("switch", { name: /Resumo semanal/ })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("switch", { name: "Conexões" }));
+    await user.click(screen.getByRole("switch", { name: "Candidaturas nas suas oportunidades" }));
+    await user.click(screen.getByRole("switch", { name: "Oportunidades em que você participa" }));
+    await user.click(screen.getByRole("switch", { name: "Mensagens não lidas" }));
+
+    expect(onAlterarConfiguracao.mock.calls.map(([campo]) => campo)).toEqual(["conexoes", "publicacoes", "novasOportunidades", "mensagens"]);
+    expect(screen.getByRole("status")).toHaveTextContent("Alterações salvas");
+  });
+
+  it("trava as opções de notificação enquanto as configurações carregam", async () => {
+    const user = userEvent.setup();
+    render(<Configs {...props} configuracoesCarregadas={false} />);
+
+    await user.click(screen.getByRole("button", { name: /Notificações/ }));
+
+    expect(screen.getByRole("switch", { name: "Conexões" })).toBeDisabled();
+    expect(screen.getByRole("status")).toHaveTextContent("Carregando suas configurações...");
   });
 
   it("exige nome completo antes de salvar dados da conta", async () => {
