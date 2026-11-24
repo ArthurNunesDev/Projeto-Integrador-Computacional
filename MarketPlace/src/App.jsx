@@ -11,6 +11,7 @@ import Messages from "./components/Messages.jsx";
 import Salvos from "./components/Saved.jsx";
 import MinhasPublicacoes from "./components/Publications.jsx";
 import Perfil from "./components/Profile.jsx";
+import Notificacoes from "./components/Notifications.jsx";
 import Footer from "./components/Footer.jsx";
 
 import Login from "./auth/Login.jsx";
@@ -26,6 +27,7 @@ import { useNotificacoes } from "./useNotificacoes.js";
 import "./index.scss";
 import "./components/Header.scss";
 import "./components/NotificationBell.scss";
+import "./components/Notifications.scss";
 import "./components/Body.scss";
 import "./components/Profile.scss";
 import "./components/Configs.scss";
@@ -342,6 +344,9 @@ function App() {
 
       case "mensagens":
         return <Messages conversaInicial={conversaInicial} onNaoLidasMudou={notificacoes.recarregar} />;
+
+      case "notificacoes":
+        return <Notificacoes onNavigate={navegarPara} onAtualizar={notificacoes.recarregar} />;
 
       case "salvos":
         return <Salvos onNavigate={navegarPara} />;
