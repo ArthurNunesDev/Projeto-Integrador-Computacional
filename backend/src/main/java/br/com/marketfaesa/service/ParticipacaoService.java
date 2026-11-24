@@ -3,6 +3,7 @@ package br.com.marketfaesa.service;
 import br.com.marketfaesa.dto.ParticipacaoResposta;
 import br.com.marketfaesa.dto.PessoaResumo;
 import br.com.marketfaesa.error.ErroApiException;
+import br.com.marketfaesa.service.NotificacaoService.Tipo;
 import java.util.List;
 import java.util.Map;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -22,9 +23,11 @@ public class ParticipacaoService {
             """.formatted(PessoaResumo.colunas("u", "c", "pessoa"));
 
     private final JdbcClient jdbc;
+    private final NotificacaoService notificacoes;
 
-    public ParticipacaoService(JdbcClient jdbc) {
+    public ParticipacaoService(JdbcClient jdbc, NotificacaoService notificacoes) {
         this.jdbc = jdbc;
+        this.notificacoes = notificacoes;
     }
 
     // Só o autor; 404 se a oportunidade não existe. Ordem de chegada.
@@ -43,10 +46,12 @@ public class ParticipacaoService {
     // Só o autor da oportunidade (403); 404 se a participação não existe; 409 se a oportunidade
     // está FECHADA (mesma regra do participar). Repetir o status atual não é erro: devolve 200 sem mudar nada.
     // O autor pode trocar de ideia (ACEITA <-> RECUSADA) enquanto a oportunidade estiver aberta.
+    // Cada mudança avisa o candidato e apaga o aviso não lido da decisão anterior.
     @Transactional
     public ParticipacaoResposta definirStatus(Long eu, Long id, String status) {
         Situacao situacao = jdbc.sql("""
-                SELECT o.autor_id, o.status AS status_oportunidade, pa.status
+                SELECT o.autor_id, o.status AS status_oportunidade, o.titulo, pa.oportunidade_id,
+                       pa.usuario_id AS candidato_id, pa.status
                 FROM participacoes pa JOIN oportunidades o ON o.id = pa.oportunidade_id
                 WHERE pa.id = ?
                 FOR UPDATE OF pa
@@ -61,11 +66,26 @@ public class ParticipacaoService {
         }
         if (!status.equals(situacao.status())) {
             jdbc.sql("UPDATE participacoes SET status = ? WHERE id = ?").params(status, id).update();
+            notificarDecisao(eu, situacao, status);
         }
         return consultar("WHERE pa.id = :id", Map.of("id", id)).get(0);
     }
 
-    record Situacao(Long autorId, String statusOportunidade, String status) {
+    record Situacao(Long autorId, String statusOportunidade, String titulo, Long oportunidadeId, Long candidatoId,
+            String status) {
+    }
+
+    private void notificarDecisao(Long eu, Situacao situacao, String status) {
+        boolean aceita = "ACEITA".equals(status);
+        Tipo tipo = aceita ? Tipo.PARTICIPACAO_ACEITA : Tipo.PARTICIPACAO_RECUSADA;
+        Tipo oposto = aceita ? Tipo.PARTICIPACAO_RECUSADA : Tipo.PARTICIPACAO_ACEITA;
+        Long oportunidadeId = situacao.oportunidadeId();
+        Long candidatoId = situacao.candidatoId();
+        notificacoes.remover(candidatoId, NotificacaoService.chave(oposto, oportunidadeId, eu));
+        // O autor já decidiu: o aviso "quer participar", se ainda não lido, sai da lista dele.
+        notificacoes.remover(eu, NotificacaoService.chave(Tipo.PARTICIPACAO_NOVA, oportunidadeId, candidatoId));
+        notificacoes.notificar(candidatoId, eu, tipo, oportunidadeId, "Sua participação em '" + situacao.titulo()
+                + "' foi " + (aceita ? "aceita" : "recusada") + ".");
     }
 
     private List<ParticipacaoResposta> consultar(String resto, Map<String, ?> params) {
