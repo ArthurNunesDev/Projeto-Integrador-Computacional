@@ -19,7 +19,7 @@
   <img src="https://img.shields.io/badge/flyway-CC0200?style=for-the-badge&logo=flyway&logoColor=white" alt="Flyway">
   <img src="https://img.shields.io/badge/maven-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white" alt="Maven">
   <img src="https://img.shields.io/badge/vitest-6E9F18?style=for-the-badge&logo=vitest&logoColor=white" alt="Vitest">
-  <img src="https://img.shields.io/badge/github_pages-222222?style=for-the-badge&logo=githubpages&logoColor=white" alt="GitHub Pages">
+  <img src="https://img.shields.io/badge/render-000000?style=for-the-badge&logo=render&logoColor=white" alt="Render">
 </p>
 
 <p align="center">
@@ -53,7 +53,7 @@
 
 <h2 id="situacao">📌 Situação atual</h2>
 
-O **frontend em React** tem interface funcional e responsiva, publicada no GitHub Pages. O **backend em Java com Spring Boot** sobe com Spring Security configurado e se conecta a um **PostgreSQL** (hospedado no [Neon](https://neon.tech)), com o schema criado por migrations do Flyway. A [API](#api) cobre cadastro, login com JWT, perfil, configurações, catálogos, oportunidades, habilidades publicadas, pessoas, conexões e mensagens. O backend ainda não está no ar: o deploy no [Render](#deploy-render) já está descrito no Blueprint `render.yaml` (API com o `backend/Dockerfile` e front como site estático), mas os serviços ainda não foram criados no painel.
+O **frontend em React** tem interface funcional e responsiva. O **backend em Java com Spring Boot** sobe com Spring Security configurado e se conecta a um **PostgreSQL** (hospedado no [Neon](https://neon.tech)), com o schema criado por migrations do Flyway. A [API](#api) cobre cadastro, login com JWT, perfil, configurações, catálogos, oportunidades, habilidades publicadas, pessoas, conexões e mensagens. A hospedagem é só no [Render](#deploy-render), descrita no Blueprint `render.yaml` (API com o `backend/Dockerfile` e front como site estático), com o banco no Neon; o endereço do site está no link acima. A contratação de habilidades ficou fora do MVP: as habilidades publicadas servem para divulgar, e o contato acontece por conexões e mensagens.
 
 O front usa a API em **todas as telas**: login, cadastro, sessão, perfil (edição, foto, troca de senha e exclusão de conta), configurações, oportunidades (publicar, editar, participar e salvar), habilidades publicadas, diretório de pessoas, conexões e mensagens. Para entrar é preciso o backend rodando (veja [Executando](#executando)). O navegador guarda só o token JWT e preferências de interface (página aberta, preferências de conteúdo, a animação de perfil completo e a opção demonstrativa de duas etapas); nenhuma senha ou dado de outras telas fica no `localStorage`, e as chaves do antigo modo demonstrativo são apagadas na primeira carga. As mensagens não são em tempo real: com uma conversa aberta, a tela consulta a API a cada 5 segundos. O que falta está no [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md#3-integração-com-o-front).
 
@@ -90,7 +90,7 @@ cd Projeto-Integrador-Computacional
 
 O front só tem uma variável, documentada em `MarketPlace/.env.example`. O endereço do backend vem de `VITE_API_URL` (padrão `http://localhost:8080`, sem `/api` no final). No build, a origem dessa URL também entra no `connect-src` da CSP; para gerar a versão de produção apontando para outro servidor, defina a variável antes do build (ex.: `VITE_API_URL=https://api.exemplo.com npm run build`). O cliente HTTP fica em `MarketPlace/src/api/`.
 
-Se `VITE_API_URL` não estiver definida num build de produção, o build continua mas avisa no console que o site vai apontar para `http://localhost:8080`. O deploy do GitHub Pages (`.github/workflows/deploy.yml`) lê a variável do repositório `VITE_API_URL`: quando a API estiver publicada, crie-a em Settings > Secrets and variables > Actions > Variables com a URL pública da API (ex.: `https://api.exemplo.com`). Enquanto ela não existir, o site publicado aponta para `localhost` e nada funciona fora da máquina de quem roda a API: desde a integração não há mais modo demonstrativo no navegador, então a demo do GitHub Pages depende de um backend hospedado e da variável `VITE_API_URL` apontando para ele (com a origem do Pages liberada em `CORS_ALLOWED_ORIGINS`).
+Se `VITE_API_URL` não estiver definida num build de produção, o build continua mas avisa no console que o site vai apontar para `http://localhost:8080`. Não há modo demonstrativo no navegador, então um site publicado sem essa variável não funciona. No Render, o valor vem do `render.yaml` (veja [Deploy](#deploy-render)).
 
 <h3 id="executando">Executando</h3>
 
@@ -130,7 +130,7 @@ A conexão vem de variáveis de ambiente, lidas em `application.properties`:
 | `DATABASE_DIRECT_URL` | opcional: URL JDBC **direta** (host sem `-pooler`), usada pelo Flyway nas migrations; se faltar, usa `DATABASE_URL` |
 | `JWT_SECRET` | **obrigatória**: segredo que assina o JWT (HS256), com pelo menos 32 bytes. Sem ela a aplicação não sobe. Gere com `openssl rand -base64 48` (o texto gerado é usado como está, sem decodificar) |
 | `JWT_EXPIRACAO` | opcional: validade do token, no formato de `Duration` do Spring (`24h`, `30m`); padrão `24h` |
-| `CORS_ALLOWED_ORIGINS` | opcional: origens liberadas no CORS, separadas por vírgula; padrão `https://arthurnunesdev.github.io,http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173` |
+| `CORS_ALLOWED_ORIGINS` | opcional: origens liberadas no CORS, separadas por vírgula; padrão `http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173` (no Render, o `render.yaml` define a origem do site) |
 | `PORT` | opcional: porta do servidor, normalmente definida pelo host; padrão `8080` |
 | `SERVER_FORWARD_HEADERS_STRATEGY` | padrão `none` (usa o IP da conexão e ignora o `X-Forwarded-For`). **Atrás do proxy de um host, defina `native`**; sem isso, todos os clientes parecem ter o IP do proxy e o limite de tentativas vira global. Nunca use `framework`, que aceita um IP forjado pelo cliente |
 | `APP_LIMITE_LOGIN_MAXIMO`, `APP_LIMITE_LOGIN_JANELA` | opcionais: erros de login por par IP e e-mail; padrão `5` em `15m` |
@@ -218,7 +218,7 @@ Regras:
 - **Login**: e-mail inexistente e senha errada devolvem o mesmo `401`, com o mesmo corpo.
 - **Cadastro**: devolve `201` sem token; para entrar, o front chama `/api/auth/login` em seguida. O cadastro cria também a linha de configurações com os valores padrão.
 - **Erros**: sempre `{status, erro, campos}`, com `campos` só nos erros de validação (`{"campo": "mensagem"}`). Sem token, token inválido ou expirado, ou token de um usuário que não existe mais: `401 {"status":401,"erro":"Não autenticado"}`. As mensagens de validação seguem o idioma do `Accept-Language` da requisição.
-- **Segurança**: API stateless, CORS liberado para o Vite local (`localhost:5173`, `127.0.0.1:5173`, preview em `localhost:4173`) e para o GitHub Pages (configurável por `CORS_ALLOWED_ORIGINS`). Login e cadastro têm limite de tentativas em memória, válido para uma única instância.
+- **Segurança**: API stateless, CORS liberado para o Vite local (`localhost:5173`, `127.0.0.1:5173`, preview em `localhost:4173`); outras origens, como a do site no Render, entram por `CORS_ALLOWED_ORIGINS`. Login e cadastro têm limite de tentativas em memória, válido para uma única instância.
 
 <h3 id="curl">Testando com curl</h3>
 
@@ -248,7 +248,7 @@ curl -X PUT http://localhost:8080/api/usuarios/me/configuracoes -H "Authorizatio
 ```text
 Projeto-Integrador-Computacional/
 ├── .github/
-│   ├── workflows/deploy.yml        # build e publicação no GitHub Pages
+│   ├── workflows/test-frontend.yml # testes, lint e build do front em cada PR
 │   ├── workflows/backend.yml       # testes do backend em cada PR e push que mexe em backend/
 │   └── pull_request_template.md
 ├── MarketPlace/                    # frontend React + Vite
@@ -295,12 +295,9 @@ O símbolo representa um mural com quatro cards, um deles sendo fixado. Os arqui
 
 <h2 id="deploy">🌐 Deploy</h2>
 
-O projeto tem dois deploys independentes:
+A hospedagem é só no **Render** (frontend + API), com o banco no **Neon**, descrita no Blueprint `render.yaml`, na raiz. A API roda como Web Service Docker (`backend/Dockerfile`) e o front como Static Site, servido na raiz do domínio (base `/` do Vite). O antigo deploy no GitHub Pages foi removido.
 
-- **GitHub Pages** (só o frontend): publicado automaticamente pelo GitHub Actions (`.github/workflows/deploy.yml`) a cada push na `main`, com o caminho `/Projeto-Integrador-Computacional/`. Continua funcionando como antes.
-- **Render** (frontend + API) com o banco no **Neon**: descrito no Blueprint `render.yaml`, na raiz. A API roda como Web Service Docker (`backend/Dockerfile`) e o front como Static Site.
-
-Os testes do backend rodam em outro workflow (veja [CI](#ci)). Os pontos de atenção da hospedagem estão no [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md#4-deploy).
+Os workflows do GitHub Actions só testam: o do backend (veja [CI](#ci)) e o do front (`.github/workflows/test-frontend.yml`, com testes, lint e build em cada PR). Os pontos de atenção da hospedagem estão no [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md#4-deploy).
 
 <h3 id="deploy-render">Render + Neon</h3>
 
@@ -309,7 +306,7 @@ O `render.yaml` cria dois serviços no plano gratuito:
 | Serviço | Tipo | Endereço esperado |
 |---|---|---|
 | `marketfaesa-api` | Web Service, runtime Docker, região Virginia, health check em `/api/health` | `https://marketfaesa-api.onrender.com` |
-| `marketfaesa-web` | Static Site (build com `--base=/`) | `https://marketfaesa-web.onrender.com` |
+| `marketfaesa-web` | Static Site (build do Vite com base `/`) | `https://marketfaesa-web.onrender.com` |
 
 O front chama a API pela própria origem (`VITE_API_URL=https://marketfaesa-web.onrender.com`): o Static Site reescreve `/api/*` para `https://marketfaesa-api.onrender.com/api/*` e manda o resto para `/index.html`. Mesmo assim, o CORS da API libera a origem do front (`CORS_ALLOWED_ORIGINS`), porque a requisição repassada pode chegar com o header `Origin` do site (sem essa origem na lista, a API responde `403 Invalid CORS request`).
 
@@ -333,7 +330,6 @@ Observações:
 - **Nome ocupado**: o Render usa o nome do serviço como subdomínio; se ele já existir, o endereço ganha um sufixo. Nesse caso, ajuste as três URLs no `render.yaml` (`CORS_ALLOWED_ORIGINS`, `VITE_API_URL` e o destino do rewrite `/api/*`) e sincronize o Blueprint.
 - **Variáveis `sync: false`** só são pedidas na criação do Blueprint; para trocá-las depois, use *Environment* no painel do serviço.
 - **Cold start**: no plano gratuito, a API dorme após uns 15 minutos sem requisições, e a primeira chamada seguinte pode levar perto de um minuto (o container sobe e o Spring inicia). O site estático não dorme.
-- **GitHub Pages com esta API**: para o site do Pages também usar a API do Render, defina a variável do repositório `VITE_API_URL=https://marketfaesa-api.onrender.com` e acrescente `https://arthurnunesdev.github.io` em `CORS_ALLOWED_ORIGINS`.
 - **Imagem local**: `docker build -t marketfaesa-backend backend` e `docker run -p 8080:8080 -e DATABASE_URL=... -e DATABASE_USERNAME=... -e DATABASE_PASSWORD=... -e JWT_SECRET=... marketfaesa-backend`. A porta vem de `PORT` (padrão `8080`).
 
 <h2 id="colaboradores">🤝 Colaboradores</h2>
