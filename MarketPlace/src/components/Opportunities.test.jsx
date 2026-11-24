@@ -3,7 +3,7 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 
 import Oportunidades from "./Opportunities.jsx";
-import { AREAS, chamadas, erroApi, mockarApi, oportunidade, pessoaResumo } from "../test/apiFalsa.js";
+import { AREAS, chamadas, erroApi, mockarApi, oportunidade, participacao, pessoaResumo } from "../test/apiFalsa.js";
 
 const LISTA = [
   oportunidade(1, "App para Clínica", { areas: [AREAS[0], AREAS[1]] }),
@@ -68,11 +68,87 @@ describe("Oportunidades", () => {
     await screen.findByRole("heading", { name: "App para Clínica" });
 
     await user.click(within(cardDe("App para Clínica")).getByRole("button", { name: "Participar" }));
-    expect(await within(cardDe("App para Clínica")).findByRole("button", { name: "✓ Participando" })).toBeInTheDocument();
+    expect(await within(cardDe("App para Clínica")).findByText("Pendente")).toBeInTheDocument();
+    expect(within(cardDe("App para Clínica")).queryByRole("button", { name: "Participar" })).not.toBeInTheDocument();
 
     await user.click(within(cardDe("Revisão de Contratos")).getByRole("button", { name: "Participar" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Oportunidade fechada");
     expect(within(cardDe("Revisão de Contratos")).getByRole("button", { name: "Participar" })).toBeInTheDocument();
+  });
+
+  it("mostra o status do pedido e cancela com DELETE; recusada não tem cancelar", async () => {
+    const fetchFalso = mockarApi({
+      "GET /api/oportunidades": [
+        oportunidade(1, "App para Clínica", { participando: true, minhaParticipacao: "ACEITA" }),
+        oportunidade(2, "Revisão de Contratos", { participando: true, minhaParticipacao: "RECUSADA" }),
+      ],
+      "GET /api/areas": AREAS,
+      "DELETE /api/oportunidades/1/participacao": null,
+    });
+    const user = userEvent.setup();
+    render(<Oportunidades usuarioId={1} />);
+    await screen.findByRole("heading", { name: "App para Clínica" });
+
+    expect(within(cardDe("App para Clínica")).getByText("Aceita")).toBeInTheDocument();
+    expect(within(cardDe("Revisão de Contratos")).getByText("Recusada")).toBeInTheDocument();
+    expect(within(cardDe("Revisão de Contratos")).queryByRole("button", { name: /Cancelar|Participar/ })).not.toBeInTheDocument();
+
+    await user.click(within(cardDe("App para Clínica")).getByRole("button", { name: "Cancelar participação em App para Clínica" }));
+    expect(await within(cardDe("App para Clínica")).findByRole("button", { name: "Participar" })).toBeInTheDocument();
+    expect(chamadas(fetchFalso, "DELETE /api/oportunidades/1/participacao")).toHaveLength(1);
+  });
+
+  it("autor vê os candidatos e aceita ou recusa com PATCH /api/participacoes/{id}", async () => {
+    const fetchFalso = mockarApi({
+      "GET /api/oportunidades": [oportunidade(3, "Minha pesquisa", { autor: pessoaResumo(1, "Ana Souza"), participantes: 2 })],
+      "GET /api/areas": AREAS,
+      "GET /api/oportunidades/3/participacoes": [
+        participacao(10, pessoaResumo(4, "Carla Dias")),
+        participacao(11, pessoaResumo(5, "Davi Reis"), { status: "ACEITA" }),
+      ],
+      "PATCH /api/participacoes/10": (corpo) => participacao(10, pessoaResumo(4, "Carla Dias"), { status: corpo.status }),
+      "PATCH /api/participacoes/11": erroApi(409, "Oportunidade fechada"),
+    });
+    const user = userEvent.setup();
+    render(<Oportunidades usuarioId={1} />);
+    await screen.findByRole("heading", { name: "Minha pesquisa" });
+
+    await user.click(within(cardDe("Minha pesquisa")).getByRole("button", { name: "Candidatos (2)" }));
+    const dialogo = within(screen.getByRole("dialog", { name: "Minha pesquisa" }));
+    const carla = within((await dialogo.findByText("Carla Dias")).closest("li"));
+    expect(carla.getByText("Pendente")).toBeInTheDocument();
+    expect(carla.getByText("Ciência da Computação · 4º período")).toBeInTheDocument();
+
+    await user.click(carla.getByRole("button", { name: "Aceitar" }));
+    expect(await carla.findByText("Aceita")).toBeInTheDocument();
+    expect(carla.getByRole("button", { name: "Aceitar" })).toHaveAttribute("aria-pressed", "true");
+    expect(chamadas(fetchFalso, "PATCH /api/participacoes/10")).toEqual([{ status: "ACEITA" }]);
+
+    const davi = within(dialogo.getByText("Davi Reis").closest("li"));
+    await user.click(davi.getByRole("button", { name: "Recusar" }));
+    expect(await dialogo.findByRole("alert")).toHaveTextContent("Oportunidade fechada");
+    expect(davi.getByText("Aceita")).toBeInTheDocument();
+
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("autor de oportunidade encerrada vê os candidatos sem poder decidir", async () => {
+    mockarApi({
+      "GET /api/oportunidades": [oportunidade(3, "Minha pesquisa", { autor: pessoaResumo(1, "Ana Souza"), status: "FECHADA" })],
+      "GET /api/areas": AREAS,
+      "GET /api/oportunidades/3/participacoes": [participacao(10, pessoaResumo(4, "Carla Dias"))],
+    });
+    const user = userEvent.setup();
+    render(<Oportunidades usuarioId={1} />);
+    await screen.findByRole("heading", { name: "Minha pesquisa" });
+
+    await user.click(within(cardDe("Minha pesquisa")).getByRole("button", { name: "Candidatos (0)" }));
+    const dialogo = within(screen.getByRole("dialog"));
+    expect(await dialogo.findByText("Carla Dias")).toBeInTheDocument();
+    expect(dialogo.getByText(/Oportunidade encerrada/)).toBeInTheDocument();
+    expect(dialogo.getByRole("button", { name: "Aceitar" })).toBeDisabled();
+    expect(dialogo.getByRole("button", { name: "Recusar" })).toBeDisabled();
   });
 
   it("mostra editar e excluir só na própria oportunidade, sem participar", async () => {
