@@ -20,10 +20,7 @@ export function excluirOportunidade(id) {
   return requisicao(`/api/oportunidades/${id}`, { method: 'DELETE' })
 }
 
-/**
- * POST/DELETE /api/oportunidades/{id}/participacao. O pedido nasce PENDENTE; cancelar apaga o pedido
- * pendente ou aceito (409 se já foi recusado).
- */
+/** POST/DELETE /api/oportunidades/{id}/participacao. */
 export function definirParticipacao(id, participar) {
   return requisicao(`/api/oportunidades/${id}/participacao`, { method: participar ? 'POST' : 'DELETE' })
 }
@@ -41,14 +38,4 @@ export function listarParticipacoes() {
 /** GET /api/usuarios/me/salvos. */
 export function listarSalvas() {
   return requisicao('/api/usuarios/me/salvos')
-}
-
-/** GET /api/oportunidades/{id}/participacoes (só o autor): [{id, oportunidadeId, status, criadoEm, pessoa}]. */
-export function listarCandidatos(oportunidadeId) {
-  return requisicao(`/api/oportunidades/${oportunidadeId}/participacoes`)
-}
-
-/** PATCH /api/participacoes/{id} (só o autor) com status ACEITA ou RECUSADA; devolve a participação atualizada. */
-export function definirStatusParticipacao(participacaoId, status) {
-  return requisicao(`/api/participacoes/${participacaoId}`, { method: 'PATCH', body: { status } })
 }

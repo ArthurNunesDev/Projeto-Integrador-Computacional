@@ -59,7 +59,7 @@ export function pessoaResumo(id, nome, curso = CURSO, periodo = 4) {
 export function oportunidade(id, titulo, extras = {}) {
   return {
     id, tipo: "PROJETO", titulo, descricao: `Descrição de ${titulo}`, modalidade: "REMOTO", status: "ABERTA",
-    areas: [AREAS[0]], autor: pessoaResumo(2, "Bruno Lima"), participantes: 0, participando: false, minhaParticipacao: null, salva: false,
+    areas: [AREAS[0]], autor: pessoaResumo(2, "Bruno Lima"), participantes: 0, participando: false, salva: false,
     criadoEm: "2026-10-20T10:00:00Z", atualizadoEm: "2026-10-20T10:00:00Z", ...extras,
   };
 }
@@ -74,9 +74,4 @@ export function habilidadePublicada(id, nome, extras = {}) {
 
 export function pessoa(id, nome, habilidades = []) {
   return { ...pessoaResumo(id, nome), cidade: "Serra", bio: `Bio de ${nome}`, email: null, fotoUrl: null, habilidades };
-}
-
-/** ParticipacaoResposta: candidatura vista pelo autor da oportunidade. */
-export function participacao(id, pessoaDaCandidatura, extras = {}) {
-  return { id, oportunidadeId: 3, status: "PENDENTE", pessoa: pessoaDaCandidatura, criadoEm: "2026-10-21T10:00:00Z", ...extras };
 }

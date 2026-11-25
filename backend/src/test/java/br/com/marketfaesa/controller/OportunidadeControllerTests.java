@@ -84,7 +84,6 @@ class OportunidadeControllerTests {
                 .andExpect(jsonPath("$.autor.email").doesNotExist())
                 .andExpect(jsonPath("$.participantes").value(0))
                 .andExpect(jsonPath("$.participando").value(false))
-                .andExpect(jsonPath("$.minhaParticipacao").value(org.hamcrest.Matchers.nullValue()))
                 .andExpect(jsonPath("$.salva").value(false))
                 .andExpect(jsonPath("$.criadoEm").isNotEmpty());
     }
@@ -192,7 +191,6 @@ class OportunidadeControllerTests {
 
         mvc.perform(get("/api/oportunidades/" + id).header("Authorization", outro.bearer()))
                 .andExpect(jsonPath("$.participando").value(true))
-                .andExpect(jsonPath("$.minhaParticipacao").value("PENDENTE"))
                 .andExpect(jsonPath("$.participantes").value(1));
         mvc.perform(get("/api/usuarios/me/participacoes").header("Authorization", outro.bearer()))
                 .andExpect(status().isOk())
