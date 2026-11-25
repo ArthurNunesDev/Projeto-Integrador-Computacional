@@ -1,13 +1,13 @@
 # Próximos passos
 
-Roadmap do backend e da integração com o frontend. O backend já roda com Spring Boot 4.1 (Java 21+, Maven Wrapper), já conecta ao PostgreSQL (Neon) com migrations do Flyway e já tem os endpoints de health, cadastro, login (JWT), perfil, configurações, catálogos, oportunidades, habilidades publicadas, pessoas, conexões e mensagens (lista no [README](README.md#api)), e todas as telas do front já os usam. O deploy no Render (API em Docker + front estático, banco no Neon) já está descrito no Blueprint `render.yaml`; falta criar os serviços no painel do Render.
+Roadmap do backend e da integração com o frontend. O backend já roda com Spring Boot 4.1 (Java 21+, Maven Wrapper), já conecta ao PostgreSQL (Neon) com migrations do Flyway e já tem os endpoints de health, cadastro, login (JWT), perfil, configurações, catálogos, oportunidades, habilidades publicadas, pessoas, conexões e mensagens (lista no [README](README.md#api)), e todas as telas do front já os usam. A hospedagem é só no Render (API em Docker + front estático, banco no Neon), descrita no Blueprint `render.yaml`; a criação dos serviços no painel ainda precisa ser confirmada (ver checklist da fase 5). A contratação de habilidades ficou fora do MVP (a tabela `contratacoes` do V3 foi removida no V7).
 
 ---
 
 ## 1. Evoluir o backend
 
 1. **Ferramenta de build** (feito): Maven com Maven Wrapper (`backend/mvnw`), então ninguém precisa instalar o Maven. As dependências ficam em `backend/pom.xml`.
-2. **Framework** (base feita): Spring Boot 4.1 com Spring Web MVC, que já resolve servidor HTTP, JSON, injeção de dependência e CORS, e Spring Security em `config/SecurityConfig.java` (API stateless: `/api/health`, os catálogos, `/api/auth/register` e `/api/auth/login` são públicos, o resto exige `Bearer` e responde `401` no formato de erro; CORS configurável por `CORS_ALLOWED_ORIGINS`, com padrão `http://localhost:5173` e o GitHub Pages; BCrypt para senhas). Starters:
+2. **Framework** (base feita): Spring Boot 4.1 com Spring Web MVC, que já resolve servidor HTTP, JSON, injeção de dependência e CORS, e Spring Security em `config/SecurityConfig.java` (API stateless: `/api/health`, os catálogos, `/api/auth/register` e `/api/auth/login` são públicos, o resto exige `Bearer` e responde `401` no formato de erro; CORS configurável por `CORS_ALLOWED_ORIGINS`, com padrão `http://localhost:5173` e o preview local; BCrypt para senhas). Starters:
    - `spring-boot-starter-data-jpa`, Flyway e o driver do PostgreSQL já estão no `pom.xml` (banco no Neon, ver item 4);
    - `spring-boot-starter-validation`, usado com `@Valid` nos DTOs de `dto/`;
    - `spring-boot-starter-security-oauth2-resource-server`, que valida o JWT (HS256, `config/JwtConfig.java`).
@@ -147,14 +147,14 @@ Fica em `MarketPlace/src/api/`:
 - `catalogos.js`, `oportunidades.js`, `habilidades.js`, `pessoas.js`, `conexoes.js` e `conversas.js`: uma função por rota, todas sobre `requisicao` (filtros de lista viram query string com `comFiltros`).
 - Nas telas, `src/useCarregar.js` carrega uma lista ao montar (com `carregando`, `erro` e `recarregar`) e `mensagemDoErro` traduz o `ApiError`.
 
-- **Variável de ambiente**: `VITE_API_URL` (padrão `http://localhost:8080`, sem `/api`; veja `MarketPlace/.env.example`). Falta configurar a URL de produção no build (variável `VITE_API_URL` do repositório, lida pelo workflow de deploy). Sem ela, a demo do GitHub Pages não funciona: o front não tem mais modo demonstrativo e depende de um backend hospedado.
-- **CORS**: o backend já libera `http://localhost:5173` e `http://127.0.0.1:5173` (Vite), `http://localhost:4173` (vite preview) e `https://arthurnunesdev.github.io`; outras origens entram por `CORS_ALLOWED_ORIGINS` (separadas por vírgula).
+- **Variável de ambiente**: `VITE_API_URL` (padrão `http://localhost:8080`, sem `/api`; veja `MarketPlace/.env.example`). No Render, a URL de produção vem do `render.yaml`. Sem ela, o site publicado não funciona: o front não tem mais modo demonstrativo e depende de um backend hospedado.
+- **CORS**: o backend já libera `http://localhost:5173` e `http://127.0.0.1:5173` (Vite), `http://localhost:4173` (vite preview); outras origens (como a do site no Render, já definida no `render.yaml`) entram por `CORS_ALLOWED_ORIGINS` (separadas por vírgula).
 
 ---
 
 ## 4. Deploy
 
-O GitHub Pages serve apenas arquivos estáticos: ele continua publicando o frontend pelo `deploy.yml`. A hospedagem escolhida para a API é o **Render**, com o Blueprint `render.yaml` na raiz (API como Web Service Docker, front como Static Site com rewrite de `/api/*` para a API; passo a passo no [README](README.md#deploy-render)). Pontos de atenção:
+A hospedagem é só no **Render** (o deploy no GitHub Pages foi removido), com o Blueprint `render.yaml` na raiz (API como Web Service Docker, front como Static Site com rewrite de `/api/*` para a API; passo a passo no [README](README.md#deploy-render)). Pontos de atenção:
 
 - Imagem: `backend/Dockerfile`, com contexto de build `backend/`. A aplicação escuta na porta de `PORT` (padrão `8080`) e o health check é `GET /api/health`.
 
@@ -199,6 +199,7 @@ O GitHub Pages serve apenas arquivos estáticos: ele continua publicando o front
 - [x] Enviar as edições do perfil para `PUT /api/usuarios/me` e remover `marketfaesa-perfil:<id>`
 - [x] Troca de senha e exclusão de conta
 - [x] Oportunidades, salvos, habilidades publicadas, pessoas, conexões e mensagens pela API (sem `localStorage`)
+- [x] Deixar a contratação de habilidades fora do MVP e remover a tabela `contratacoes` (migration V7)
 - [x] Tela para publicar e editar oportunidades (`POST/PUT/DELETE /api/oportunidades`)
 
 ### Fase 4 — Configurações
@@ -210,10 +211,9 @@ O GitHub Pages serve apenas arquivos estáticos: ele continua publicando o front
 - [x] Usar PostgreSQL (Neon)
 - [x] Criar o `backend/Dockerfile` e ler a porta de `PORT`
 - [x] Escolher a hospedagem (Render) e preparar o Blueprint `render.yaml` (API, front e variáveis `JWT_SECRET`, `CORS_ALLOWED_ORIGINS`, `SERVER_FORWARD_HEADERS_STRATEGY` e `VITE_API_URL`)
-- [ ] Criar o Blueprint no Render e preencher as variáveis `DATABASE_*` do Neon
+- [ ] Confirmar que o Blueprint foi criado no Render com as variáveis `DATABASE_*` do Neon e que site e API respondem
 - [ ] Conferir em produção que o limite de tentativas separa os clientes (exceder numa rede e testar de outra)
-- [ ] Definir `VITE_API_URL` de produção no workflow do GitHub Pages (no Render, já vem do `render.yaml`)
-- [x] Liberar CORS para a origem do GitHub Pages
+- [x] Remover o deploy do GitHub Pages (hospedagem só no Render, front com base `/`)
 
 ### Opcional — Limpeza do frontend
 - [x] Renomear o `name` do `package.json` para `marketfaesa`
