@@ -7,6 +7,8 @@ import { MODALIDADES, TIPOS, formatarOportunidade } from "../rotulos.js";
 import { mensagemDoErro, useCarregar } from "../useCarregar.js";
 import { useDialogo } from "../useDialogo.js";
 import { carregarOportunidades, useAcoesOportunidade } from "./acoesOportunidade.js";
+import Candidatos from "./Candidatos.jsx";
+import { AcaoParticipacao } from "./Participacao.jsx";
 
 const FORMULARIO_VAZIO = { tipo: "PROJETO", titulo: "", descricao: "", modalidade: "REMOTO", status: "ABERTA", areaIds: [] };
 
@@ -23,6 +25,9 @@ function Oportunidades({ usuarioId, initialSearch = "" }){
   // formulario: null fechado; sem id cria (POST), com id edita (PUT).
   const [formulario,setFormulario]=useState(null);
   const [excluindo,setExcluindo]=useState(null);
+  // Oportunidade própria cujos candidatos estão abertos no modal.
+  const [vendoCandidatos,setVendoCandidatos]=useState(null);
+  const fecharCandidatos=useCallback(()=>setVendoCandidatos(null),[]);
   const [enviando,setEnviando]=useState(false);
   const [erroFormulario,setErroFormulario]=useState("");
   const modalRef=useRef(null);
@@ -94,11 +99,11 @@ function Oportunidades({ usuarioId, initialSearch = "" }){
     </section>
     {carregando ? <p className="opportunities-loading" role="status">Carregando oportunidades...</p> :
     erro ? <section className="opportunities-empty"><span>!</span><h2>Não foi possível carregar as oportunidades</h2><p>{erro}</p><button type="button" onClick={recarregar}>Tentar novamente</button></section> :
-    lista.length ? <section className="opportunities-results">{lista.map((item)=>{const minha=item.autorId===usuarioId;const encerrada=item.status==="FECHADA"&&!item.participando;return <article className="opportunity-page-card" key={item.id}>
+    lista.length ? <section className="opportunities-results">{lista.map((item)=>{const minha=item.autorId===usuarioId;return <article className="opportunity-page-card" key={item.id}>
       <div className="opportunity-page-card__top"><div className="opportunity-page-card__icon">{item.icon}</div><div className="opportunity-card-top-actions"><button className={item.salva?"save-button salvo":"save-button"} type="button" onClick={()=>alternar(item,"salva")} aria-label={item.salva?"Remover dos salvos":"Salvar oportunidade"}>{item.salva?"♥":"♡"}</button><span>{item.tipo}</span></div></div>
       <h2>{item.titulo}</h2><p className="opportunity-page-card__description">{item.descricao}</p>
       <div className="opportunity-page-card__info"><span>✦ {item.area}</span><span>◷ {item.modalidade}</span></div>
-      <div className="opportunity-page-card__footer"><div className="opportunity-page-card__person"><div>{item.inicial}</div><span><strong>{item.pessoa}</strong>{item.curso}</span></div>{minha?<div className="opportunity-owner-actions"><button type="button" onClick={()=>abrirFormulario(item)}>Editar</button><button type="button" className="danger" onClick={()=>{setErroFormulario("");setExcluindo(item)}}>Excluir</button></div>:encerrada?<button type="button" disabled>Encerrada</button>:<button type="button" className={item.participando?"participando":""} onClick={()=>alternar(item,"participando")}>{item.participando?"✓ Participando":"Participar"}</button>}</div>
+      <div className="opportunity-page-card__footer"><div className="opportunity-page-card__person"><div>{item.inicial}</div><span><strong>{item.pessoa}</strong>{item.curso}</span></div>{minha?<div className="opportunity-owner-actions"><button type="button" onClick={()=>setVendoCandidatos(item)}>Candidatos ({item.participantes})</button><button type="button" onClick={()=>abrirFormulario(item)}>Editar</button><button type="button" className="danger" onClick={()=>{setErroFormulario("");setExcluindo(item)}}>Excluir</button></div>:<AcaoParticipacao item={item} onAlternar={alternar}/>}</div>
     </article>})}</section>:
     <section className="opportunities-empty"><span>⌕</span><h2>Nenhuma oportunidade encontrada</h2><p>{oportunidades.length?"Tente mudar o filtro ou pesquisar por outro termo.":"Ainda não há oportunidades publicadas."}</p><button type="button" onClick={()=>{setFiltro("Todos");setBusca("")}}>Limpar filtros</button></section>}
 
@@ -124,6 +129,8 @@ function Oportunidades({ usuarioId, initialSearch = "" }){
         </section>
       </div>
     )}
+
+    {vendoCandidatos && <Candidatos oportunidade={vendoCandidatos} onFechar={fecharCandidatos} />}
 
     {excluindo && (
       <div className="publication-modal-backdrop publication-delete-backdrop" onMouseDown={(event)=>{if(event.target===event.currentTarget)fecharModal()}}>

@@ -162,7 +162,6 @@ body { background: var(--mf-bg); }
 .opportunity-footer button { cursor: pointer; transition: transform .18s ease, background .18s ease; }
 .opportunity-footer button:hover { transform: translateY(-1px); }
 .details-button { background: var(--mf-light) !important; color: var(--mf-navy) !important; }
-.opportunity-footer button.participating-button { background: #2F7D5B; color: #fff; }
 .opportunities-empty-home {
   display: flex; flex-direction: column; align-items: center; gap: 5px;
   margin-top: 13px; padding: 30px 20px; border: 1px solid var(--mf-border);
@@ -196,7 +195,6 @@ body { background: var(--mf-bg); }
 .opportunity-modal-info span { padding: 7px 9px; border-radius: 10px; background: var(--mf-bg); color: var(--mf-muted); font-size: 8px; }
 .opportunity-modal-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--mf-border); }
 .opportunity-modal-footer > button { padding: 9px 14px; border: 0; border-radius: 18px; background: var(--mf-navy); color: #fff; font-size: 9px; font-weight: 800; cursor: pointer; }
-.opportunity-modal-footer > button.participating-button { background: #2F7D5B; }
 
 [data-theme="dark"] .area-pill { color:#fff; }
 [data-theme="dark"] .area-pill span { background:#111; }
