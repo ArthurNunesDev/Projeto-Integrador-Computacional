@@ -3,6 +3,7 @@ package br.com.marketfaesa.service;
 import br.com.marketfaesa.dto.ConexaoResposta;
 import br.com.marketfaesa.dto.PessoaResumo;
 import br.com.marketfaesa.error.ErroApiException;
+import br.com.marketfaesa.service.NotificacaoService.Tipo;
 import java.util.List;
 import java.util.Map;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -11,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 // Conexões entre usuários: pedido (PENDENTE) -> aceito (ACEITA). Recusar, cancelar o pedido e
 // desfazer a conexão apagam a linha, então o par pode pedir de novo depois.
+// Pedido e aceite notificam a outra pessoa; recusar, cancelar e desfazer só apagam as notificações ainda não lidas
+// (a recusa não é avisada).
 @Service
 public class ConexaoService {
 
@@ -23,9 +26,11 @@ public class ConexaoService {
             """.formatted(PessoaResumo.colunas("u", "c", "pessoa"));
 
     private final JdbcClient jdbc;
+    private final NotificacaoService notificacoes;
 
-    public ConexaoService(JdbcClient jdbc) {
+    public ConexaoService(JdbcClient jdbc, NotificacaoService notificacoes) {
         this.jdbc = jdbc;
+        this.notificacoes = notificacoes;
     }
 
     @Transactional(readOnly = true)
@@ -62,21 +67,28 @@ public class ConexaoService {
                 """)
                 .params(eu, destinatarioId).query(Long.class).optional()
                 .orElseThrow(() -> ErroApiException.conflito("Já existe uma conexão ou um pedido com esta pessoa"));
+        notificacoes.notificar(destinatarioId, eu, Tipo.CONEXAO_SOLICITADA, id,
+                notificacoes.nome(eu) + " quer se conectar com você.");
         return buscar(eu, id);
     }
 
     // Só quem recebeu o pedido aceita (403 para os demais); 409 se já foi aceito.
     @Transactional
     public ConexaoResposta aceitar(Long eu, Long id) {
-        exigirPedidoRecebido(eu, id);
+        Partes partes = exigirPedidoRecebido(eu, id);
         jdbc.sql("UPDATE conexoes SET status = 'ACEITA', atualizado_em = now() WHERE id = ?").param(id).update();
+        // O pedido já foi respondido: o aviso dele, se ainda não lido, sai da lista.
+        removerNotificacoes(partes, id);
+        notificacoes.notificar(partes.solicitanteId(), eu, Tipo.CONEXAO_ACEITA, id,
+                notificacoes.nome(eu) + " aceitou seu pedido de conexão.");
         return buscar(eu, id);
     }
 
     @Transactional
     public void recusar(Long eu, Long id) {
-        exigirPedidoRecebido(eu, id);
+        Partes partes = exigirPedidoRecebido(eu, id);
         jdbc.sql("DELETE FROM conexoes WHERE id = ?").param(id).update();
+        removerNotificacoes(partes, id);
     }
 
     // Qualquer um dos dois lados: cancela o pedido enviado ou desfaz a conexão.
@@ -87,6 +99,15 @@ public class ConexaoService {
             throw ErroApiException.acessoNegado();
         }
         jdbc.sql("DELETE FROM conexoes WHERE id = ?").param(id).update();
+        removerNotificacoes(partes, id);
+    }
+
+    // Apaga as não lidas desta conexão: o pedido (para o destinatário) e o aceite (para o solicitante).
+    private void removerNotificacoes(Partes partes, Long id) {
+        notificacoes.remover(partes.destinatarioId(),
+                NotificacaoService.chave(Tipo.CONEXAO_SOLICITADA, id, partes.solicitanteId()));
+        notificacoes.remover(partes.solicitanteId(),
+                NotificacaoService.chave(Tipo.CONEXAO_ACEITA, id, partes.destinatarioId()));
     }
 
     record Partes(Long solicitanteId, Long destinatarioId, String status) {
@@ -98,7 +119,7 @@ public class ConexaoService {
                 .orElseThrow(ErroApiException::naoEncontrado);
     }
 
-    private void exigirPedidoRecebido(Long eu, Long id) {
+    private Partes exigirPedidoRecebido(Long eu, Long id) {
         Partes partes = partes(id);
         if (!partes.destinatarioId().equals(eu)) {
             throw ErroApiException.acessoNegado();
@@ -106,6 +127,7 @@ public class ConexaoService {
         if (!"PENDENTE".equals(partes.status())) {
             throw ErroApiException.conflito("Pedido já aceito");
         }
+        return partes;
     }
 
     private ConexaoResposta buscar(Long eu, Long id) {

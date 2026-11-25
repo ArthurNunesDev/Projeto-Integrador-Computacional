@@ -5,6 +5,7 @@ import br.com.marketfaesa.dto.OportunidadeRequisicao;
 import br.com.marketfaesa.dto.OportunidadeResposta;
 import br.com.marketfaesa.dto.PessoaResumo;
 import br.com.marketfaesa.error.ErroApiException;
+import br.com.marketfaesa.service.NotificacaoService.Tipo;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,9 +30,11 @@ public class OportunidadeService {
             """.formatted(PessoaResumo.colunas("u", "c", "autor"));
 
     private final JdbcClient jdbc;
+    private final NotificacaoService notificacoes;
 
-    public OportunidadeService(JdbcClient jdbc) {
+    public OportunidadeService(JdbcClient jdbc, NotificacaoService notificacoes) {
         this.jdbc = jdbc;
+        this.notificacoes = notificacoes;
     }
 
     // Filtros opcionais; busca procura no título, na descrição e no nome do autor. Mais recentes primeiro.
@@ -96,9 +99,10 @@ public class OportunidadeService {
         return buscar(eu, id);
     }
 
+    // Fechar (ABERTA -> FECHADA) avisa os participantes; reabrir ou salvar de novo já fechada, não.
     @Transactional
     public OportunidadeResposta atualizar(Long eu, Long id, OportunidadeRequisicao requisicao) {
-        exigirAutor(eu, id);
+        Situacao antes = exigirAutor(eu, id);
         validarAreas(requisicao.areaIds());
         jdbc.sql("""
                 UPDATE oportunidades SET tipo = :tipo, titulo = :titulo, descricao = :descricao,
@@ -110,12 +114,19 @@ public class OportunidadeService {
                 .update();
         jdbc.sql("DELETE FROM oportunidade_areas WHERE oportunidade_id = ?").param(id).update();
         gravarAreas(id, requisicao.areaIds());
+        if ("ABERTA".equals(antes.status()) && "FECHADA".equals(requisicao.status())) {
+            notificacoes.notificarParticipantes(id, eu, Tipo.OPORTUNIDADE_FECHADA,
+                    "A oportunidade '" + requisicao.titulo() + "' foi fechada.");
+        }
         return buscar(eu, id);
     }
 
+    // Avisa os participantes antes do DELETE, que apaga as participações em cascata.
     @Transactional
     public void excluir(Long eu, Long id) {
-        exigirAutor(eu, id);
+        Situacao situacao = exigirAutor(eu, id);
+        notificacoes.notificarParticipantes(id, eu, Tipo.OPORTUNIDADE_REMOVIDA,
+                "A oportunidade '" + situacao.titulo() + "' foi removida.");
         jdbc.sql("DELETE FROM oportunidades WHERE id = ?").param(id).update();
     }
 
@@ -136,13 +147,15 @@ public class OportunidadeService {
             throw ErroApiException.conflito("RECUSADA".equals(minhaParticipacao(eu, id))
                     ? "Sua participação foi recusada" : "Você já participa desta oportunidade");
         }
+        notificacoes.notificar(situacao.autorId(), eu, Tipo.PARTICIPACAO_NOVA, id,
+                notificacoes.nome(eu) + " quer participar de '" + situacao.titulo() + "'.");
     }
 
     // Pendente ou aceita: apaga a linha (o candidato pode pedir de novo enquanto a oportunidade estiver aberta).
     // Recusada: 409, senão bastaria cancelar e pedir de novo para voltar a PENDENTE.
     @Transactional
     public void cancelarParticipacao(Long eu, Long id) {
-        situacao(id);
+        Situacao situacao = situacao(id);
         String status = minhaParticipacao(eu, id);
         if (status == null) {
             throw ErroApiException.naoEncontrado();
@@ -151,6 +164,7 @@ public class OportunidadeService {
             throw ErroApiException.conflito("Sua participação foi recusada");
         }
         jdbc.sql("DELETE FROM participacoes WHERE oportunidade_id = ? AND usuario_id = ?").params(id, eu).update();
+        notificacoes.remover(situacao.autorId(), NotificacaoService.chave(Tipo.PARTICIPACAO_NOVA, id, eu));
     }
 
     private String minhaParticipacao(Long eu, Long id) {
@@ -182,20 +196,27 @@ public class OportunidadeService {
         return campos;
     }
 
-    record Situacao(Long autorId, String status) {
+    record Situacao(Long autorId, String status, String titulo) {
     }
 
     private Situacao situacao(Long id) {
-        return jdbc.sql("SELECT autor_id, status FROM oportunidades WHERE id = ?").param(id)
+        return situacao(id, "");
+    }
+
+    private Situacao situacao(Long id, String trava) {
+        return jdbc.sql("SELECT autor_id, status, titulo FROM oportunidades WHERE id = ?" + trava).param(id)
                 .query(Situacao.class).optional()
                 .orElseThrow(ErroApiException::naoEncontrado);
     }
 
-    // 404 se não existe, 403 se é de outro usuário.
-    private void exigirAutor(Long eu, Long id) {
-        if (!situacao(id).autorId().equals(eu)) {
+    // 404 se não existe, 403 se é de outro usuário. Trava a linha (FOR UPDATE) para a edição e a exclusão:
+    // duas edições simultâneas não veem as duas a transição ABERTA -> FECHADA.
+    private Situacao exigirAutor(Long eu, Long id) {
+        Situacao situacao = situacao(id, " FOR UPDATE");
+        if (!situacao.autorId().equals(eu)) {
             throw ErroApiException.acessoNegado();
         }
+        return situacao;
     }
 
     private void validarAreas(List<Long> areaIds) {
