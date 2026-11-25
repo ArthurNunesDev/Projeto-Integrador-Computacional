@@ -4,7 +4,9 @@ import userEvent from "@testing-library/user-event";
 
 import App from "./App.jsx";
 import { obterToken, salvarToken } from "./api/client.js";
-import { chamadas, CONFIGURACOES, erroApi, mockarApi, oportunidade, USUARIO_API } from "./test/apiFalsa.js";
+import {
+  chamadas, CONFIGURACOES, erroApi, mockarApi, notificacao, oportunidade, ROTAS_NOTIFICACOES, USUARIO_API,
+} from "./test/apiFalsa.js";
 
 // Rotas que a página inicial consulta depois de entrar.
 const ROTAS_INICIO = {
@@ -18,6 +20,7 @@ const ROTAS_INICIO = {
   "GET /api/pessoas": [],
   "GET /api/conexoes": [],
   "GET /api/usuarios/me/participacoes": [],
+  ...ROTAS_NOTIFICACOES,
 };
 
 beforeEach(() => {
@@ -163,6 +166,29 @@ describe("autenticação pela API", () => {
     await waitFor(() => expect(chamadas(fetchFalso, "PUT /api/usuarios/me/configuracoes")).toEqual([{ ...salvas, perfilPublico: false }]));
   });
 
+  it("salva as opções de notificação no PUT e esconde o badge de mensagens quando desligado", async () => {
+    salvarToken("jwt-salvo");
+    localStorage.setItem("marketfaesa-pagina:1", "configuracoes");
+    const fetchFalso = mockarApi({
+      ...ROTAS_INICIO,
+      "GET /api/usuarios/me": USUARIO_API,
+      "PUT /api/usuarios/me/configuracoes": (corpo) => corpo,
+      "GET /api/cursos": [],
+      "GET /api/notificacoes/contagem": { naoLidas: 0, mensagensNaoLidas: 4 },
+    });
+    const user = userEvent.setup();
+    render(<App />);
+    expect(await screen.findByRole("button", { name: /Mensagens, 4 não lidas$/, hidden: true })).toBeInTheDocument();
+
+    await user.click(await screen.findByRole("button", { name: /NotificaçõesO que aparece/ }));
+    const toggle = screen.getByRole("switch", { name: "Mensagens não lidas" });
+    await waitFor(() => expect(toggle).toBeEnabled());
+    await user.click(toggle);
+
+    await waitFor(() => expect(chamadas(fetchFalso, "PUT /api/usuarios/me/configuracoes")).toEqual([{ ...CONFIGURACOES, mensagens: false }]));
+    expect(screen.getByRole("button", { name: /Mensagens$/, hidden: true })).not.toHaveTextContent("4");
+  });
+
   it("volta ao login com aviso quando o token salvo expirou", async () => {
     salvarToken("jwt-vencido");
     mockarApi({ "GET /api/usuarios/me": erroApi(401, "Não autenticado") });
@@ -220,5 +246,25 @@ describe("navegação com dados da API", () => {
 
     expect(await screen.findByRole("heading", { name: /Oportunidades em Destaque/i })).toBeInTheDocument();
     expect(screen.getByRole("contentinfo")).toBeInTheDocument();
+  });
+
+  it("mostra as não lidas no sino e abre a página de notificações por Ver todas", async () => {
+    salvarToken("jwt-salvo");
+    mockarApi({
+      ...ROTAS_INICIO,
+      "GET /api/usuarios/me": USUARIO_API,
+      "GET /api/notificacoes/contagem": { naoLidas: 3, mensagensNaoLidas: 2 },
+      "GET /api/notificacoes": [notificacao(5, "CONEXAO_SOLICITADA", { texto: "Bruno Lima quer se conectar com você" })],
+    });
+    render(<App />);
+    const user = userEvent.setup();
+
+    const sino = await screen.findByRole("button", { name: "Notificações, 3 não lidas" });
+    expect(screen.getByRole("button", { name: /Mensagens, 2 não lidas$/, hidden: true })).toBeInTheDocument();
+    await user.click(sino);
+    await user.click(await screen.findByRole("button", { name: "Ver todas" }));
+
+    expect(await screen.findByRole("heading", { name: "Notificações", level: 1 })).toBeInTheDocument();
+    expect(await screen.findAllByText("Bruno Lima quer se conectar com você")).not.toHaveLength(0);
   });
 });

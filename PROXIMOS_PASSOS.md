@@ -127,14 +127,21 @@ Todas as telas usam a API; não há mais dados de demonstração no front.
 - **Oportunidades** (início, `Opportunities.jsx`, `Saved.jsx`): lista, participar/sair e salvar/remover pela API; a busca e o filtro por área rodam no front sobre a lista. As encerradas não mostram "Participar". Depois de pedir, o card mostra o status do pedido (`minhaParticipacao` da API: Pendente, Aceita ou Recusada) no lugar do botão, com "Cancelar" enquanto não foi recusado. "+ Publicar oportunidade" abre o formulário (tipo, título, modalidade, descrição e áreas); na própria oportunidade, o card troca "Participar" por "Candidatos (n)" (modal para aceitar ou recusar cada pedido; desabilitado com a oportunidade encerrada), "Editar" (que também muda o status) e "Excluir", com confirmação.
 - **Habilidades publicadas** (`Skills.jsx`, `Publications.jsx`): criar, editar e excluir; os selects enviam os códigos (`INTERMEDIARIO`, `PROJETOS_FREELAS`...) e as telas mostram os rótulos (`src/rotulos.js`).
 - **Pessoas e conexões** (`PeopleSkills.jsx`, `Connections.jsx`): diretório de `/api/pessoas` e todas as ações de conexão; o card de uma conexão completa cidade e habilidades com os dados do diretório.
-- **Mensagens** (`Messages.jsx`): conversas e mensagens reais. Sem tempo real: com uma conversa aberta, mensagens e lista são recarregadas a cada 5 s (o intervalo para ao sair da tela).
+- **Mensagens** (`Messages.jsx`): conversas e mensagens reais. Sem tempo real: com uma conversa aberta, mensagens e lista são recarregadas 5 s depois de cada atualização terminar; a consulta para ao sair da tela e com a aba oculta (volta na hora quando a aba fica visível).
+- **Notificações** (`NotificationBell.jsx`, `Notifications.jsx`, `src/useNotificacoes.js`):
+  - **Contagem**: `useNotificacoes`, montado uma vez no `App` com usuário logado, consulta `GET /api/notificacoes/contagem` a cada 30 s (só depois da resposta anterior, nunca duas ao mesmo tempo). Para com a aba oculta e consulta na hora ao voltar; pausa depois de 10 min sem clique ou tecla e retoma na próxima interação; depois de uma falha espera 60 s, dobrando até 5 min; para em `401`. A lógica de intervalo fica em `src/useIntervaloVisivel.js`, usada também pelas mensagens.
+  - **Sino no cabeçalho**: badge com as não lidas (até "99+") e rótulo "Notificações, N não lidas" para leitores de tela. Abre um painel com as 10 últimas (`GET /api/notificacoes?limite=10`), "Marcar todas como lidas" (envia `ateId` = maior id exibido, para não marcar o que chegou depois) e "Ver todas". Esc fecha e devolve o foco ao sino.
+  - **Ao clicar numa notificação**: marca como lida (`PUT /api/notificacoes/{id}/lida`) e navega: `CONEXAO_*` para Conexões; `PARTICIPACAO_*` e `OPORTUNIDADE_*` para Oportunidades. Depois de marcar, a contagem é consultada de novo.
+  - **Página "Notificações"** (aberta por "Ver todas"): lista de 20 em 20 com "Carregar mais" (`antesDeId` = id da última exibida; acaba quando vem menos que 20), filtro "Só não lidas" (`naoLidas=true`), estados de carregando, vazio e erro.
+  - **Mensagens no menu**: o item "Mensagens" mostra `mensagensNaoLidas` da mesma contagem; a tela de mensagens pede uma nova contagem quando o total de não lidas muda.
+  - **Configurações > Notificações**: liga e desliga `conexoes` (`CONEXAO_SOLICITADA` e `CONEXAO_ACEITA`), `publicacoes` (as candidaturas: `PARTICIPACAO_NOVA` nas oportunidades que você publicou e `PARTICIPACAO_ACEITA` / `PARTICIPACAO_RECUSADA` nos seus pedidos) e `mensagens` (o badge do menu; o front esconde o número quando desligado). Quais tipos cada opção suprime é decidido pela API ao gerar a notificação; `OPORTUNIDADE_FECHADA` e `OPORTUNIDADE_REMOVIDA` sempre chegam, e a tela avisa isso. `novasOportunidades` e `resumoSemanal` ficam fora da tela porque não têm efeito: nenhum tipo de notificação usa `novasOportunidades` e não há envio de e-mail.
 - **Início** (`Body.jsx`): números (estudantes, oportunidades abertas, habilidades), destaques e "Categorias com mais habilidades" calculados a partir das listas da API.
 - **Limpeza**: na primeira carga o front apaga as chaves do modo demonstrativo (`marketfaesa-users` com senhas em texto puro, `marketfaesa-auth`, salvos, participações, habilidades, conexões, mensagens, configurações, perfil e foto locais, além das opções removidas de duas etapas e preferências de conteúdo; ver `limparDadosAntigos` em `src/storage.js`).
 
 ### O que ainda fica no navegador (ou falta)
 
 - **No `localStorage`, por conta**: a página aberta e o registro de que a animação de perfil completo já foi exibida.
-- **Notificações**: não há rota nem tela de notificações. Na configuração, `novasOportunidades`, `mensagens`, `conexoes`, `publicacoes` e `resumoSemanal`, além de `reduzirAnimacoes`, seguem na API sem uso: o front só os devolve no PUT, que exige todos.
+- **Notificações**: não são em tempo real (consulta a cada 30 s; WebSocket ou SSE fica para depois). Na configuração, `novasOportunidades`, `resumoSemanal` e `reduzirAnimacoes` seguem na API sem uso: o front só os devolve no PUT, que exige todos.
 - **Fotos nas listas**: a API não manda `fotoUrl` nas listas, então os cards usam as iniciais do nome; o ícone da oportunidade vem do tipo.
 
 ### Cliente de API
@@ -144,6 +151,7 @@ Fica em `MarketPlace/src/api/`:
 - `client.js`: `requisicao(caminho, {method, body, signal})` monta a URL a partir de `VITE_API_URL`, envia JSON e o `Authorization: Bearer` quando há token (`localStorage`, chave `marketfaesa-token`). Erros viram `ApiError` com `status`, `mensagem` (o `erro` da API) e `campos`; falha de rede vira `status: 0` com mensagem amigável. Um `401` em requisição com token limpa o token e chama o callback registrado em `definirOnNaoAutenticado(fn)`.
 - `auth.js`: `cadastrar({nome, email, senha})`, `login({email, senha})` (salva o token) e `sair()`.
 - `usuarios.js`: `obterMe()`, `atualizarMe(perfil)`, `alterarSenha({senhaAtual, novaSenha})`, `excluirConta(senha)`, `obterConfiguracoes()` e `salvarConfiguracoes(config)`.
+- `notificacoes.js`: `obterContagem()`, `listarNotificacoes({limite, antesDeId, naoLidas})`, `marcarLida(id)` e `marcarTodas(ateId)`.
 - `catalogos.js`, `oportunidades.js`, `habilidades.js`, `pessoas.js`, `conexoes.js` e `conversas.js`: uma função por rota, todas sobre `requisicao` (filtros de lista viram query string com `comFiltros`).
 - Nas telas, `src/useCarregar.js` carrega uma lista ao montar (com `carregando`, `erro` e `recarregar`) e `mensagemDoErro` traduz o `ApiError`.
 
@@ -201,11 +209,13 @@ A hospedagem é só no **Render** (o deploy no GitHub Pages foi removido), com o
 - [x] Oportunidades, salvos, habilidades publicadas, pessoas, conexões e mensagens pela API (sem `localStorage`)
 - [x] Deixar a contratação de habilidades fora do MVP e remover a tabela `contratacoes` (migration V7)
 - [x] Tela para publicar e editar oportunidades (`POST/PUT/DELETE /api/oportunidades`)
+- [x] Notificações no front: sino com contagem (consulta a cada 30 s, pausada com a aba oculta), página com paginação e badge de mensagens no menu
 
 ### Fase 4 — Configurações
 - [x] `GET/PUT /api/usuarios/me/configuracoes`
 - [x] Carregar configurações após o login e salvar ao alterar em `Configs.jsx`
 - [x] Tema só da API (sem cópia no `localStorage`)
+- [x] Seção "Notificações" em `Configs.jsx` (`conexoes`, `publicacoes`, `mensagens`)
 
 ### Fase 5 — Produção
 - [x] Usar PostgreSQL (Neon)

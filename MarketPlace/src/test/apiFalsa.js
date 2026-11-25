@@ -8,16 +8,18 @@ export function erroApi(status, erro, campos) {
 
 /**
  * rotas: { "MÉTODO /caminho?query": resposta }. Sem rota com query, cai na rota sem query.
- * resposta: o corpo JSON (null = 204), erroApi(...), ou uma função (corpo da requisição) => resposta.
+ * resposta: o corpo JSON (null = 204), erroApi(...), ou uma função (corpo, url) => resposta, em que url é
+ * o URL da requisição (para ler a query, ex.: url.searchParams.get("antesDeId")).
  * Devolve o vi.fn() do fetch; chamadas(fetch, "PUT /api/...") lista os corpos enviados para a rota.
  */
 export function mockarApi(rotas) {
   const fetchFalso = vi.fn(async (url, { method = "GET", body } = {}) => {
-    const { pathname, search } = new URL(url);
+    const urlRequisicao = new URL(url);
+    const { pathname, search } = urlRequisicao;
     const chave = `${method} ${pathname}${search}`;
     let resposta = chave in rotas ? rotas[chave] : rotas[`${method} ${pathname}`];
     if (resposta === undefined) resposta = erroApi(404, `Rota não mockada: ${chave}`);
-    if (typeof resposta === "function") resposta = resposta(body ? JSON.parse(body) : undefined);
+    if (typeof resposta === "function") resposta = resposta(body ? JSON.parse(body) : undefined, urlRequisicao);
     if (resposta?.erroApi) return new Response(JSON.stringify(resposta.corpo), { status: resposta.status });
     return resposta == null ? new Response(null, { status: 204 }) : new Response(JSON.stringify(resposta), { status: 200 });
   });
@@ -80,3 +82,17 @@ export function pessoa(id, nome, habilidades = []) {
 export function participacao(id, pessoaDaCandidatura, extras = {}) {
   return { id, oportunidadeId: 3, status: "PENDENTE", pessoa: pessoaDaCandidatura, criadoEm: "2026-10-21T10:00:00Z", ...extras };
 }
+
+/** NotificacaoResposta. tipo: CONEXAO_SOLICITADA, PARTICIPACAO_NOVA, OPORTUNIDADE_FECHADA... */
+export function notificacao(id, tipo = "CONEXAO_SOLICITADA", extras = {}) {
+  return {
+    id, tipo, texto: `Notificação ${id}`, ator: pessoaResumo(2, "Bruno Lima"), alvoId: 7, lida: false,
+    criadoEm: "2026-11-20T10:00:00Z", ...extras,
+  };
+}
+
+/** Rotas de notificações sem nada novo; os testes que montam o App usam estas por padrão. */
+export const ROTAS_NOTIFICACOES = {
+  "GET /api/notificacoes/contagem": { naoLidas: 0, mensagensNaoLidas: 0 },
+  "GET /api/notificacoes": [],
+};

@@ -11,6 +11,7 @@ import Messages from "./components/Messages.jsx";
 import Salvos from "./components/Saved.jsx";
 import MinhasPublicacoes from "./components/Publications.jsx";
 import Perfil from "./components/Profile.jsx";
+import Notificacoes from "./components/Notifications.jsx";
 import Footer from "./components/Footer.jsx";
 
 import Login from "./auth/Login.jsx";
@@ -21,9 +22,12 @@ import { atualizarMe, obterConfiguracoes, obterMe, salvarConfiguracoes } from ".
 import { chaveUsuario, lerValorSeguro, salvarValorSeguro, limparDadosAntigos } from "./storage.js";
 import { corpoAtualizacao, montarUsuario } from "./perfil.js";
 import { mensagemDoErro } from "./useCarregar.js";
+import { useNotificacoes } from "./useNotificacoes.js";
 
 import "./index.scss";
 import "./components/Header.scss";
+import "./components/NotificationBell.scss";
+import "./components/Notifications.scss";
 import "./components/Body.scss";
 import "./components/Profile.scss";
 import "./components/Configs.scss";
@@ -40,7 +44,10 @@ import "./ResponsiveAudit.scss";
 const CHAVE_PAGINA = "marketfaesa-pagina";
 // Padrões das opções usadas no front, até o GET terminar. O PUT exige todos os campos de
 // ConfiguracaoDto: os que o front não usa vêm no GET e voltam intactos em `configuracoes`.
-const CONFIG_PADRAO = { perfilPublico: true, mostrarEmail: false, permitirMensagens: true };
+const CONFIG_PADRAO = {
+  perfilPublico: true, mostrarEmail: false, permitirMensagens: true,
+  conexoes: true, publicacoes: true, novasOportunidades: true, mensagens: true,
+};
 
 const MENSAGEM_SESSAO_EXPIRADA = "Sua sessão expirou. Entre novamente.";
 
@@ -66,6 +73,8 @@ function App() {
   const filaSalvarRef = useRef(Promise.resolve());
   const salvamentosPendentesRef = useRef(0);
   const falhaAoSalvarRef = useRef(false);
+  // Contagem de não lidas (notificações e mensagens), consultada enquanto há usuário logado.
+  const notificacoes = useNotificacoes(usuario?.id ?? null);
 
   useEffect(() => {
     limparDadosAntigos();
@@ -337,7 +346,10 @@ function App() {
         return <Connections onNavigate={navegarPara} onAbrirConversa={abrirConversaNaTela} />;
 
       case "mensagens":
-        return <Messages conversaInicial={conversaInicial} />;
+        return <Messages conversaInicial={conversaInicial} onNaoLidasMudou={notificacoes.recarregar} />;
+
+      case "notificacoes":
+        return <Notificacoes onNavigate={navegarPara} onAtualizar={notificacoes.recarregar} />;
 
       case "salvos":
         return <Salvos onNavigate={navegarPara} />;
@@ -434,6 +446,9 @@ function App() {
         onSearch={buscarOportunidades}
         usuario={usuario}
         onLogout={fazerLogout}
+        naoLidas={notificacoes.naoLidas}
+        mensagensNaoLidas={configuracoes.mensagens === false ? 0 : notificacoes.mensagensNaoLidas}
+        onAtualizarNotificacoes={notificacoes.recarregar}
       />
 
       {renderizarPagina()}

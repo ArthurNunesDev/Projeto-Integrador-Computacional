@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 
-function Header({ paginaAtual, onNavigate, onSearch, usuario, onLogout }) {
+import NotificationBell from "./NotificationBell.jsx";
+import { descreverNaoLidas, textoDoBadge } from "../notificacoes.js";
+
+function Header({
+  paginaAtual, onNavigate, onSearch, usuario, onLogout,
+  naoLidas = 0, mensagensNaoLidas = 0, onAtualizarNotificacoes,
+}) {
   const [menuAberto, setMenuAberto] = useState(false);
   const [perfilMenuAberto, setPerfilMenuAberto] = useState(false);
   const perfilMenuRef = useRef(null);
@@ -76,6 +82,8 @@ function Header({ paginaAtual, onNavigate, onSearch, usuario, onLogout }) {
         </form>
 
         <div className="div-icons">
+          <NotificationBell naoLidas={naoLidas} onNavigate={navegar} onAtualizar={onAtualizarNotificacoes} />
+
           <div className="profile-menu-wrapper" ref={perfilMenuRef}>
             <button
               className={`profile-button ${perfilMenuAberto ? "ativo" : ""}`}
@@ -142,7 +150,17 @@ function Header({ paginaAtual, onNavigate, onSearch, usuario, onLogout }) {
             <li><button className={`menu-item ${paginaAtual === "oportunidades" ? "ativo" : ""}`} type="button" onClick={() => navegar("oportunidades")}><span className="menu-item-icon">□</span><span>Oportunidades</span></button></li>
             <li><button className={`menu-item ${paginaAtual === "habilidades" ? "ativo" : ""}`} type="button" onClick={() => navegar("habilidades")}><span className="menu-item-icon">✦</span><span>Habilidades</span></button></li>
             <li><button className={`menu-item ${paginaAtual === "conexoes" ? "ativo" : ""}`} type="button" onClick={() => navegar("conexoes")}><span className="menu-item-icon">♡</span><span>Conexões</span></button></li>
-            <li><button className={`menu-item ${paginaAtual === "mensagens" ? "ativo" : ""}`} type="button" onClick={() => navegar("mensagens")}><span className="menu-item-icon">□</span><span>Mensagens</span></button></li>
+            <li>
+              <button className={`menu-item ${paginaAtual === "mensagens" ? "ativo" : ""}`} type="button" onClick={() => navegar("mensagens")}>
+                <span className="menu-item-icon">□</span><span>Mensagens</span>
+                {mensagensNaoLidas > 0 && (
+                  <span className="menu-badge">
+                    <span aria-hidden="true">{textoDoBadge(mensagensNaoLidas)}</span>
+                    <span className="visualmente-oculto">, {descreverNaoLidas(mensagensNaoLidas)}</span>
+                  </span>
+                )}
+              </button>
+            </li>
           </ul>
         </div>
 

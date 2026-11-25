@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { enviarMensagem, listarConversas, listarMensagens } from "../api/conversas.js";
 import { iniciais } from "../rotulos.js";
 import { mensagemDoErro, useCarregar } from "../useCarregar.js";
+import { useIntervaloVisivel } from "../useIntervaloVisivel.js";
 
-// A API não tem tempo real: com uma conversa aberta, mensagens e lista são recarregadas neste intervalo.
+// A API não tem tempo real: com uma conversa aberta, mensagens e lista são recarregadas neste
+// intervalo (contado a partir do fim da atualização anterior, e só com a aba visível).
 export const INTERVALO_ATUALIZACAO = 5000;
 
 function formatarHora(iso) {
@@ -14,7 +16,8 @@ function formatarHora(iso) {
     : data.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
 }
 
-function Mensagens({ conversaInicial = null }) {
+// onNaoLidasMudou: chamado quando o total de não lidas muda (o App atualiza o badge do menu).
+function Mensagens({ conversaInicial = null, onNaoLidasMudou }) {
   const { dados: conversas, carregando, erro, recarregar, setDados: setConversas } = useCarregar(listarConversas, []);
   const [selecionada,setSelecionada] = useState(conversaInicial);
   // Mensagens da conversa aberta; guardam o id para não mostrar as de outra conversa enquanto carrega.
@@ -24,6 +27,7 @@ function Mensagens({ conversaInicial = null }) {
   const [mostrarLista,setMostrarLista] = useState(!conversaInicial);
   const [enviando,setEnviando] = useState(false);
   const [erroPersistencia,setErroPersistencia] = useState("");
+  const naoLidasRef = useRef(null);
 
   const filtradas = useMemo(() => {
     const termo=busca.trim().toLowerCase();
@@ -34,28 +38,28 @@ function Mensagens({ conversaInicial = null }) {
   const atual=conversas.find(c=>c.id===selecionada)||conversas[0];
   const atualId=atual?.id;
 
-  useEffect(() => {
-    if (!atualId) return undefined;
-    let ativo = true;
-    async function atualizar() {
-      try {
-        // Primeiro as mensagens (o GET marca como lidas), depois a lista com as não lidas atualizadas.
-        const lista = await listarMensagens(atualId);
-        if (!ativo) return;
-        setMensagens({ conversaId: atualId, lista });
-        const novasConversas = await listarConversas();
-        if (ativo) setConversas(novasConversas);
-      } catch (e) {
-        if (ativo) setErroPersistencia(mensagemDoErro(e));
+  // Primeiro as mensagens (o GET marca como lidas), depois a lista com as não lidas atualizadas.
+  // O signal é abortado ao trocar de conversa ou sair da tela: a resposta antiga é descartada.
+  const atualizar = useCallback(async (signal) => {
+    try {
+      const lista = await listarMensagens(atualId);
+      if (signal.aborted) return;
+      setMensagens({ conversaId: atualId, lista });
+      const novasConversas = await listarConversas();
+      if (signal.aborted) return;
+      setConversas(novasConversas);
+      const naoLidas = novasConversas.reduce((total, c) => total + c.naoLidas, 0);
+      if (naoLidasRef.current !== naoLidas) {
+        naoLidasRef.current = naoLidas;
+        onNaoLidasMudou?.();
       }
+    } catch (e) {
+      if (!signal.aborted) setErroPersistencia(mensagemDoErro(e));
     }
-    atualizar();
-    const timer = window.setInterval(atualizar, INTERVALO_ATUALIZACAO);
-    return () => {
-      ativo = false;
-      window.clearInterval(timer);
-    };
-  }, [atualId, setConversas]);
+  }, [atualId, setConversas, onNaoLidasMudou]);
+
+  // Para com a aba oculta e volta na hora quando ela fica visível de novo.
+  useIntervaloVisivel(atualizar, INTERVALO_ATUALIZACAO, { ativo: Boolean(atualId), chave: atualId });
 
   function abrirConversa(id) {
     setSelecionada(id);

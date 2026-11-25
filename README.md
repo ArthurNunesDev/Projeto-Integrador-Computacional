@@ -55,7 +55,7 @@
 
 O **frontend em React** tem interface funcional e responsiva. O **backend em Java com Spring Boot** sobe com Spring Security configurado e se conecta a um **PostgreSQL** (hospedado no [Neon](https://neon.tech)), com o schema criado por migrations do Flyway. A [API](#api) cobre cadastro, login com JWT, perfil, configurações, catálogos, oportunidades, habilidades publicadas, pessoas, conexões, mensagens e notificações. A hospedagem é só no [Render](#deploy-render), descrita no Blueprint `render.yaml` (API com o `backend/Dockerfile` e front como site estático), com o banco no Neon; o endereço do site está no link acima. A contratação de habilidades ficou fora do MVP: as habilidades publicadas servem para divulgar, e o contato acontece por conexões, mensagens e notificações.
 
-O front usa a API em **todas as telas**: login, cadastro, sessão, perfil (edição, foto, troca de senha e exclusão de conta), configurações, oportunidades (publicar, editar, participar, salvar e aceitar ou recusar candidatos), habilidades publicadas, diretório de pessoas, conexões e mensagens. Para entrar é preciso o backend rodando (veja [Executando](#executando)). O navegador guarda só o token JWT e preferências de interface (página aberta, preferências de conteúdo, a animação de perfil completo e a opção demonstrativa de duas etapas); nenhuma senha ou dado de outras telas fica no `localStorage`, e as chaves do antigo modo demonstrativo são apagadas na primeira carga. As mensagens não são em tempo real: com uma conversa aberta, a tela consulta a API a cada 5 segundos. O que falta está no [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md#3-integração-com-o-front).
+O front usa a API em **todas as telas**: login, cadastro, sessão, perfil (edição, foto, troca de senha e exclusão de conta), configurações, oportunidades (publicar, editar, participar, salvar e aceitar ou recusar candidatos), habilidades publicadas, diretório de pessoas, conexões, mensagens e notificações (sino no cabeçalho, página "Notificações" e opções em Configurações). Para entrar é preciso o backend rodando (veja [Executando](#executando)). O navegador guarda só o token JWT e preferências de interface (página aberta, preferências de conteúdo, a animação de perfil completo e a opção demonstrativa de duas etapas); nenhuma senha ou dado de outras telas fica no `localStorage`, e as chaves do antigo modo demonstrativo são apagadas na primeira carga. Mensagens e notificações não são em tempo real: com uma conversa aberta, a tela consulta a API a cada 5 segundos, e a contagem de não lidas do sino e do menu é consultada a cada 30 segundos; as duas consultas param com a aba oculta. O que falta está no [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md#3-integração-com-o-front).
 
 <h2 id="funcionalidades">✨ Funcionalidades</h2>
 
@@ -67,6 +67,7 @@ O front usa a API em **todas as telas**: login, cadastro, sessão, perfil (ediç
 | 💬 Mensagens entre usuários | 🔖 Itens salvos |
 | 📋 Minhas publicações | ⚙️ Configurações de conta e privacidade |
 | 🌙 Tema claro e escuro | 📱 Layout responsivo para desktop e mobile |
+| 🔔 Notificações de conexões, candidaturas e oportunidades | 📬 Contagem de mensagens não lidas no menu |
 
 <h2 id="comecar">🚀 Como começar</h2>
 
