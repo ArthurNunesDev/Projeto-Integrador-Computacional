@@ -55,7 +55,7 @@
 
 O **frontend em React** tem interface funcional e responsiva. O **backend em Java com Spring Boot** sobe com Spring Security configurado e se conecta a um **PostgreSQL** (hospedado no [Neon](https://neon.tech)), com o schema criado por migrations do Flyway. A [API](#api) cobre cadastro, login com JWT, perfil, configurações, catálogos, oportunidades, habilidades publicadas, pessoas, conexões e mensagens. A hospedagem é só no [Render](#deploy-render), descrita no Blueprint `render.yaml` (API com o `backend/Dockerfile` e front como site estático), com o banco no Neon; o endereço do site está no link acima. A contratação de habilidades ficou fora do MVP: as habilidades publicadas servem para divulgar, e o contato acontece por conexões e mensagens.
 
-O front usa a API em **todas as telas**: login, cadastro, sessão, perfil (edição, foto, troca de senha e exclusão de conta), configurações, oportunidades (publicar, editar, participar, salvar e aceitar ou recusar candidatos), habilidades publicadas, diretório de pessoas, conexões e mensagens. Para entrar é preciso o backend rodando (veja [Executando](#executando)). O navegador guarda só o token JWT e preferências de interface (página aberta, preferências de conteúdo, a animação de perfil completo e a opção demonstrativa de duas etapas); nenhuma senha ou dado de outras telas fica no `localStorage`, e as chaves do antigo modo demonstrativo são apagadas na primeira carga. As mensagens não são em tempo real: com uma conversa aberta, a tela consulta a API a cada 5 segundos. O que falta está no [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md#3-integração-com-o-front).
+O front usa a API em **todas as telas**: login, cadastro, sessão, perfil (edição, foto, troca de senha e exclusão de conta), configurações, oportunidades (publicar, editar, participar e salvar), habilidades publicadas, diretório de pessoas, conexões e mensagens. Para entrar é preciso o backend rodando (veja [Executando](#executando)). O navegador guarda só o token JWT e preferências de interface (página aberta, preferências de conteúdo, a animação de perfil completo e a opção demonstrativa de duas etapas); nenhuma senha ou dado de outras telas fica no `localStorage`, e as chaves do antigo modo demonstrativo são apagadas na primeira carga. As mensagens não são em tempo real: com uma conversa aberta, a tela consulta a API a cada 5 segundos. O que falta está no [PROXIMOS_PASSOS.md](PROXIMOS_PASSOS.md#3-integração-com-o-front).
 
 <h2 id="funcionalidades">✨ Funcionalidades</h2>
 
@@ -197,9 +197,7 @@ Base em desenvolvimento: `http://localhost:8080/api`. São públicas só `GET /a
 | GET | `/api/oportunidades?tipo=&areaId=&modalidade=&status=&autorId=&busca=` | `200` lista, mais novas primeiro |
 | POST | `/api/oportunidades` | `201` com `Location`; `400` |
 | GET / PUT / DELETE | `/api/oportunidades/{id}` | `200` / `200` / `204`; `403` se não for o autor; `404` |
-| POST / DELETE | `/api/oportunidades/{id}/participacao` | `204`; `400` na própria; `409` fechada, repetida ou já recusada (o pedido nasce `PENDENTE`; cancelar apaga o pendente ou aceito) |
-| GET | `/api/oportunidades/{id}/participacoes` | `200 [{id, oportunidadeId, status, criadoEm, pessoa}]` em ordem de chegada; `403` se não for o autor; `404` |
-| PATCH | `/api/participacoes/{id}` (corpo `{status: "ACEITA" \| "RECUSADA"}`) | `200` participação; repetir o status atual não muda nada; `400`; `403` se não for o autor; `404`; `409` oportunidade fechada |
+| POST / DELETE | `/api/oportunidades/{id}/participacao` | `204`; `400` na própria; `409` fechada ou repetida |
 | PUT / DELETE | `/api/oportunidades/{id}/salvo` | `204` |
 | GET | `/api/usuarios/me/participacoes`, `/api/usuarios/me/salvos` | `200` lista |
 | GET | `/api/habilidades-publicadas?usuarioId=&categoria=&busca=`, `/{id}` | `200` sem as de perfis privados de outras pessoas; `404` no detalhe delas |

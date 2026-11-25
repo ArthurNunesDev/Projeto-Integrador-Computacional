@@ -21,7 +21,7 @@ public class OportunidadeService {
     private static final String SELECT = """
             SELECT o.id, o.tipo, o.titulo, o.descricao, o.modalidade, o.status, o.criado_em, o.atualizado_em, %s,
                    (SELECT count(*) FROM participacoes p WHERE p.oportunidade_id = o.id) AS participantes,
-                   (SELECT p.status FROM participacoes p WHERE p.oportunidade_id = o.id AND p.usuario_id = :eu) AS minha_participacao,
+                   EXISTS (SELECT 1 FROM participacoes p WHERE p.oportunidade_id = o.id AND p.usuario_id = :eu) AS participando,
                    EXISTS (SELECT 1 FROM itens_salvos s WHERE s.oportunidade_id = o.id AND s.usuario_id = :eu) AS salva
             FROM oportunidades o
             JOIN usuarios u ON u.id = o.autor_id
@@ -119,7 +119,7 @@ public class OportunidadeService {
         jdbc.sql("DELETE FROM oportunidades WHERE id = ?").param(id).update();
     }
 
-    // Só oportunidades abertas e de outra pessoa. A participação nasce PENDENTE.
+    // Só oportunidades abertas e de outra pessoa.
     @Transactional
     public void participar(Long eu, Long id) {
         Situacao situacao = situacao(id);
@@ -133,29 +133,18 @@ public class OportunidadeService {
                 INSERT INTO participacoes (oportunidade_id, usuario_id) VALUES (?, ?) ON CONFLICT DO NOTHING
                 """).params(id, eu).update();
         if (inseridas == 0) {
-            throw ErroApiException.conflito("RECUSADA".equals(minhaParticipacao(eu, id))
-                    ? "Sua participação foi recusada" : "Você já participa desta oportunidade");
+            throw ErroApiException.conflito("Você já participa desta oportunidade");
         }
     }
 
-    // Pendente ou aceita: apaga a linha (o candidato pode pedir de novo enquanto a oportunidade estiver aberta).
-    // Recusada: 409, senão bastaria cancelar e pedir de novo para voltar a PENDENTE.
     @Transactional
     public void cancelarParticipacao(Long eu, Long id) {
         situacao(id);
-        String status = minhaParticipacao(eu, id);
-        if (status == null) {
+        int removidas = jdbc.sql("DELETE FROM participacoes WHERE oportunidade_id = ? AND usuario_id = ?")
+                .params(id, eu).update();
+        if (removidas == 0) {
             throw ErroApiException.naoEncontrado();
         }
-        if ("RECUSADA".equals(status)) {
-            throw ErroApiException.conflito("Sua participação foi recusada");
-        }
-        jdbc.sql("DELETE FROM participacoes WHERE oportunidade_id = ? AND usuario_id = ?").params(id, eu).update();
-    }
-
-    private String minhaParticipacao(Long eu, Long id) {
-        return jdbc.sql("SELECT status FROM participacoes WHERE oportunidade_id = ? AND usuario_id = ?")
-                .params(id, eu).query(String.class).optional().orElse(null);
     }
 
     // Salvar e remover são idempotentes.
@@ -219,8 +208,7 @@ public class OportunidadeService {
                 .query((rs, i) -> new OportunidadeResposta(rs.getLong("id"), rs.getString("tipo"),
                         rs.getString("titulo"), rs.getString("descricao"), rs.getString("modalidade"),
                         rs.getString("status"), new ArrayList<>(), PessoaResumo.de(rs, "autor"),
-                        rs.getLong("participantes"), rs.getString("minha_participacao") != null,
-                        rs.getString("minha_participacao"), rs.getBoolean("salva"),
+                        rs.getLong("participantes"), rs.getBoolean("participando"), rs.getBoolean("salva"),
                         rs.getTimestamp("criado_em").toInstant(), rs.getTimestamp("atualizado_em").toInstant()))
                 .list();
         if (lista.isEmpty()) {

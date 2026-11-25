@@ -9,7 +9,6 @@ import { calcularProgressoPerfil, conquistaPerfilExibida, marcarConquistaPerfilE
 import { iniciais } from "../rotulos.js";
 import { useCarregar } from "../useCarregar.js";
 import { carregarOportunidades, useAcoesOportunidade } from "./acoesOportunidade.js";
-import { AcaoParticipacao } from "./Participacao.jsx";
 
 // Números do painel e da barra lateral, todos calculados a partir das listas da API.
 function carregarPainel() {
@@ -188,7 +187,7 @@ function Body({ onNavigate, usuario }) {
                         </div>
                         <div className="opportunity-actions">
                           <button className="details-button" type="button" onClick={() => setDetalheId(item.id)}>Detalhes</button>
-                          <BotaoParticipar item={item} usuarioId={usuario?.id} onAlternar={alternar} compacto />
+                          <BotaoParticipar item={item} usuarioId={usuario?.id} onAlternar={alternar} />
                         </div>
                       </div>
                     </article>
@@ -291,10 +290,15 @@ function Body({ onNavigate, usuario }) {
   );
 }
 
-// Na própria oportunidade não há o que pedir; para os demais, Participar ou o status do pedido.
-function BotaoParticipar({ item, usuarioId, onAlternar, compacto }) {
+// Participar/sair; desabilitado na própria oportunidade e nas encerradas.
+function BotaoParticipar({ item, usuarioId, onAlternar }) {
   if (item.autorId === usuarioId) return <button type="button" disabled>Sua oportunidade</button>;
-  return <AcaoParticipacao item={item} onAlternar={onAlternar} compacto={compacto} />;
+  if (item.status === "FECHADA" && !item.participando) return <button type="button" disabled>Encerrada</button>;
+  return (
+    <button className={item.participando ? "participating-button" : ""} type="button" onClick={() => onAlternar(item, "participando")}>
+      {item.participando ? "✓ Participando" : "Participar"}
+    </button>
+  );
 }
 
 export default Body;
