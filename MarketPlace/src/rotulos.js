@@ -25,6 +25,9 @@ export const DISPONIBILIDADES = {
   COLABORACOES: "Colaborações",
 };
 
+// Status de uma participação (candidatura) em oportunidade.
+export const STATUS_PARTICIPACAO = { PENDENTE: "Pendente", ACEITA: "Aceita", RECUSADA: "Recusada" };
+
 // Categoria de habilidade é texto livre na API; estas são as sugestões das telas.
 export const CATEGORIAS = ["Tecnologia", "Design", "Negócios", "Comunicação", "Saúde", "Direito", "Engenharia", "Outras"];
 
@@ -61,6 +64,9 @@ export function formatarOportunidade(api) {
     pessoa: api.autor?.nome || "",
     curso: api.autor?.curso?.nome || "",
     inicial: iniciais(api.autor?.nome),
+    participantes: api.participantes ?? 0,
+    // Status da participação do usuário logado (PENDENTE, ACEITA, RECUSADA ou null).
+    minhaParticipacao: api.minhaParticipacao ?? (api.participando ? "PENDENTE" : null),
     participando: Boolean(api.participando),
     salva: Boolean(api.salva),
   };

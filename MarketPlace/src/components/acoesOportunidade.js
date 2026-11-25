@@ -21,7 +21,9 @@ export function useAcoesOportunidade(setOportunidades) {
     try {
       if (campo === "salva") await definirSalva(item.id, novoValor);
       else await definirParticipacao(item.id, novoValor);
-      setOportunidades((lista) => lista.map((o) => (o.id === item.id ? { ...o, [campo]: novoValor } : o)));
+      // Participar cria um pedido PENDENTE; cancelar apaga o pedido.
+      const extra = campo === "participando" ? { minhaParticipacao: novoValor ? "PENDENTE" : null } : {};
+      setOportunidades((lista) => lista.map((o) => (o.id === item.id ? { ...o, [campo]: novoValor, ...extra } : o)));
       setErro("");
     } catch (e) {
       setErro(mensagemDoErro(e));
