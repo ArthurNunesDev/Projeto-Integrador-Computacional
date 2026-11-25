@@ -54,8 +54,7 @@ services:
   - type: web
     name: marketfaesa-web
     runtime: static
-    # base "/" no lugar do caminho do GitHub Pages definido no vite.config.js
-    buildCommand: cd MarketPlace && npm ci && npm run build -- --base=/
+    buildCommand: cd MarketPlace && npm ci && npm run build
     staticPublishPath: ./MarketPlace/dist
     buildFilter:
       paths:

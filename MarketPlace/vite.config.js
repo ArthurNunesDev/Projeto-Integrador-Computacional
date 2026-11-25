@@ -27,11 +27,11 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, fileURLToPath(new URL('.', import.meta.url)), 'VITE_')
   const csp = montarCsp(origemDaApi(env))
 
-  // Não falha o build: o deploy do GitHub Pages ainda não tem API publicada.
+  // Não falha o build (ex.: build local sem API configurada); só avisa.
   if (mode === 'production' && !env.VITE_API_URL) {
     console.warn(
       `\n[aviso] VITE_API_URL não definida: este build de produção vai chamar a API em ${API_URL_PADRAO}.\n` +
-        '        Defina VITE_API_URL (no deploy, a variável do repositório) com a URL pública da API.\n',
+        '        Defina VITE_API_URL com a URL pública da API (no Render, ela vem do render.yaml).\n',
     )
   }
 
@@ -46,7 +46,6 @@ export default defineConfig(({ mode }) => {
         ],
       },
     ],
-    base: '/Projeto-Integrador-Computacional/',
     test: {
       environment: 'jsdom',
       setupFiles: ['@testing-library/jest-dom/vitest'],
