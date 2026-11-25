@@ -11,13 +11,14 @@ export function useDialogo(modalRef, aberto, fechar) {
     const modal = modalRef.current;
     const elementoAnterior = document.activeElement;
     const primeiroCampo = modal.querySelector("form input, form select, form textarea");
-    const controles = Array.from(
+    // Consultados a cada Tab: o conteúdo do modal pode mudar depois de aberto (ex.: lista carregada pela API).
+    const listarControles = () => Array.from(
       modal.querySelectorAll(
         'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
       ),
     );
 
-    (primeiroCampo || controles[0])?.focus();
+    (primeiroCampo || listarControles()[0])?.focus();
 
     function tratarTeclado(event) {
       if (event.key === "Escape") {
@@ -26,7 +27,9 @@ export function useDialogo(modalRef, aberto, fechar) {
         return;
       }
 
-      if (event.key !== "Tab" || controles.length === 0) return;
+      if (event.key !== "Tab") return;
+      const controles = listarControles();
+      if (controles.length === 0) return;
 
       const primeiro = controles[0];
       const ultimo = controles[controles.length - 1];

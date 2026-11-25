@@ -89,7 +89,29 @@ describe("Página inicial", () => {
     const modal = screen.getByRole("dialog");
     await user.click(within(modal).getByRole("button", { name: "Participar" }));
 
-    expect(await within(modal).findByRole("button", { name: "✓ Participando" })).toBeInTheDocument();
+    expect(await within(modal).findByText("Pendente")).toBeInTheDocument();
+    expect(within(modal).getByRole("button", { name: "Cancelar participação em App para Clínica" })).toBeInTheDocument();
     expect(chamadas(fetchFalso, "POST /api/oportunidades/1/participacao")).toHaveLength(1);
+    // No card o status aparece no lugar do botão, sem o "Cancelar".
+    const card = screen.getByRole("heading", { name: "App para Clínica", level: 4 }).closest("article");
+    expect(within(card).getByText("Pendente")).toBeInTheDocument();
+    expect(within(card).queryByRole("button", { name: /Participar|Cancelar/ })).not.toBeInTheDocument();
+  });
+
+  it("mostra o status da participação no lugar do botão Participar", async () => {
+    mockarApi(rotas({
+      "GET /api/oportunidades": [
+        oportunidade(1, "App para Clínica", { participando: true, minhaParticipacao: "ACEITA" }),
+        oportunidade(2, "Análise de Dados", { status: "FECHADA", participando: true, minhaParticipacao: "RECUSADA" }),
+      ],
+    }));
+    render(<Body onNavigate={vi.fn()} usuario={USUARIO} />);
+
+    const aceita = (await screen.findByRole("heading", { name: "App para Clínica" })).closest("article");
+    expect(within(aceita).getByText("Aceita")).toHaveTextContent("Sua participação: Aceita");
+    expect(within(aceita).queryByRole("button", { name: "Participar" })).not.toBeInTheDocument();
+    const recusada = screen.getByRole("heading", { name: "Análise de Dados" }).closest("article");
+    expect(within(recusada).getByText("Recusada")).toBeInTheDocument();
+    expect(within(recusada).queryByRole("button", { name: "Encerrada" })).not.toBeInTheDocument();
   });
 });
